@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
+    <WindowsSdkPackageVersion>10.0.19041.52</WindowsSdkPackageVersion>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Notatnik</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="../../LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Compile Remove="Core/**/*.cs" />
+    <Compile Remove="Legacy/**/*.cs" />
+    <ProjectReference Include="Core/Notatnik.Core.csproj" />
+    <PackageReference Include="Emoji.Wpf" Version="0.3.4" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3719.77" />
+    <EmbeddedResource Include="WebEditor/dist/index.html;WebEditor/dist/editor.js;WebEditor/dist/editor.css;WebEditor/dist/math.css">
+      <LogicalName>Notatnik.WebAssets.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+    <Content Include="WebEditor/dist/THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

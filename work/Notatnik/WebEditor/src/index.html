@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src data:; font-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Notatnik</title><link rel="stylesheet" href="editor.css"><link rel="stylesheet" href="math.css"></head>
+<body><main id="editor" aria-label="Treść notatki"></main>
+<dialog id="link-dialog"><form method="dialog"><label>Adres linku<input id="link-url" type="url" placeholder="https://" autocomplete="off"></label><div><button value="cancel">Anuluj</button><button id="link-save" value="save">Zapisz</button></div></form></dialog>
+<dialog id="math-dialog"><form method="dialog"><label>Wzór LaTeX<textarea id="math-source" rows="3" placeholder="E = mc^2" spellcheck="false"></textarea></label><label><select id="math-layout"><option value="inlineMath">W tekście</option><option value="blockMath">Osobny wiersz</option></select></label><div id="math-preview" aria-label="Podgląd wzoru"></div><p id="math-error" role="alert"></p><div><button value="cancel">Anuluj</button><button id="math-save" value="save">Wstaw</button></div></form></dialog>
+<input id="image-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" hidden>
+<script src="editor.js"></script></body></html>
