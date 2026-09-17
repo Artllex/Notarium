@@ -9,5 +9,5 @@ try {
     npm.cmd test
     if ($LASTEXITCODE) { throw 'Testy edytora nie przeszły.' }
 } finally { Pop-Location }
-dotnet publish (Join-Path $PSScriptRoot 'Notatnik.csproj') -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o (Join-Path $workspace 'outputs/Notatnik-engines')
+dotnet publish (Join-Path $PSScriptRoot 'Notatnik.csproj') -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o (Join-Path $workspace 'outputs/Notarium')
 if ($LASTEXITCODE) { throw 'Publikacja lokalnego pakietu nie powiodła się.' }

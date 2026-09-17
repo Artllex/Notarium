@@ -69,6 +69,24 @@ internal static class Program
                 Require(mathRendered == "true", "Native math/image rendering failed");
                 using (var stream = File.Create("outputs/engines-check/native-media.png")) await web.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png, stream);
                 Console.WriteLine("PASS native KaTeX and 200px image render and persist through bridge");
+                await web.CoreWebView2.ExecuteScriptAsync("window.notatnik.editor.commands.focus('end'); window.notatnik.editor.commands.insertContent([{type:'blockMath',attrs:{latex:'a=b',numbered:true}},{type:'paragraph'}]); window.notatnik.editor.commands.focus('end'); window.notatnik.editor.commands.insertTable({rows:2,cols:2,withHeaderRow:true});");
+                await editor.FlushAsync();
+                Require(latest!.DocumentJson.Contains("numbered\":true") && latest.DocumentJson.Contains("tableCell"), "Numbering/table missing from native snapshot");
+                var elements = await web.CoreWebView2.ExecuteScriptAsync("!!document.querySelector('[data-numbered=true] .katex') && document.querySelectorAll('.tiptap tr').length === 2");
+                Require(elements == "true", "Numbering/table failed to render in WebView2");
+                Console.WriteLine("PASS numbered equations and TableKit in native WebView2");
+                var interactions = await web.CoreWebView2.ExecuteScriptAsync("document.querySelector('[data-type=block-math]').draggable && document.querySelector('figure[data-note-image]').draggable && !!document.querySelector('.container-resize') && !document.querySelector('#image-placement')");
+                Require(interactions == "true", "Image/math movement or image controls missing in WebView2");
+                Console.WriteLine("PASS image resize/wrap and draggable document elements in native WebView2");
+                await web.CoreWebView2.ExecuteScriptAsync("window.notatnik.editor.state.doc.descendants((n,p)=>{if(n.type.name==='image'){window.notatnik.editor.view.dispatch(window.notatnik.editor.state.tr.setNodeMarkup(p,undefined,{...n.attrs,title:'Tytuł natywny'}));return false;}});const label=document.querySelector('.image-title .label-editor');label.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));label.focus();const selection=getSelection();const range=document.createRange();range.selectNodeContents(label);selection.removeAllRanges();selection.addRange(range);");
+                editor.Execute("font", "Consolas"); editor.Execute("color", "#58B889"); editor.Execute("alignRight"); await editor.FlushAsync();
+                var richLabel = await web.CoreWebView2.ExecuteScriptAsync("document.querySelector('.image-title .label-editor').innerHTML");
+                Require(richLabel.Contains("Consolas") && richLabel.Contains("right"), "Native toolbar did not format active image title: " + richLabel);
+                Require(latest!.DocumentJson.Contains("titleRich"), "Rich image title was not persisted through native bridge");
+                editor.UndoContentChange(); await editor.FlushAsync();
+                Require(await web.CoreWebView2.ExecuteScriptAsync("document.querySelector('.image-title .label-editor p').style.textAlign") != "\"right\"", "Native undo did not undo label alignment");
+                editor.RedoContentChange(); await editor.FlushAsync();
+                Console.WriteLine("PASS native toolbar formats persistent rich labels with document undo/redo");
                 var titleEditor = new Emoji.Wpf.TextBox { Text = "🦊 Firefox", Foreground = Brushes.White, FontSize = 18, Background = Brushes.Transparent, BorderThickness = new Thickness(0), Padding = new Thickness(3, 0, 0, 0) };
                 InlineTitleEditor.SetDark(titleEditor, true);
                 var titleWindow = new Window { Content = titleEditor, Background = new SolidColorBrush(Color.FromRgb(59, 59, 59)), Width = 260, Height = 90, Left = -12000, Top = -12000, ShowActivated = false, ShowInTaskbar = false };
@@ -101,6 +119,22 @@ internal static class Program
                 var shell = new MainWindow(store) { WindowState = WindowState.Normal, Left = -12000, Top = -12000, Width = 1400, Height = 800, ShowActivated = false, ShowInTaskbar = false };
                 var shellEditor = (WebEditorControl)shell.FindName("Editor"); shellEditor.DataDirectory = Path.Combine(directory, "shell");
                 shell.Show(); await shellEditor.Ready.WaitAsync(TimeSpan.FromSeconds(30)); await shellEditor.FlushAsync();
+                var fontColorButton = (Button)shell.FindName("FontColorButton");
+                var splitGrid = (Grid)fontColorButton.Parent;
+                Require(Math.Abs(fontColorButton.ActualWidth / splitGrid.ActualWidth - .8) < .02 && splitGrid.ColumnDefinitions.Count == 2,
+                    "Color split button must reserve 80% for applying and 20% for its menu arrow");
+                var toolbarBitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(1400, 150, 96, 96, PixelFormats.Pbgra32);
+                toolbarBitmap.Render(shell);
+                var toolbarEncoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                toolbarEncoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(toolbarBitmap));
+                using (var stream = File.Create("outputs/engines-check/split-color-buttons.png")) toolbarEncoder.Save(stream);
+                var shellWeb = (WebView2CompositionControl)typeof(WebEditorControl).GetField("_web", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(shellEditor)!;
+                await shellWeb.CoreWebView2.ExecuteScriptAsync("window.notatnik.editor.commands.setContent('<p>Kolor testowy</p>');window.notatnik.editor.commands.selectAll()");
+                fontColorButton.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); await shellEditor.FlushAsync();
+                Require(shell.ActiveNote!.DocumentJson?.Contains("#E76F6F", StringComparison.OrdinalIgnoreCase) == true, "Main color button did not apply its last color");
+                fontColorButton.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); await shellEditor.FlushAsync();
+                Require(shell.ActiveNote!.DocumentJson?.Contains("#E76F6F", StringComparison.OrdinalIgnoreCase) == false, "Main color button did not toggle its color off");
+                Console.WriteLine("PASS 80/20 split color button applies and removes its last color");
                 var originalNote = shell.ActiveNote!;
                 Descendants<Button>(shell).First(b => Equals(b.ToolTip, "Utwórz nową notatkę")).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
                 var newNote = shell.ActiveNote!; Require(newNote.Id != originalNote.Id, "New note button did not create a note");
@@ -115,7 +149,21 @@ internal static class Program
                 shell.Close(); await closed.Task.WaitAsync(TimeSpan.FromSeconds(10));
                 Require(store.Load().Count == 2, "Window close did not flush and save notes");
                 Console.WriteLine("PASS full Windows shell: new note, sidebar switch, per-note history, flush and save on close");
-                Console.WriteLine("PASS 7 native integration scenarios"); exitCode = 0;
+                Guid sampleId = Guid.Empty;
+                for (var attempt = 0; attempt < 2; attempt++)
+                {
+                    var sampleWindow = new MainWindow(store, true) { WindowState = WindowState.Normal, Left = -12000, Top = -12000, Width = 1400, Height = 800, ShowActivated = false, ShowInTaskbar = false };
+                    var sampleEditor = (WebEditorControl)sampleWindow.FindName("Editor"); sampleEditor.DataDirectory = Path.Combine(directory, "sample-" + attempt);
+                    sampleWindow.Show(); await sampleEditor.Ready.WaitAsync(TimeSpan.FromSeconds(30)); await sampleEditor.FlushAsync();
+                    Require(sampleWindow.Notes.Count == 3, "Startup duplicated or removed existing notes");
+                    Require(sampleWindow.ActiveNote!.Content.Contains("notarium:article"), "Article did not open on startup");
+                    if (attempt == 0) { sampleId = sampleWindow.ActiveNote.Id; sampleWindow.ActiveNote.CustomTitle = "Zachowany tytuł"; }
+                    else Require(sampleWindow.ActiveNote.Id == sampleId && sampleWindow.ActiveNote.CustomTitle == "Zachowany tytuł", "Startup replaced the edited sample");
+                    var sampleClosed = new TaskCompletionSource<bool>(); sampleWindow.Closed += (_, _) => sampleClosed.TrySetResult(true);
+                    sampleWindow.Close(); await sampleClosed.Task.WaitAsync(TimeSpan.FromSeconds(10));
+                }
+                Console.WriteLine("PASS default article opens on startup without duplicates or overwriting edits");
+                Console.WriteLine("PASS 11 native integration scenarios"); exitCode = 0;
             }
             catch (Exception error) { Console.Error.WriteLine(error); }
             finally { editor.Dispose(); window.Close(); app.Shutdown(); }

@@ -31,6 +31,9 @@ public sealed class WebEditorControl : UserControl, IDisposable
     public event EventHandler<string>? ShortcutRequested;
     public event EventHandler<string>? EditorError;
     public string CurrentFont { get; private set; } = "Segoe UI";
+    public string? CurrentTextColor { get; private set; }
+    public string? CurrentHighlightColor { get; private set; }
+    public int CurrentContentWidth { get; private set; }
     public bool CanUndoContent { get; private set; }
     public bool CanRedoContent { get; private set; }
     public bool IsCodeFocused { get; private set; }
@@ -42,6 +45,12 @@ public sealed class WebEditorControl : UserControl, IDisposable
     {
         var grid = new Grid(); grid.Children.Add(_web); grid.Children.Add(_status); Content = grid;
         Loaded += async (_, _) => await InitializeAsync();
+        _web.PreviewMouseLeftButtonDown += (_, e) =>
+        {
+            if (e.ClickCount != 2 || !_ready || _web.ActualWidth <= 0 || _web.ActualHeight <= 0) return;
+            var point = e.GetPosition(_web);
+            Send(new { type = "doubleClick", x = point.X / _web.ActualWidth, y = point.Y / _web.ActualHeight });
+        };
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Undo, (_, _) => Execute("undo"), (_, e) => e.CanExecute = CanUndoContent));
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Redo, (_, _) => Execute("redo"), (_, e) => e.CanExecute = CanRedoContent));
     }
@@ -115,6 +124,9 @@ public sealed class WebEditorControl : UserControl, IDisposable
                     break;
                 case "selection":
                     CurrentFont = message.GetProperty("font").GetString() ?? "Segoe UI";
+                    CurrentTextColor = message.TryGetProperty("color", out var color) && color.ValueKind == JsonValueKind.String ? color.GetString() : null;
+                    CurrentHighlightColor = message.TryGetProperty("highlight", out var highlight) && highlight.ValueKind == JsonValueKind.String ? highlight.GetString() : null;
+                    CurrentContentWidth = message.GetProperty("contentWidth").GetInt32();
                     CanUndoContent = message.GetProperty("canUndo").GetBoolean(); CanRedoContent = message.GetProperty("canRedo").GetBoolean();
                     IsCodeFocused = message.GetProperty("inCode").GetBoolean();
                     SelectionChanged?.Invoke(this, EventArgs.Empty); CommandManager.InvalidateRequerySuggested(); break;

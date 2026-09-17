@@ -1,0 +1,16 @@
+/* Editorial documents opt in; ordinary notes retain their compact spacing. */
+.tiptap[data-content-width]{max-width:var(--content-width);margin-left:auto;margin-right:auto}
+.tiptap[data-layout=article]{line-height:1.65;color:#d7d9de;font-family:'Segoe UI',sans-serif}
+.tiptap[data-layout=article]>h1{font-size:2.65em;font-weight:650;letter-spacing:-.035em;line-height:1.12;color:#f3f4f6;margin:0 0 .65em}
+.tiptap[data-layout=article]>h2{font-size:1.4em;letter-spacing:-.015em;line-height:1.3;color:#f1f2f4;margin:1.8em 0 .65em}
+.tiptap[data-layout=article]>p{margin:0 0 1em}
+.tiptap[data-layout=article]>h1+p{font-size:1.16em;line-height:1.6;color:#b8c2d0;margin-bottom:1.6em}
+.tiptap[data-layout=article] strong{font-weight:600;color:#eef0f4}
+.tiptap[data-layout=article] figure[data-note-image]{margin-top:26px;margin-bottom:28px}
+.tiptap[data-layout=article] figcaption{font-size:.78em;line-height:1.5;color:#929ca9;padding-top:10px;text-align:center}
+.tiptap[data-layout=article] [data-type=block-math]{padding:12px 16px;margin:20px 0;background:transparent;border-radius:5px}
+.tiptap[data-layout=article] .tableWrapper{margin:18px 0 24px}
+.tiptap[data-layout=article] td,.tiptap[data-layout=article] th{padding:10px 14px;border-color:#42464c;font-size:.9em}
+.tiptap[data-layout=article] th{background:#2a2e34;color:#edf2f7}
+.tiptap[data-layout=article] tr:nth-child(even) td{background:#222426}
+.tiptap[data-layout=article] blockquote{margin:28px 0;padding:8px 20px;border-color:#86a9cd;color:#b8c6d6;font-size:1.1em}

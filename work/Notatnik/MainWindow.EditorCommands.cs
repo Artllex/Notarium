@@ -13,6 +13,8 @@ namespace Notatnik;
 
 public partial class MainWindow
 {
+    private string _lastTextColor = "#E76F6F";
+    private string _lastHighlightColor = "#F4D35E";
     private void MarkdownButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: string action }) return;
@@ -22,10 +24,29 @@ public partial class MainWindow
         {
             case "fontfamily": ShowFontMenu((Button)sender); return;
             case "linespacing": ShowLineSpacingMenu((Button)sender); return;
-            case "fontcolor": ShowColorMenu((Button)sender, highlight: false); return;
-            case "highlight": ShowColorMenu((Button)sender, highlight: true); return;
+            case "contentwidth": ShowContentWidthMenu((Button)sender); return;
             default: Editor.Execute(action); break;
         }
+    }
+
+    private void ShowContentWidthMenu(Button source)
+    {
+        var values = new[] { ("Wąska", 650), ("Standardowa", 790), ("Szeroka", 960), ("Pełna szerokość", 0) };
+        var menu = CreatePopupMenu(source, itemWidth: 158);
+        foreach (var (name, width) in values)
+        {
+            var selectedWidth = width;
+            var item = new MenuItem
+            {
+                Header = width == 0 ? name : $"{name} ({width}px)",
+                IsCheckable = true,
+                IsChecked = Editor.CurrentContentWidth == width,
+                Style = PopupMenuItemStyle()
+            };
+            item.Click += (_, _) => { Editor.Execute("contentWidth", selectedWidth.ToString()); Editor.Focus(); };
+            menu.Items.Add(item);
+        }
+        menu.IsOpen = true;
     }
 
     private void ShowFontMenu(Button source)
@@ -106,11 +127,53 @@ public partial class MainWindow
             var item = new MenuItem { Header = row, Tag = hex, Style = PopupMenuItemStyle() };
             item.Click += (_, _) =>
             {
-                Editor.Execute(highlight ? "highlight" : "color", hex);
+                ApplyChosenColor(highlight, hex);
             };
             menu.Items.Add(item);
         }
+        menu.Items.Add(new Separator());
+        var more = new MenuItem { Header = "Więcej kolorów…", Style = PopupMenuItemStyle() };
+        more.Click += (_, _) => ShowRgbColorDialog(highlight);
+        menu.Items.Add(more);
         menu.IsOpen = true;
+    }
+
+    private void ToggleFontColor_Click(object sender, RoutedEventArgs e) => ToggleColor(highlight: false);
+    private void ToggleHighlightColor_Click(object sender, RoutedEventArgs e) => ToggleColor(highlight: true);
+    private void FontColorMenu_Click(object sender, RoutedEventArgs e) => ShowColorMenu((Button)sender, highlight: false);
+    private void HighlightColorMenu_Click(object sender, RoutedEventArgs e) => ShowColorMenu((Button)sender, highlight: true);
+
+    private void ToggleColor(bool highlight)
+    {
+        if (ActiveNote is null) return;
+        var selected = highlight ? Editor.CurrentHighlightColor : Editor.CurrentTextColor;
+        var last = highlight ? _lastHighlightColor : _lastTextColor;
+        Editor.Execute(string.Equals(selected, last, StringComparison.OrdinalIgnoreCase)
+            ? highlight ? "clearHighlight" : "clearColor"
+            : highlight ? "highlight" : "color", string.Equals(selected, last, StringComparison.OrdinalIgnoreCase) ? null : last);
+    }
+
+    private void ApplyChosenColor(bool highlight, string hex)
+    {
+        if (highlight) _lastHighlightColor = hex; else _lastTextColor = hex;
+        var brush = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString(hex)!;
+        if (highlight) HighlightColorSwatch.Background = brush; else FontColorSwatch.Background = brush;
+        Editor.Execute(highlight ? "highlight" : "color", hex);
+    }
+
+    private void ShowRgbColorDialog(bool highlight)
+    {
+        var initial = highlight ? _lastHighlightColor : _lastTextColor;
+        using var picker = new System.Windows.Forms.ColorDialog
+        {
+            AllowFullOpen = true,
+            FullOpen = true,
+            AnyColor = true,
+            SolidColorOnly = false,
+            Color = System.Drawing.ColorTranslator.FromHtml(initial)
+        };
+        if (picker.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+        ApplyChosenColor(highlight, $"#{picker.Color.R:X2}{picker.Color.G:X2}{picker.Color.B:X2}");
     }
 
     private void AddCodeCell_Click(object sender, RoutedEventArgs e)

@@ -169,6 +169,20 @@ internal static class Program
                 Equal("green", editor.SelectedText);
                 Equal("#FF58B889", ((SolidColorBrush)editor.Selection.GetPropertyValue(TextElement.ForegroundProperty)).Color.ToString());
             });
+            Check("Sidebar title and preview never expose Markdown or HTML syntax", () =>
+            {
+                var note = new Note
+                {
+                    Content = "<!-- notarium:article width=790 -->\r\n\r\n# Od światła do energii\r\n\r\n**Artykuł demonstracyjny** z <span style=\"color:#58B889\">czystym opisem</span>."
+                };
+                Equal("Od światła do energii", note.Title);
+                Equal("Artykuł demonstracyjny z czystym opisem.", note.Preview);
+                True(!note.Title.Contains('#') && !note.Preview.Contains('<') && !note.Preview.Contains("span"));
+
+                note.Content = "# Obraz\r\n\r\n![Schemat](data:image/png;base64,AAAA)";
+                Equal("Obraz", note.Title);
+                Equal("Schemat", note.Preview);
+            });
             Check("Disk save preserves metadata, makes backup, rejects corrupt input", () =>
             {
                 var directory = Path.Combine(Path.GetTempPath(), "Notatnik-check-" + Guid.NewGuid());

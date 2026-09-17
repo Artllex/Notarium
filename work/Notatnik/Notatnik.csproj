@@ -4,12 +4,19 @@
     <TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
     <WindowsSdkPackageVersion>10.0.19041.52</WindowsSdkPackageVersion>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>Notatnik</AssemblyName>
+    <AssemblyName>Notarium</AssemblyName>
+    <RootNamespace>Notatnik</RootNamespace>
+    <Product>Notarium</Product>
+    <Title>Notarium</Title>
   </PropertyGroup>
   <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
     <Content Include="../../LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <EmbeddedResource Include="../../examples/Notarium — przykładowy artykuł.md" LogicalName="Notarium.Example.md" />
     <Compile Remove="Core/**/*.cs" />
     <Compile Remove="Legacy/**/*.cs" />
     <ProjectReference Include="Core/Notatnik.Core.csproj" />

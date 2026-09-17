@@ -45,16 +45,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
     }
 
-    public MainWindow() : this(new NoteStore()) { }
+    public MainWindow() : this(new NoteStore(), true) { }
 
-    public MainWindow(NoteStore store)
+    public MainWindow(NoteStore store, bool openExample = false)
     {
         _store = store;
         InitializeComponent();
         DataContext = this;
         Editor.DocumentChanged += Editor_DocumentChanged;
         Editor.SelectionChanged += Editor_SelectionChanged;
-        Editor.EditorError += (_, message) => MessageBox.Show(this, message, "Notatnik", MessageBoxButton.OK, MessageBoxImage.Error);
+        Editor.EditorError += (_, message) => MessageBox.Show(this, message, "Notarium", MessageBoxButton.OK, MessageBoxImage.Error);
         Editor.ShortcutRequested += (_, key) =>
         {
             if (key == "n") NewNote_Click(this, new RoutedEventArgs());
@@ -72,13 +72,27 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
         {
             _loadFailed = true;
-            MessageBox.Show($"Nie udało się odczytać notatek. Plik pozostaje niezmieniony.\n\n{error.Message}", "Notatnik", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"Nie udało się odczytać notatek. Plik pozostaje niezmieniony.\n\n{error.Message}", "Notarium", MessageBoxButton.OK, MessageBoxImage.Error);
             Application.Current.Shutdown();
             return;
         }
+        Note? example = null;
+        if (openExample)
+        {
+            var exampleId = Guid.Parse("99a2f5dc-7f71-45ab-93b5-8b5992b5b268");
+            example = Notes.FirstOrDefault(note => note.Id == exampleId);
+            if (example is null)
+            {
+                using var stream = typeof(MainWindow).Assembly.GetManifestResourceStream("Notarium.Example.md")!;
+                using var reader = new StreamReader(stream);
+                example = new Note { Id = exampleId, CustomTitle = "Od światła do energii", Content = reader.ReadToEnd() };
+                Notes.Insert(0, example);
+                ScheduleSave();
+            }
+        }
         if (Notes.Count == 0) Notes.Add(new Note());
 
-        OpenNote(Notes[0]);
+        OpenNote(example ?? Notes[0]);
         Editor.Focus();
     }
 
@@ -362,12 +376,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         try
         {
             _store.Save(Notes);
-            Title = "Notatnik";
+            Title = "Notarium";
             return true;
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
-            MessageBox.Show(this, $"Nie udało się zapisać notatek.\n\n{error.Message}", "Notatnik", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, $"Nie udało się zapisać notatek.\n\n{error.Message}", "Notarium", MessageBoxButton.OK, MessageBoxImage.Error);
             return false;
         }
     }
@@ -375,6 +389,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void Editor_SelectionChanged(object? sender, EventArgs e)
     {
         FontFamilyButton.Content = $"{Editor.CurrentFont} ▾";
+        ContentWidthButton.Content = Editor.CurrentContentWidth == 0 ? "↔ Pełna" : $"↔ {Editor.CurrentContentWidth}";
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -443,7 +458,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         catch (Exception exception)
         {
-            MessageBox.Show(this, $"Nie udało się otworzyć pliku.\n\n{exception.Message}", "Notatnik", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, $"Nie udało się otworzyć pliku.\n\n{exception.Message}", "Notarium", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -472,15 +487,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         catch (Exception exception)
         {
-            MessageBox.Show(this, $"Nie udało się zapisać pliku.\n\n{exception.Message}", "Notatnik", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, $"Nie udało się zapisać pliku.\n\n{exception.Message}", "Notarium", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
     private void HelpMenu_Click(object sender, RoutedEventArgs e)
     {
         MessageBox.Show(this,
-            "Notatnik\n\nMinimalistyczna aplikacja do tworzenia i organizowania notatek.\n\nAutor: Arkad",
-            "About Notatnik",
+            "Notarium\n\nMinimalistyczna aplikacja do tworzenia i organizowania notatek.\n\nAutor: Arkad",
+            "About Notarium",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
     }
@@ -577,7 +592,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
         catch (Exception error)
         {
-            MessageBox.Show(this, "Nie udało się odebrać ostatnich zmian. Okno pozostaje otwarte.\n\n" + error.Message, "Notatnik", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, "Nie udało się odebrać ostatnich zmian. Okno pozostaje otwarte.\n\n" + error.Message, "Notarium", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally { _closingInProgress = false; }
     }

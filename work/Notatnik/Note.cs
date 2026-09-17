@@ -101,7 +101,10 @@ public sealed class Note : INotifyPropertyChanged
     {
         get
         {
-            var lines = DisplayText.Replace("\r", string.Empty).Split('\n').Select(line => line.Trim()).Where(line => line.Length > 0).Take(2);
+            var lines = DisplayText.Replace("\r", string.Empty).Split('\n')
+                .Select(line => line.Trim()).Where(line => line.Length > 0);
+            if (string.IsNullOrWhiteSpace(_title)) lines = lines.Skip(1);
+            lines = lines.Take(2);
             var preview = string.Join("  ", lines);
             return preview.Length > 58 ? preview[..58] + "…" : preview;
         }
@@ -117,8 +120,6 @@ public sealed class Note : INotifyPropertyChanged
         catch (Exception error) when (error is System.Text.Json.JsonException or KeyNotFoundException or InvalidOperationException) { return LegacyDisplayText; }
     }
 
-    private string LegacyDisplayText => System.Text.RegularExpressions.Regex.Replace(Content,
-        @"</?(?:span|mark)\b[^>\r\n]*(?:>|$)|<!-- cell:(?:markdown|python) -->", string.Empty,
-        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Multiline);
+    private string LegacyDisplayText => Core.MarkdownPlainText.Extract(Content);
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }

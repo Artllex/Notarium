@@ -3,8 +3,12 @@ import { copyFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import path from 'node:path';
 await mkdir('dist', { recursive: true });
 const result = await build({ entryPoints: ['src/editor.js'], bundle: true, minify: true, format: 'iife', target: 'es2022', outfile: 'dist/editor.js', legalComments: 'eof', metafile: true });
+// Some bundled dependencies contain whitespace-only template-literal lines.
+// Keep generated artifacts clean without changing their runtime contents.
+await writeFile('dist/editor.js', (await readFile('dist/editor.js', 'utf8')).replace(/^[\t ]+$/gm, ''));
 await copyFile('src/index.html', 'dist/index.html');
-await copyFile('src/editor.css', 'dist/editor.css');
+await writeFile('dist/editor.css', (await readFile('node_modules/cropperjs/dist/cropper.css', 'utf8')) + '\n' +
+  (await readFile('src/editor.css', 'utf8')) + '\n' + (await readFile('src/article.css', 'utf8')) + '\n' + (await readFile('src/containers.css', 'utf8')));
 await build({ entryPoints: ['node_modules/katex/dist/katex.min.css'], bundle: true, minify: true,
   outfile: 'dist/math.css', loader: { '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl' } });
 const packages = new Set(Object.keys(result.metafile.inputs).flatMap(file => {

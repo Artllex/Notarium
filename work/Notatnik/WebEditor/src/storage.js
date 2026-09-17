@@ -20,8 +20,12 @@ marked.use({ extensions: [
 export function importLegacy(markdown) {
   const root = document.createElement('div');
   // Preserve cell identity before sanitizing HTML (which intentionally removes comments).
-  const tagged = (markdown || '').replace(/<!-- cell:python -->[ \t]*\r?\n(`{3,})python[ \t]*\r?\n([\s\S]*?)\r?\n\1(?=\s|$)/g,
-    (_match, _fence, code) => `<section data-code-cell="python"><pre><code>${escapeHtml(code)}</code></pre></section>\n`);
+  const tagged = (markdown || '').replace(/<!-- cell:([^\s<>]+) -->[ \t]*\r?\n(`{3,})[^\r\n]*\r?\n([\s\S]*?)\r?\n\2(?=\s|$)/g,
+    (_match, language, _fence, code) => {
+      const section = document.createElement('section');
+      try { section.dataset.codeCell = decodeURIComponent(language); } catch { section.dataset.codeCell = language; }
+      section.innerHTML = `<pre><code>${escapeHtml(code)}</code></pre>`; return section.outerHTML + '\n';
+    });
   root.innerHTML = DOMPurify.sanitize(marked.parse(tagged, { breaks: true, gfm: true }), { ADD_ATTR: ['data-code-cell'] });
   return root.innerHTML;
 }
@@ -30,9 +34,21 @@ function escapeHtml(value) { const element = document.createElement('div'); elem
 
 const exportMarkdown = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced', bulletListMarker: '-' });
 exportMarkdown.use(gfm);
+exportMarkdown.addRule('containers', {
+  filter: node => node.hasAttribute('data-layout-row') || [...node.attributes].some(attr => attr.name.startsWith('data-box')),
+  replacement: (_content, node) => '\n\n' + node.outerHTML + '\n\n'
+});
+exportMarkdown.addRule('documentElements', {
+  filter: node => node.nodeName === 'FIGURE' || node.nodeName === 'TABLE',
+  replacement: (_content, node) => `\n\n${node.outerHTML}\n\n`
+});
+exportMarkdown.addRule('alignedBlocks', {
+  filter: node => ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(node.nodeName) && Boolean(node.style.textAlign),
+  replacement: (_content, node) => `\n\n${node.outerHTML}\n\n`
+});
 exportMarkdown.addRule('math', {
   filter: node => ['inline-math', 'block-math'].includes(node.getAttribute('data-type')),
-  replacement: (_content, node) => node.dataset.type === 'block-math'
+  replacement: (_content, node) => node.dataset.numbered === 'true' ? `\n\n${node.outerHTML}\n\n` : node.dataset.type === 'block-math'
     ? `\n\n$$\n${node.dataset.latex}\n$$\n\n` : `$${node.dataset.latex}$`
 });
 exportMarkdown.addRule('codeCell', {
@@ -41,7 +57,8 @@ exportMarkdown.addRule('codeCell', {
     const text = node.querySelector('code')?.textContent || '';
     const longest = Math.max(2, ...(text.match(/`+/g) || []).map(run => run.length));
     const fence = '`'.repeat(longest + 1);
-    return `\n\n<!-- cell:python -->\n${fence}python\n${text}\n${fence}\n\n`;
+    const language = encodeURIComponent(node.dataset.codeCell || 'python');
+    return `\n\n<!-- cell:${language} -->\n${fence}${language}\n${text}\n${fence}\n\n`;
   }
 });
 exportMarkdown.addRule('styledText', {
@@ -55,7 +72,7 @@ export function snapshot(editor) {
   html.querySelectorAll('[data-latex]').forEach(node => { node.textContent = node.dataset.latex; });
   return {
     documentJson: JSON.stringify({ version: 1, doc: editor.getJSON() }),
-    markdown: exportMarkdown.turndown(html.innerHTML),
+    markdown: (editor.state.doc.attrs.layout === 'article' ? `<!-- notarium:article width=${editor.state.doc.attrs.contentWidth ?? 790} -->\n\n` : '') + exportMarkdown.turndown(html.innerHTML),
     plainText: editor.getText({ blockSeparator: '\n' })
   };
 }
