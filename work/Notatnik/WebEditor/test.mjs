@@ -35,13 +35,36 @@ try {
     assert.match(await page.locator('.tiptap').textContent(), /zielony/);
     assert.doesNotMatch(await page.locator('.tiptap').textContent(), /<span|cell:python/);
   });
-  await check('Markdown input: headings and numbered list continuation', async () => {
+  await check('Enter stays in a container; Ctrl+Enter creates a sibling; Shift+Tab moves forward', async () => {
     await open('typing'); await page.locator('.tiptap').click();
-    await page.keyboard.type('# Heading'); await page.keyboard.press('Enter');
+    await page.keyboard.type('# Heading'); await page.keyboard.press('Control+Enter');
     await page.keyboard.type('1. first'); await page.keyboard.press('Enter'); await page.keyboard.type('second');
     assert.equal(await page.locator('h1').count(), 1);
-    assert.equal(await page.locator('ol li').count(), 2);
-    await page.keyboard.press('Tab'); assert.equal(await page.locator('ol ol li').count(), 1);
+    assert.equal(await page.locator('ol li').count(), 1);
+    assert.match(JSON.stringify(await json()), /hardBreak/);
+    await page.keyboard.press('Control+Enter'); await page.keyboard.type('third');
+    assert.equal((await json()).content.filter(node => node.content?.length).length, 3);
+    await page.evaluate(() => window.notatnik.editor.commands.setTextSelection(1));
+    await page.keyboard.press('Shift+Tab');
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'firstsecond');
+    await page.keyboard.press('Shift+Tab');
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'third');
+  });
+  await check('Container shortcuts preserve nesting, code newlines and undo', async () => {
+    await open('keyboard-nested'); await command('container');
+    await page.keyboard.type('alpha'); await page.keyboard.press('Enter'); await page.keyboard.type('beta');
+    assert.equal((await json()).content.find(n => n.type === 'blockGroup').content.length, 1);
+    await page.keyboard.press('Control+Enter');
+    assert.equal((await json()).content.find(n => n.type === 'blockGroup').content.length, 2);
+    await page.keyboard.press('Control+z');
+    assert.equal((await json()).content.find(n => n.type === 'blockGroup').content.length, 1);
+    await command('cell');
+    await page.locator('.cm-content').click(); await page.keyboard.type('x'); await page.keyboard.press('Enter'); await page.keyboard.type('y');
+    assert.equal(await page.locator('.code-cell').evaluate(el => el.codeMirror.state.doc.toString()), 'x\ny');
+    await page.keyboard.press('Control+Enter'); await page.keyboard.type('after code');
+    assert.match((await json()).content.find(n => n.type === 'blockGroup').content.map(n => JSON.stringify(n)).join(''), /after code/);
+    await page.locator('.cm-content').click(); await page.keyboard.press('Shift+Tab');
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'after code');
   });
   await check('Formatting stored as marks and undo/redo', async () => {
     await open('marks', 'hello');
@@ -641,6 +664,92 @@ try {
     await page.emulateMedia({ reducedMotion: 'reduce' }); await box.hover();
     assert.equal(await box.locator('.container-tools').evaluate(el => getComputedStyle(el).animationName), 'none');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+  await check('Pointer-only double tap resets the right edge without a native dblclick', async () => {
+    await open('edge-pointer-only', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [{ type: 'paragraph', attrs: { boxWidth: 320, boxHeight: 140 }, content: [{ type: 'text', text: 'Reset' }] }] } }));
+    const edge = page.locator('.container-resize-right');
+    await edge.evaluate(el => {
+      const rect = el.getBoundingClientRect(), init = { bubbles: true, button: 0, clientX: rect.x + 3, clientY: rect.y + 40 };
+      for (let i = 0; i < 2; i++) { el.dispatchEvent(new PointerEvent('pointerdown', init)); document.dispatchEvent(new PointerEvent('pointerup', init)); }
+    });
+    assert.equal((await json()).content[0].attrs.boxWidth, null);
+    assert.equal((await json()).content[0].attrs.boxHeight, 140);
+    await command('undo'); assert.equal((await json()).content[0].attrs.boxWidth, 320);
+  });
+  await check('Groups nest by dragging, preserve children through both formats and undo, and allow extraction', async () => {
+    await open('nested-containers', 'Przenoszony tekst');
+    await command('container');
+    const group = page.locator('[data-container-type=blockGroup]');
+    assert.equal(await group.count(), 1);
+    await page.locator('.tiptap>.object-container[data-container-type=paragraph]').first().hover();
+    const grip = await page.locator('.tiptap>.object-container[data-container-type=paragraph] .container-grip').first().boundingBox();
+    const destination = await group.boundingBox();
+    await page.mouse.move(grip.x + 8, grip.y + 8); await page.mouse.down();
+    await page.mouse.move(destination.x + destination.width / 2, destination.y + destination.height / 2, { steps: 8 }); await page.mouse.up();
+    assert.match(await group.textContent(), /Przenoszony tekst/);
+    const nested = await json(); assert.equal(nested.content[0].type, 'blockGroup');
+    await command('undo'); assert.equal((await json()).content[0].type, 'paragraph');
+    await command('redo'); assert.deepEqual(await json(), nested);
+    const saved = await page.evaluate(() => window.notatnik.snapshot());
+    for (const format of ['json', 'md']) {
+      await open('nest-' + format, format === 'md' ? saved.markdown : '', format === 'json' ? saved.documentJson : null);
+      assert.match(await group.textContent(), /Przenoszony tekst/);
+    }
+    await group.locator('p').last().click(); await command('container');
+    assert.equal(await group.count(), 2);
+    assert.equal(await page.locator('.block-group-content [data-container-type=blockGroup]').count(), 1);
+    await command('undo'); assert.equal(await group.count(), 1);
+    const child = group.locator('[data-container-type=paragraph]').last(); await child.hover();
+    const childGrip = await child.locator('.container-grip').boundingBox(), bounds = await group.boundingBox();
+    await page.mouse.move(childGrip.x + 8, childGrip.y + 8); await page.mouse.down();
+    await page.mouse.move(bounds.x + bounds.width / 2, bounds.y - 3, { steps: 8 }); await page.mouse.up();
+    assert.equal((await json()).content[0].type, 'paragraph');
+    assert.equal((await json()).content[0].content[0].text, 'Przenoszony tekst');
+    await command('undo'); assert.match(await group.textContent(), /Przenoszony tekst/);
+  });
+  await check('Nested siblings reorder and code cells insert inside the active group', async () => {
+    await open('nested-siblings', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'blockGroup', content: ['A', 'B'].map(text => ({ type: 'paragraph', attrs: { boxHeight: 110 }, content: [{ type: 'text', text }] })) },
+      { type: 'paragraph', content: [{ type: 'text', text: 'Zewnętrzny' }] }
+    ] } }));
+    const children = page.locator('.block-group-content>[data-container-type=paragraph]');
+    await children.last().hover();
+    const handle = await children.last().locator('.container-grip').boundingBox(), first = await children.first().boundingBox();
+    await page.mouse.move(handle.x + 8, handle.y + 8); await page.mouse.down();
+    await page.mouse.move(first.x + first.width / 2, first.y + 1, { steps: 8 }); await page.mouse.up();
+    assert.equal((await json()).content[0].content[0].content[0].text, 'B');
+    await command('undo'); assert.equal((await json()).content[0].content[0].content[0].text, 'A');
+    await children.first().locator('p').click(); await command('cell');
+    assert.equal(await page.locator('.block-group-content .code-cell').count(), 1);
+    await page.locator('.cm-content').click(); await page.keyboard.type('print(123)');
+    assert.match(JSON.stringify((await json()).content[0]), /print\(123\)/);
+    const saved = await page.evaluate(() => window.notatnik.snapshot());
+    for (const format of ['json', 'md']) {
+      await open('nested-cell-' + format, format === 'md' ? saved.markdown : '', format === 'json' ? saved.documentJson : null);
+      assert.equal(await page.locator('.block-group-content .code-cell').count(), 1);
+      assert.match(await page.locator('.cm-content').textContent(), /print\(123\)/);
+    }
+  });
+  await check('Container type badges and controls occupy the upper left corner', async () => {
+    const nodes = [{ type: 'paragraph', content: [{ type: 'text', text: 'Text example' }] },
+      { type: 'blockMath', attrs: { latex: 'x=1' } }, { type: 'codeCell' },
+      { type: 'image', attrs: { src: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80"><rect width="200" height="80" fill="teal"/></svg>') } },
+      { type: 'table', content: [{ type: 'tableRow', content: [{ type: 'tableCell', content: [{ type: 'paragraph' }] }] }] }];
+    await open('container-badges', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: nodes } }));
+    for (const [type, label] of [['paragraph','Text'], ['blockMath','Math'], ['codeCell','Code'], ['image','Picture'], ['table','Table']]) {
+      const container = page.locator(`[data-container-type="${type}"]`).first();
+      await container.hover();
+      const bar = container.locator(':scope > .container-tools');
+      await bar.waitFor({ state: 'visible' });
+      assert.equal(await bar.locator('.container-type-label').getAttribute('data-label'), label);
+      const box = await container.boundingBox(), tools = await bar.boundingBox();
+      assert.ok(Math.abs(tools.x - box.x) <= 1);
+      assert.ok(Math.abs(tools.y + tools.height - box.y) <= 1);
+      const badge = await bar.locator('.container-type-label').boundingBox();
+      const grip = await bar.locator('.container-grip').boundingBox();
+      assert.ok(grip.x >= badge.x + badge.width - 1);
+    }
+    await page.screenshot({ path: '../../../outputs/engines-check/container-badges.png' });
   });
   await open('demo', '# Notatnik 🦊\n\n**Tiptap** — tekst, listy i formatowanie.\n\n1. Pierwszy punkt\n2. Drugi punkt');
   await command('cell'); await page.locator('.cm-content').click(); await page.keyboard.type('def greeting(name):\n    return f"Hello, {name}!"');

@@ -17,6 +17,9 @@ public sealed class Note : INotifyPropertyChanged
     public Guid Id { get; set; } = Guid.NewGuid();
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
+    private DateTime? _savedAtUtc;
+    public DateTime? SavedAtUtc { get => _savedAtUtc; set { _savedAtUtc = value; OnPropertyChanged(nameof(SavedAtText)); } }
+    [JsonIgnore] public string SavedAtText => SavedAtUtc is DateTime saved ? $"Ostatni zapis: {saved.ToLocalTime():dd.MM.yyyy, HH:mm:ss}" : "Ostatni zapis: —";
 
     [JsonIgnore]
     public bool IsRenamingInSidebar { get => _isRenamingInSidebar; set { if (_isRenamingInSidebar == value) return; _isRenamingInSidebar = value; OnPropertyChanged(); } }

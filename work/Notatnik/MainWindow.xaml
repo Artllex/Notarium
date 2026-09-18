@@ -64,11 +64,11 @@
 
             </Grid>
 
-            <Border Grid.Row="2" Grid.Column="1" Background="{StaticResource Line}"/>
+            <Border Grid.Row="2" Grid.Column="1" Background="{StaticResource Line}" Margin="0,34,0,0"/>
 
             <!-- Główna część: lekkie karty i edytor -->
             <Grid Grid.Row="2" Grid.Column="2" Background="{StaticResource Editor}">
-                <Grid.RowDefinitions><RowDefinition Height="34"/><RowDefinition Height="30"/><RowDefinition Height="1"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="34"/><RowDefinition Height="Auto" MinHeight="30"/><RowDefinition Height="1"/><RowDefinition Height="*"/><RowDefinition Height="26"/></Grid.RowDefinitions>
                 <Grid Grid.Row="0" Background="{StaticResource Editor}" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <Grid x:Name="TabsHost" SizeChanged="TabsHost_SizeChanged">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -98,6 +98,7 @@
                 </Grid>
                 <Border Grid.Row="1" Background="#262626">
                     <Grid>
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <StackPanel Orientation="Horizontal" Margin="15,0" VerticalAlignment="Center">
                         <StackPanel.Resources><Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Height" Value="26"/><Setter Property="Padding" Value="7,1"/></Style></StackPanel.Resources>
                         <Button Content="↶" ToolTip="Cofnij" Tag="undo" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="17"/>
@@ -107,22 +108,26 @@
                         <Button Content="B" ToolTip="Pogrubienie (Ctrl+B)" Tag="bold" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontWeight="Bold" FontSize="15"/>
                         <Button Content="I" ToolTip="Kursywa (Ctrl+I)" Tag="italic" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontStyle="Italic" FontSize="15"/>
                         <Button Content="S̶" ToolTip="Przekreślenie" Tag="strike" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="14"/>
-                        <Button Content="≡" ToolTip="Wyrównaj do lewej (Ctrl+Shift+L)" Tag="alignLeft" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="15"/>
-                        <Button Content="≡" ToolTip="Wyśrodkuj (Ctrl+Shift+E)" Tag="alignCenter" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="15" RenderTransformOrigin="0.5,0.5"><Button.RenderTransform><ScaleTransform ScaleX="0.72"/></Button.RenderTransform></Button>
-                        <Button Content="≡" ToolTip="Wyrównaj do prawej (Ctrl+Shift+R)" Tag="alignRight" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="15" HorizontalContentAlignment="Right"/>
-                        <Button Content="▤" ToolTip="Wyjustuj (Ctrl+Shift+J)" Tag="alignJustify" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="15"/>
+                        <Border Width="1" Height="17" Background="#505050" Margin="5,0"/>
+                        <StackPanel Orientation="Horizontal" ToolTip="Wyrównanie">
+                            <Button Content="&#xE8E4;" FontFamily="Segoe MDL2 Assets" Width="30" Padding="4,1" ToolTip="Wyrównaj do lewej (Ctrl+Shift+L)" Tag="alignLeft" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="14"/>
+                            <Button Content="&#xE8E3;" FontFamily="Segoe MDL2 Assets" Width="30" Padding="4,1" ToolTip="Wyśrodkuj (Ctrl+Shift+E)" Tag="alignCenter" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="14"/>
+                            <Button Content="&#xE8E2;" FontFamily="Segoe MDL2 Assets" Width="30" Padding="4,1" ToolTip="Wyrównaj do prawej (Ctrl+Shift+R)" Tag="alignRight" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="14"/>
+                            <Button Content="▤" Width="30" Padding="4,1" ToolTip="Wyjustuj (Ctrl+Shift+J)" Tag="alignJustify" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="15"/>
+                        </StackPanel>
+                        <Border Width="1" Height="17" Background="#505050" Margin="5,0"/>
                         <Button x:Name="FontFamilyButton" Content="Segoe UI ▾" Width="132" HorizontalContentAlignment="Left" ToolTip="Wybierz czcionkę" Tag="fontfamily" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="11"/>
                         <Button x:Name="LineSpacingButton" Content="↕ 1,25" ToolTip="Interlinia" Tag="linespacing" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="11"/>
-                        <Button x:Name="ContentWidthButton" Content="↔ 790" Width="62" ToolTip="Szerokość składu" Tag="contentwidth" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="11"/>
-                        <Grid Width="45" Height="26" ToolTip="Kolor tekstu"><Grid.ColumnDefinitions><ColumnDefinition Width="36"/><ColumnDefinition Width="9"/></Grid.ColumnDefinitions>
+                        <Button x:Name="ContentWidthButton" Content="↔ 790" Width="49" Padding="2,1" ToolTip="Szerokość składu" Tag="contentwidth" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="11"/>
+                        <Grid Width="42" Height="26" ToolTip="Kolor tekstu"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="18"/></Grid.ColumnDefinitions>
                             <Button x:Name="FontColorButton" Grid.Column="0" Padding="0" Click="ToggleFontColor_Click" ToolTip="Włącz lub wyłącz ostatni kolor tekstu">
-                                <Grid Width="27" Height="24"><TextBlock Text="A" Foreground="{StaticResource Accent}" FontWeight="SemiBold" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Top"/><Border x:Name="FontColorSwatch" Height="3" Background="#E76F6F" VerticalAlignment="Bottom" Margin="2,0"/></Grid>
+                                <Grid Width="22" Height="24"><TextBlock Text="A" Foreground="{StaticResource Accent}" FontWeight="SemiBold" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Top"/><Border x:Name="FontColorSwatch" Height="3" Background="#E76F6F" VerticalAlignment="Bottom" Margin="2,0"/></Grid>
                             </Button>
                             <Button Grid.Column="1" Padding="0" Click="FontColorMenu_Click" ToolTip="Wybierz kolor tekstu"><TextBlock Text="⌄" FontSize="9" Foreground="{StaticResource Muted}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2"/></Button>
                         </Grid>
-                        <Grid Width="45" Height="26" ToolTip="Kolor podświetlenia"><Grid.ColumnDefinitions><ColumnDefinition Width="36"/><ColumnDefinition Width="9"/></Grid.ColumnDefinitions>
+                        <Grid Width="42" Height="26" ToolTip="Kolor podświetlenia"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="18"/></Grid.ColumnDefinitions>
                             <Button x:Name="HighlightColorButton" Grid.Column="0" Padding="0" Click="ToggleHighlightColor_Click" ToolTip="Włącz lub wyłącz ostatnie podświetlenie">
-                                <Grid Width="27" Height="24"><TextBlock Text="▰" Foreground="{StaticResource Accent}" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Top"/><Border x:Name="HighlightColorSwatch" Height="3" Background="#F4D35E" VerticalAlignment="Bottom" Margin="2,0"/></Grid>
+                                <Grid Width="22" Height="24"><TextBlock Text="▰" Foreground="{StaticResource Accent}" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Top"/><Border x:Name="HighlightColorSwatch" Height="3" Background="#F4D35E" VerticalAlignment="Bottom" Margin="2,0"/></Grid>
                             </Button>
                             <Button Grid.Column="1" Padding="0" Click="HighlightColorMenu_Click" ToolTip="Wybierz kolor podświetlenia"><TextBlock Text="⌄" FontSize="9" Foreground="{StaticResource Muted}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2"/></Button>
                         </Grid>
@@ -131,6 +136,7 @@
                         <Button Content="&lt;/&gt;" ToolTip="Kod w tekście" Tag="code" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontFamily="Consolas"/>
                         <Button Content="{}{ }" ToolTip="Blok kodu" Tag="codeblock" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontFamily="Consolas"/>
                         <Button Content="+ Cell" ToolTip="Dodaj komórkę kodu" Click="AddCodeCell_Click" Foreground="{StaticResource Accent}" FontSize="11"/>
+                        <Button Content="+ Kontener" ToolTip="Dodaj kontener na zagnieżdżone sekcje" Tag="container" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="11"/>
                         <Button Content="∑" ToolTip="Wstaw wzór LaTeX" Tag="math" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="16"/>
                         <Button Content="&#xEB9F;" FontFamily="Segoe MDL2 Assets" ToolTip="Wstaw obraz" Tag="image" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="14"/>
                         <Button Content="▦" ToolTip="Wstaw lub edytuj tabelę" Tag="table" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="16"/>
@@ -139,8 +145,17 @@
                         <Button Content="1≡" ToolTip="Lista numerowana" Tag="numbered" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="14"/>
                         <Button Content="☑≡" ToolTip="Lista zadań" Tag="checklist" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="14"/>
                     </StackPanel>
+                    </ScrollViewer>
+                    </Grid>
+                </Border>
+                <Border Grid.Row="4" Background="#262626" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
+                    <Grid>
+                    <Grid VerticalAlignment="Center" Margin="12,0,110,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding ActiveNote.CreatedAtText}" Foreground="{StaticResource Muted}" FontSize="10"/>
+                        <TextBlock Grid.Column="1" Text="{Binding ActiveNote.SavedAtText}" ToolTip="{Binding ActiveNote.SavedAtText}" TextTrimming="CharacterEllipsis" Margin="18,0,0,0" Foreground="{StaticResource Muted}" FontSize="10"/>
+                    </Grid>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0">
-                        <TextBlock Text="{Binding ActiveNote.CreatedAtText}" VerticalAlignment="Center" Margin="0,0,9,0" Foreground="{StaticResource Muted}" FontSize="11"/>
                         <Button Content="−" ToolTip="Pomniejsz tekst" Width="25" Height="24" Padding="0" FontSize="15" Foreground="{StaticResource Accent}" Click="ZoomOut_Click"/>
                         <Button x:Name="ZoomButton" Content="100%" ToolTip="Wybierz powiększenie" Width="46" Height="24" Padding="1,0" Foreground="{StaticResource Muted}" FontSize="10" Click="ZoomMenu_Click"/>
                         <Button Content="+" ToolTip="Powiększ tekst" Width="25" Height="24" Padding="0" FontSize="15" Foreground="{StaticResource Accent}" Click="ZoomIn_Click"/>

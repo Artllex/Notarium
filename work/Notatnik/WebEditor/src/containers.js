@@ -4,7 +4,12 @@ import { NodeSelection } from '@tiptap/pm/state';
 import { closeHistory } from '@tiptap/pm/history';
 import { RichLabelView, richAttribute } from './rich-label.js';
 
-const types = ['paragraph', 'heading', 'blockquote', 'bulletList', 'orderedList', 'taskList', 'codeBlock', 'codeCell', 'image', 'blockMath', 'table'];
+const types = ['paragraph', 'heading', 'blockquote', 'bulletList', 'orderedList', 'taskList', 'codeBlock', 'codeCell', 'image', 'blockMath', 'table', 'blockGroup'];
+export const BlockGroup = Node.create({
+  name: 'blockGroup', group: 'block', content: 'block+', defining: true, isolating: true,
+  parseHTML: () => [{ tag: 'section[data-block-group]' }],
+  renderHTML: ({ HTMLAttributes }) => ['section', { ...HTMLAttributes, 'data-block-group': 'true', class: 'block-group-content' }, 0]
+});
 const backgroundColor = value => /^#[0-9a-f]{6}$/i.test(value || '') ? value : null;
 export const LayoutRow = Node.create({
   name: 'layoutRow', group: 'block', content: 'block+', isolating: true,
@@ -34,6 +39,7 @@ export class ContainerView {
     this.inner = inner; this.props = props; this.node = props.node;
     this.dom = document.createElement('section'); this.dom.className = 'object-container';
     this.dom.dataset.containerType = this.node.type.name;
+    this.dom.containerView = this;
     this.contentDOM = inner.contentDOM;
     this.header = document.createElement('div'); this.header.className = 'container-title';
     this.footer = document.createElement('div'); this.footer.className = 'container-caption';
@@ -41,8 +47,12 @@ export class ContainerView {
     this.tools.contentEditable = this.header.contentEditable = this.footer.contentEditable = 'false';
     const grip = document.createElement('span'); grip.className = 'container-grip'; grip.title = 'Przeciągnij kontener';
     const settings = document.createElement('button'); settings.type = 'button'; settings.title = 'Tytuł, stopka i wymiary';
-    settings.addEventListener('click', event => { event.preventDefault(); options.editContainer(this); });
-    this.tools.append(grip, settings);
+    settings.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); options.editContainer(this); });
+    const typeLabel = document.createElement('span'); typeLabel.className = 'container-type-label';
+    typeLabel.dataset.label = ({ blockMath: 'Math', codeCell: 'Code', codeBlock: 'Code', image: 'Picture', table: 'Table' })[this.node.type.name] || 'Text';
+    typeLabel.setAttribute('aria-label', typeLabel.dataset.label);
+    typeLabel.setAttribute('role', 'img');
+    this.tools.append(typeLabel, grip, settings);
     this.resize = document.createElement('span'); this.resize.className = 'container-resize'; this.resize.contentEditable = 'false';
     this.resize.title = 'Zmień szerokość i wysokość';
     this.resizeRight = document.createElement('span'); this.resizeRight.className = 'container-resize-edge container-resize-right';
@@ -59,6 +69,7 @@ export class ContainerView {
       if (event.target === this.dom || event.target === grip) this.select();
     });
     this.dom.addEventListener('dblclick', event => {
+      if (event.target.closest('.object-container') !== this.dom) return;
       if (event.target.closest('input,button,.container-title,.container-caption,.image-title,figcaption,.cm-editor')) return;
       const pos = this.props.getPos(); if (typeof pos !== 'number') return;
       if (this.node.type.name === 'image' && !options.imageDialogOpen()) { event.preventDefault(); options.editImage(this.node, pos); }
@@ -71,6 +82,7 @@ export class ContainerView {
     this.labels = [new RichLabelView(this.header, props.editor, props.getPos, 'boxTitle', 'Tytuł kontenera'),
       new RichLabelView(this.footer, props.editor, props.getPos, 'boxCaption', 'Stopka kontenera')];
     for (const [handle, axis] of [[this.resize, 'both'], [this.resizeRight, 'width'], [this.resizeBottom, 'height']]) handle.addEventListener('pointerdown', event => {
+      if (event.button !== 0) return;
       event.preventDefault(); event.stopPropagation();
       const rect = this.dom.getBoundingClientRect(), x = event.clientX, y = event.clientY;
       const doc = props.editor.state.doc;
@@ -86,7 +98,14 @@ export class ContainerView {
         if (s.boxHeight != null) this.dom.style.minHeight = s.boxHeight + 'px';
       };
       const finish = e => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', finish); document.removeEventListener('pointercancel', cancel);
-        if (moved && doc === props.editor.state.doc) this.updateAttrs(size(e)); else this.paint(); };
+        if (moved && doc === props.editor.state.doc) { this.lastEdgeClick = null; this.updateAttrs(size(e)); }
+        else if (!moved && doc === props.editor.state.doc) {
+          const last = this.lastEdgeClick, now = performance.now();
+          if (last?.axis === axis && now - last.time < 500 && Math.hypot(e.clientX - last.x, e.clientY - last.y) < 5) {
+            this.lastEdgeClick = null; this.resetDimensions(axis);
+          } else this.lastEdgeClick = { axis, time: now, x: e.clientX, y: e.clientY };
+          this.paint();
+        } else this.paint(); };
       const cancel = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', finish); document.removeEventListener('pointercancel', cancel); this.paint(); };
       document.addEventListener('pointermove', move); document.addEventListener('pointerup', finish); document.addEventListener('pointercancel', cancel);
     });
@@ -101,6 +120,7 @@ export class ContainerView {
     const { editor, getPos } = this.props, pos = getPos();
     const current = typeof pos === 'number' && editor.state.doc.nodeAt(pos);
     if (!current || current.type !== this.node.type) return;
+    if (Object.entries(attrs).every(([key, value]) => current.attrs[key] === value)) return;
     editor.view.dispatch(closeHistory(editor.state.tr).setNodeMarkup(pos, undefined, { ...current.attrs, ...attrs }));
     editor.view.dispatch(closeHistory(editor.state.tr));
   }
@@ -140,7 +160,7 @@ export function setupContainers(editor, options) {
       const $pos = view.state.doc.resolve(getPos());
       const inner = original[type]?.(node, view, getPos, decorations, innerDecorations) ||
         DOMSerializer.renderSpec(document, node.type.spec.toDOM(node));
-      if (!['doc', 'layoutRow'].includes($pos.parent.type.name)) return inner;
+      if (!['doc', 'layoutRow', 'blockGroup'].includes($pos.parent.type.name)) return inner;
       return new ContainerView(inner, { node, editor, getPos }, options);
     };
   }

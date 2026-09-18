@@ -348,7 +348,14 @@ dialog{color:#eee;background:#292929;border:1px solid #666;border-radius:7px;min
 .object-container[data-align=center]{margin-left:auto;margin-right:auto}
 .object-container[data-align=right]{margin-left:auto;margin-right:0}
 .object-container[data-align=justify]{width:100%!important}
-.container-tools{position:absolute;right:0;top:-23px;height:23px;display:none;z-index:20;background:#303030;border-radius:4px;color:#bbb;align-items:center}
+.block-group-content{padding:26px 16px 16px;min-height:90px;border:1px solid #454545;border-radius:4px}
+.block-group-content>.object-container{margin-bottom:18px}
+.block-group-content>.object-container:last-child{margin-bottom:0}
+.object-container:has(.object-container:hover)>.container-tools{display:none}
+.block-drop-marker[data-inside=true]{background:#60a5fa22;border:2px solid #60a5fa;border-radius:4px}
+.container-tools{position:absolute;left:0;top:-23px;height:23px;display:none;z-index:20;background:#303030;border-radius:4px 4px 0 0;color:#bbb;align-items:center;width:max-content;white-space:nowrap}
+.container-type-label{font:600 11px/23px 'Segoe UI',sans-serif;padding:0 7px;color:#ccc;border-right:1px solid #494949;user-select:none}
+.container-type-label:before{content:attr(data-label)}
 .object-container:hover>.container-tools,.container-selected>.container-tools{display:flex}
 .object-container:hover>.container-tools{animation:container-tools-appear 180ms ease-out both}
 @keyframes container-tools-appear{from{opacity:.5}to{opacity:1}}

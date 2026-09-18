@@ -132,9 +132,23 @@ częścią tej integracji. Markdown jest formatem wymiany: pełny model dokument
 jest przechowywany w JSON. Nietypowe stare konstrukcje mogą wymagać dalszych
 reguł importu; oryginalna biblioteka jest zachowywana w kopii migracyjnej.
 
-Kolor tekstu i podświetlenia mają dzielone przyciski 80/20. Główna część
+Kolor tekstu i podświetlenia mają dzielone przyciski: 24 px ikona i 18 px strzałka. Główna część
 przełącza ostatnio wybrany kolor, a mała strzałka w prawym dolnym rogu otwiera
 paletę. Stan formatowania pod kursorem jest raportowany przez WebEditorControl,
 więc ponowne kliknięcie usuwa aktywny kolor. Pozycja „Więcej kolorów…“ korzysta
 z systemowego ColorDialog i zwraca kolor RGB jako #RRGGBB. Ostatnia barwa jest
 widoczna na pasku pod ikoną i staje się barwą głównego przycisku.
+
+Kontener grupujący blockGroup przechowuje bloki jako dzieci w modelu ProseMirror.
+Przycisk + Kontener tworzy grupę; przeciągnięcie do jej wnętrza przenosi tam
+sekcję. Grupy mogą zawierać kolejne grupy. Krawędzie celu nadal służą do
+przestawiania przed/za oraz ustawiania obok siebie. ContainerView obsługuje
+także dzieci grup, a wspólne transakcje zachowują zapis, formatowanie i undo.
+Przeniesienie rodzica do własnego potomka jest odrzucane.
+Reset wymiarów rozpoznaje również parę pointerup, ponieważ zapobieganie
+domyślnemu pointerdown podczas resize może tłumić natywny dblclick.
+
+Dolny pasek pokazuje utworzenie i SavedAtUtc. NoteStore publikuje czas zapisu
+dopiero po udanym zastąpieniu pliku; błędy zapisu pozostawiają poprzednią datę.
+Starsze notatki bez tej daty wyświetlają „Ostatni zapis: —” do pierwszego
+udanego zapisu w nowej wersji.

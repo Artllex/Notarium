@@ -24,6 +24,7 @@ public sealed class NoteStore
             CustomTitle = item.CustomTitle,
             IsFavorite = item.IsFavorite,
             CreatedAtUtc = item.CreatedAtUtc,
+            SavedAtUtc = item.SavedAtUtc,
             UpdatedAtUtc = item.UpdatedAtUtc
         }).ToList();
     }
@@ -31,6 +32,7 @@ public sealed class NoteStore
     public void Save(IEnumerable<Note> notes)
     {
         var snapshot = notes.ToList();
+        var savedAt = DateTime.UtcNow;
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(_path))!);
         var migrationBackup = _path + ".pre-tiptap.json";
         if (File.Exists(_path) && !File.Exists(migrationBackup) && snapshot.Any(note => note.DocumentJson is not null))
@@ -48,12 +50,14 @@ public sealed class NoteStore
                     CustomTitle = note.CustomTitle,
                     IsFavorite = note.IsFavorite,
                     CreatedAtUtc = note.CreatedAtUtc,
+                    SavedAtUtc = savedAt,
                     UpdatedAtUtc = note.UpdatedAtUtc
                 }));
                 stream.Flush(flushToDisk: true);
             }
             if (File.Exists(_path)) File.Replace(temporary, _path, _path + ".bak");
             else File.Move(temporary, _path);
+            foreach (var note in snapshot) note.SavedAtUtc = savedAt;
         }
         finally
         {
@@ -71,5 +75,6 @@ public sealed class NoteStore
         public bool IsFavorite { get; set; }
         public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
+        public DateTime? SavedAtUtc { get; set; }
     }
 }

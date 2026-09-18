@@ -49,6 +49,11 @@ internal static class Program
                 var note = new Note { Id = firstId, Content = saved.Markdown, DocumentJson = saved.DocumentJson };
                 var store = new NoteStore(Path.Combine(directory, "test-notes.json")); store.Save(new[] { note });
                 var reloaded = store.Load().Single();
+                Require(note.SavedAtUtc is not null && reloaded.SavedAtUtc == note.SavedAtUtc, "Successful save timestamp was not retained on disk");
+                var previousSavedAt = note.SavedAtUtc;
+                try { new NoteStore(Path.Combine(directory, "test-notes.json", "invalid-child.json")).Save(new[] { note }); }
+                catch (IOException) { }
+                Require(note.SavedAtUtc == previousSavedAt, "Failed save changed the last successful save time");
                 Require(reloaded.DocumentJson == saved.DocumentJson && reloaded.Content == saved.Markdown, "Disk round trip failed");
                 Require(!reloaded.Preview.Contains("span"), "Preview leaked markup");
                 editor.OpenNote(Guid.NewGuid(), "", reloaded.DocumentJson); await editor.FlushAsync();
@@ -121,9 +126,9 @@ internal static class Program
                 shell.Show(); await shellEditor.Ready.WaitAsync(TimeSpan.FromSeconds(30)); await shellEditor.FlushAsync();
                 var fontColorButton = (Button)shell.FindName("FontColorButton");
                 var splitGrid = (Grid)fontColorButton.Parent;
-                Require(Math.Abs(fontColorButton.ActualWidth / splitGrid.ActualWidth - .8) < .02 && splitGrid.ColumnDefinitions.Count == 2,
-                    "Color split button must reserve 80% for applying and 20% for its menu arrow");
-                var toolbarBitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(1400, 150, 96, 96, PixelFormats.Pbgra32);
+                Require(splitGrid.ColumnDefinitions[1].ActualWidth >= 18 && fontColorButton.ActualWidth <= 24,
+                    "Color split button needs a compact icon and an accessible arrow");
+                var toolbarBitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(1400, 800, 96, 96, PixelFormats.Pbgra32);
                 toolbarBitmap.Render(shell);
                 var toolbarEncoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
                 toolbarEncoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(toolbarBitmap));
@@ -134,7 +139,7 @@ internal static class Program
                 Require(shell.ActiveNote!.DocumentJson?.Contains("#E76F6F", StringComparison.OrdinalIgnoreCase) == true, "Main color button did not apply its last color");
                 fontColorButton.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); await shellEditor.FlushAsync();
                 Require(shell.ActiveNote!.DocumentJson?.Contains("#E76F6F", StringComparison.OrdinalIgnoreCase) == false, "Main color button did not toggle its color off");
-                Console.WriteLine("PASS 80/20 split color button applies and removes its last color");
+                Console.WriteLine("PASS compact split color button applies and removes its last color");
                 var originalNote = shell.ActiveNote!;
                 Descendants<Button>(shell).First(b => Equals(b.ToolTip, "Utwórz nową notatkę")).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
                 var newNote = shell.ActiveNote!; Require(newNote.Id != originalNote.Id, "New note button did not create a note");

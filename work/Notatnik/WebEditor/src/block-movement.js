@@ -16,12 +16,15 @@ export function moveBlock(editor, from, boundary) {
 
 function collapseRows(tr) {
   const rows = [];
-  tr.doc.forEach((node, pos) => { if (node.type.name === 'layoutRow' && node.childCount < 2) rows.push({ node, pos }); });
-  for (const { node, pos } of rows.reverse()) tr.replaceWith(pos, pos + node.nodeSize, node.content);
+  tr.doc.descendants((node, pos) => { if (node.type.name === 'layoutRow' && node.childCount < 2) rows.push(pos); });
+  for (const pos of rows.reverse()) {
+    const node = tr.doc.nodeAt(pos);
+    if (node?.type.name === 'layoutRow') tr.replaceWith(pos, pos + node.nodeSize, node.content);
+  }
 }
 export function moveBeside(editor, from, targetPos, side) {
   const node = editor.state.doc.nodeAt(from), target = editor.state.doc.nodeAt(targetPos);
-  if (!node || !target || from === targetPos) return false;
+  if (!node || !target || targetPos >= from && targetPos < from + node.nodeSize || from >= targetPos && from < targetPos + target.nodeSize) return false;
   const tr = closeHistory(editor.state.tr).delete(from, from + node.nodeSize);
   const to = tr.mapping.map(targetPos), $to = tr.doc.resolve(to);
   const reset = value => value.type.create({ ...value.attrs, boxWidth: null, placement: 'block-left' }, value.content, value.marks);
@@ -42,14 +45,14 @@ export function setupBlockMovement(editor, noteId) {
   const blocks = () => {
     const result = [];
     editor.state.doc.descendants((node, pos, parent) => {
-      if (!['doc', 'layoutRow'].includes(parent.type.name) || node.type.name === 'layoutRow') return true;
+      if (!['doc', 'layoutRow', 'blockGroup'].includes(parent.type.name) || node.type.name === 'layoutRow') return true;
       const dom = editor.view.nodeDOM(pos);
       if (dom instanceof HTMLElement) result.push({ node, pos, dom, rect: dom.getBoundingClientRect() });
-      return false;
+      return node.type.name === 'blockGroup';
     });
     return result;
   };
-  const locate = target => blocks().find(block => block.dom === target || block.dom.contains(target));
+  const locate = target => blocks().reverse().find(block => block.dom === target || block.dom.contains(target));
   const valid = () => drag && drag.noteId === noteId() && drag.doc === editor.state.doc;
   function finish(commit = false) {
     const moving = drag; const allowed = valid();
@@ -59,14 +62,28 @@ export function setupBlockMovement(editor, noteId) {
       editor.view.dispatch(editor.state.tr.setSelection(NodeSelection.create(editor.state.doc, moving.pos)));
     }
     if (commit && allowed && moving.active) {
-      if (moving.side) moveBeside(editor, moving.pos, moving.targetPos, moving.side);
+      if (moving.inside) moveInto(editor, moving.pos, moving.targetPos);
+      else if (moving.side) moveBeside(editor, moving.pos, moving.targetPos, moving.side);
       else if (moving.boundary != null) moveBlock(editor, moving.pos, moving.boundary);
     }
   }
   function target(y) {
     if (!valid()) { finish(); return; }
-    const candidates = blocks().filter(block => block.pos !== drag.pos);
+    const source = editor.state.doc.nodeAt(drag.pos);
+    let candidates = blocks().filter(block => block.pos < drag.pos || block.pos >= drag.pos + source.nodeSize);
+    drag.side = null; drag.inside = false; drag.boundary = null; marker.dataset.inside = 'false';
     if (!candidates.length) return;
+    const inside = candidates.slice().reverse().find(block => block.node.type.name === 'blockGroup' &&
+      y > block.rect.top + 12 && y < block.rect.bottom - 12 && lastX > block.rect.left + 12 && lastX < block.rect.right - 12);
+    const sourceParent = editor.state.doc.resolve(drag.pos);
+    if (inside && sourceParent.parent === inside.node) {
+      candidates = candidates.filter(block => block.pos > inside.pos && block.pos < inside.pos + inside.node.nodeSize);
+      if (!candidates.length) { marker.style.display = 'none'; return; }
+    } else if (inside) {
+      drag.inside = true; drag.targetPos = inside.pos; marker.dataset.inside = 'true';
+      Object.assign(marker.style, { display: 'block', left: inside.rect.left + 'px', top: inside.rect.top + 'px', width: inside.rect.width + 'px', height: inside.rect.height + 'px' });
+      return;
+    }
     const beside = candidates.find(block => y > block.rect.top + Math.min(12, block.rect.height * .2) && y < block.rect.bottom - Math.min(12, block.rect.height * .2) &&
       lastX >= block.rect.left - 20 && lastX <= block.rect.right + 20 &&
       (lastX < block.rect.left + block.rect.width * .22 || lastX > block.rect.right - block.rect.width * .22));
@@ -150,4 +167,17 @@ export function setupBlockMovement(editor, noteId) {
   window.addEventListener('blur', event => { if (event.target === window) finish(); });
   editor.on('transaction', () => { if (drag && !valid()) finish(); });
   return { cancel: () => finish() };
+}
+
+export function moveInto(editor, from, targetPos) {
+  const source = editor.state.doc.nodeAt(from), target = editor.state.doc.nodeAt(targetPos);
+  if (!source || target?.type.name !== 'blockGroup' || targetPos >= from && targetPos < from + source.nodeSize) return false;
+  const tr = closeHistory(editor.state.tr).delete(from, from + source.nodeSize);
+  const mapped = tr.mapping.map(targetPos), group = tr.doc.nodeAt(mapped);
+  if (group?.type.name !== 'blockGroup') return false;
+  const to = mapped + group.nodeSize - 1;
+  tr.insert(to, source).setSelection(NodeSelection.create(tr.doc, to));
+  collapseRows(tr);
+  editor.view.dispatch(tr); editor.view.dispatch(closeHistory(editor.state.tr));
+  return true;
 }

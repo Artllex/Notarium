@@ -15,9 +15,10 @@ import { closeHistory } from '@tiptap/pm/history';
 import { CodeCell } from './code-cell.js';
 import { setupBlockMovement } from './block-movement.js';
 import { importLegacy, readDocument, snapshot } from './storage.js';
-import { ContainerAttributes, LayoutRow, setupContainers, alignContainer } from './containers.js';
+import { ContainerAttributes, LayoutRow, BlockGroup, setupContainers, alignContainer } from './containers.js';
 import { editContainer, dismissContainer } from './container-dialog.js';
 import { textTarget, clearTextTarget } from './rich-label.js';
+import { ContainerKeyboard } from './container-keyboard.js';
 
 const post = message => window.chrome?.webview?.postMessage(message);
 const sessions = new Map();
@@ -27,7 +28,7 @@ const editor = new Editor({
   element: document.querySelector('#editor'),
   extensions: [Extension.create({ name: 'documentLayout', addGlobalAttributes: () => [{ types: ['doc'], attributes: { layout: { default: 'note' }, contentWidth: { default: null } } }] }), StarterKit.configure({ link: { openOnClick: false, autolink: true } }), TextStyle, Color, FontFamily,
     Highlight.configure({ multicolor: true }), TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    TaskList, TaskItem.configure({ nested: true }), CodeCell, ContainerAttributes, LayoutRow,
+    TaskList, TaskItem.configure({ nested: true }), CodeCell, ContainerAttributes, LayoutRow, BlockGroup,
     CaptionImage.configure({ allowBase64: true, onEdit: editImage }),
     TableKit.configure({ table: { resizable: true } }),
     InlineMath.configure({ katexOptions: { throwOnError: false, trust: false, maxExpand: 1000 } }),
@@ -54,6 +55,7 @@ const editor = new Editor({
 const movement = setupBlockMovement(editor, () => noteId);
 setupMedia(editor, () => noteId);
 setupContainers(editor, { editImage, openMath, editContainer, imageDialogOpen: () => document.querySelector('#image-dialog').open });
+new ContainerKeyboard(editor);
 editor.view.dom.addEventListener('dblclick', event => {
   const dom = event.target.closest('[data-type="inline-math"]');
   if (!dom) return;
@@ -126,6 +128,14 @@ function open(message) {
   } finally { loading = false; }
 }
 
+function insertionBoundary() {
+  const { selection } = editor.state;
+  if (selection.node?.type.name === 'blockGroup') return selection.from + selection.node.nodeSize - 1;
+  for (let depth = selection.$from.depth; depth > 0; depth--) {
+    if (['doc', 'blockGroup', 'layoutRow'].includes(selection.$from.node(depth - 1).type.name)) return selection.$from.after(depth);
+  }
+  return selection.to;
+}
 function command(message) {
   if (!noteId) return;
   const action = message.action, value = message.value;
@@ -164,9 +174,13 @@ function command(message) {
       if (![0, 650, 790, 960].includes(width)) throw new Error('Nieobsługiwana szerokość składu.');
       editor.view.dispatch(editor.state.tr.setDocAttribute('contentWidth', width)); break;
     }
+    case 'container': {
+      const position = insertionBoundary();
+      editor.chain().focus().insertContentAt(position, { type: 'blockGroup', content: [{ type: 'paragraph' }] }).setTextSelection(position + 2).run();
+      break;
+    }
     case 'cell': {
-      const from = editor.state.selection.$from;
-      const position = from.depth ? from.after(1) : editor.state.doc.content.size;
+      const position = insertionBoundary();
       chain.insertContentAt(position, [{ type: 'codeCell', attrs: { language: 'python' } }, { type: 'paragraph' }])
         .setTextSelection(position + 1).run();
       break;
@@ -199,7 +213,7 @@ function receive(message) {
       case 'doubleClick': {
         const x = message.x * innerWidth, y = message.y * innerHeight;
         const target = document.elementFromPoint(x, y);
-        if (target && editor.view.dom.contains(target)) {
+        if (target && (editor.view.dom.contains(target) || target.closest('.object-container'))) {
           target.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true, clientX: x, clientY: y, detail: 2 }));
         }
         break;

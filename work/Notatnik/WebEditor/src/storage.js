@@ -35,7 +35,7 @@ function escapeHtml(value) { const element = document.createElement('div'); elem
 const exportMarkdown = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced', bulletListMarker: '-' });
 exportMarkdown.use(gfm);
 exportMarkdown.addRule('containers', {
-  filter: node => node.hasAttribute('data-layout-row') || [...node.attributes].some(attr => attr.name.startsWith('data-box')),
+  filter: node => node.hasAttribute('data-layout-row') || node.hasAttribute('data-block-group') || [...node.attributes].some(attr => attr.name.startsWith('data-box')),
   replacement: (_content, node) => '\n\n' + node.outerHTML + '\n\n'
 });
 exportMarkdown.addRule('documentElements', {

@@ -389,7 +389,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void Editor_SelectionChanged(object? sender, EventArgs e)
     {
         FontFamilyButton.Content = $"{Editor.CurrentFont} ▾";
-        ContentWidthButton.Content = Editor.CurrentContentWidth == 0 ? "↔ Pełna" : $"↔ {Editor.CurrentContentWidth}";
+        ContentWidthButton.Content = Editor.CurrentContentWidth == 0 ? "↔ ∞" : $"↔ {Editor.CurrentContentWidth}";
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
