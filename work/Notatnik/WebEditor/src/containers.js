@@ -1,6 +1,6 @@
 import { Extension, Node } from '@tiptap/core';
 import { DOMSerializer } from '@tiptap/pm/model';
-import { NodeSelection } from '@tiptap/pm/state';
+import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import { closeHistory } from '@tiptap/pm/history';
 import { RichLabelView, richAttribute } from './rich-label.js';
 
@@ -45,28 +45,39 @@ export class ContainerView {
     this.footer = document.createElement('div'); this.footer.className = 'container-caption';
     this.tools = document.createElement('div'); this.tools.className = 'container-tools';
     this.tools.contentEditable = this.header.contentEditable = this.footer.contentEditable = 'false';
-    const grip = document.createElement('span'); grip.className = 'container-grip'; grip.title = 'Przeciągnij kontener';
     const settings = document.createElement('button'); settings.type = 'button'; settings.title = 'Tytuł, stopka i wymiary';
     settings.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); options.editContainer(this); });
     const typeLabel = document.createElement('span'); typeLabel.className = 'container-type-label';
     typeLabel.dataset.label = ({ blockMath: 'Math', codeCell: 'Code', codeBlock: 'Code', image: 'Picture', table: 'Table' })[this.node.type.name] || 'Text';
     typeLabel.setAttribute('aria-label', typeLabel.dataset.label);
-    typeLabel.setAttribute('role', 'img');
-    this.tools.append(typeLabel, grip, settings);
+    typeLabel.title = 'Przeciągnij kontener';
+    this.tools.append(typeLabel, settings);
+    this.addTools = document.createElement('div'); this.addTools.className = 'container-add-tools'; this.addTools.contentEditable = 'false';
+    for (const [label, title, type] of [
+      ['+ text', 'Add text container', 'blockGroup'],
+      ['+ code block', 'Add code block', 'codeBlock'],
+      ['+ code cell', 'Add code cell', 'codeCell']
+    ]) {
+      const button = document.createElement('button'); button.type = 'button'; button.dataset.label = label; button.dataset.action = type;
+      button.setAttribute('aria-label', label); button.title = title;
+      button.addEventListener('mousedown', event => event.preventDefault());
+      button.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); this.insertAfter(type); });
+      this.addTools.append(button);
+    }
     this.resize = document.createElement('span'); this.resize.className = 'container-resize'; this.resize.contentEditable = 'false';
     this.resize.title = 'Zmień szerokość i wysokość';
     this.resizeRight = document.createElement('span'); this.resizeRight.className = 'container-resize-edge container-resize-right';
     this.resizeBottom = document.createElement('span'); this.resizeBottom.className = 'container-resize-edge container-resize-bottom';
     this.resizeRight.contentEditable = this.resizeBottom.contentEditable = 'false';
     this.resizeRight.title = 'Zmień szerokość'; this.resizeBottom.title = 'Zmień wysokość';
-    this.dom.append(this.tools, this.header, inner.dom, this.footer, this.resize);
+    this.dom.append(this.tools, this.header, inner.dom, this.footer, this.addTools, this.resize);
     this.dom.append(this.resizeRight, this.resizeBottom);
     for (const [handle, axis] of [[this.resize, 'both'], [this.resizeRight, 'width'], [this.resizeBottom, 'height']]) handle.addEventListener('dblclick', event => {
       event.preventDefault(); event.stopPropagation();
       this.resetDimensions(axis);
     });
     this.dom.addEventListener('mousedown', event => {
-      if (event.target === this.dom || event.target === grip) this.select();
+      if (event.target === this.dom || event.target === typeLabel) this.select();
     });
     this.dom.addEventListener('dblclick', event => {
       if (event.target.closest('.object-container') !== this.dom) return;
@@ -74,7 +85,7 @@ export class ContainerView {
       const pos = this.props.getPos(); if (typeof pos !== 'number') return;
       if (this.node.type.name === 'image' && !options.imageDialogOpen()) { event.preventDefault(); options.editImage(this.node, pos); }
       else if (this.node.type.name === 'blockMath') { event.preventDefault(); options.openMath(this.node, pos); }
-      else if (event.target === this.dom || event.target === grip || this.node.type.name === 'table' &&
+      else if (event.target === this.dom || event.target === typeLabel || this.node.type.name === 'table' &&
         (!event.target.closest('td,th') || event.clientX < this.dom.getBoundingClientRect().left + 5 || event.clientX > this.dom.getBoundingClientRect().right - 5)) {
         event.preventDefault(); options.editContainer(this);
       }
@@ -112,6 +123,21 @@ export class ContainerView {
     this.paint();
   }
   select() { const pos = this.props.getPos(); if (typeof pos === 'number') this.props.editor.view.dispatch(this.props.editor.state.tr.setSelection(NodeSelection.create(this.props.editor.state.doc, pos))); }
+  insertAfter(type) {
+    const { editor, getPos } = this.props, pos = getPos();
+    const current = typeof pos === 'number' && editor.state.doc.nodeAt(pos), nodeType = editor.schema.nodes[type];
+    if (!current || !nodeType) return;
+    const boundary = pos + current.nodeSize;
+    const content = type === 'blockGroup' ? editor.schema.nodes.paragraph.create() : null;
+    const attrs = type === 'codeCell' ? { language: 'python' } : null;
+    const inserted = nodeType.createAndFill(attrs, content);
+    if (!inserted) return;
+    const tr = closeHistory(editor.state.tr).insert(boundary, inserted);
+    const offset = type === 'blockGroup' ? 2 : 1;
+    tr.setSelection(NodeSelection.isSelectable(inserted) && inserted.isAtom ? NodeSelection.create(tr.doc, boundary) :
+      TextSelection.create(tr.doc, boundary + offset));
+    editor.view.dispatch(tr.scrollIntoView()); editor.view.dispatch(closeHistory(editor.state.tr)); editor.view.focus();
+  }
   resetDimensions(axis) {
     this.updateAttrs({ ...(axis !== 'height' ? { boxWidth: null, boxAlign: 'justify' } : {}),
       ...(axis !== 'width' ? { boxHeight: null } : {}) });
@@ -139,7 +165,7 @@ export class ContainerView {
     if (this.inner.update && !this.inner.update(node, ...args)) return false;
     this.node = node; this.paint(); return true;
   }
-  stopEvent(event) { return !!event.target.closest('.container-tools,.container-title,.container-caption,.container-resize,.container-resize-edge') || !!this.inner.stopEvent?.(event); }
+  stopEvent(event) { return !!event.target.closest('.container-tools,.container-add-tools,.container-title,.container-caption,.container-resize,.container-resize-edge') || !!this.inner.stopEvent?.(event); }
   ignoreMutation(mutation) {
     const target = mutation.target.nodeType === 1 ? mutation.target : mutation.target.parentElement;
     if (target?.closest('.rich-label')) return true;
@@ -165,6 +191,29 @@ export function setupContainers(editor, options) {
     };
   }
   editor.view.setProps({ nodeViews: views });
+  let rowHover = null;
+  const setRowHover = next => {
+    if (next === rowHover) return;
+    rowHover?.classList.remove('container-row-hover');
+    rowHover = next;
+    rowHover?.classList.add('container-row-hover');
+  };
+  document.addEventListener('pointermove', event => {
+    const direct = event.target.closest?.('.object-container');
+    if (direct) { setRowHover(direct); return; }
+    const editorRect = editor.view.dom.parentElement.getBoundingClientRect();
+    if (event.clientX < editorRect.left || event.clientX > editorRect.right || event.clientY < editorRect.top || event.clientY > editorRect.bottom) {
+      setRowHover(null); return;
+    }
+    const candidates = [...editor.view.dom.querySelectorAll('.object-container')].map(dom => ({ dom, rect: dom.getBoundingClientRect() }))
+      .filter(({ rect }) => event.clientY >= rect.top && event.clientY <= rect.bottom);
+    candidates.sort((a, b) => {
+      const distance = rect => event.clientX < rect.left ? rect.left - event.clientX : event.clientX > rect.right ? event.clientX - rect.right : 0;
+      return distance(a.rect) - distance(b.rect) || a.rect.width * a.rect.height - b.rect.width * b.rect.height;
+    });
+    setRowHover(candidates[0]?.dom || null);
+  }, true);
+  editor.on('destroy', () => setRowHover(null));
 }
 export function alignContainer(editor, alignment) {
   const selection = editor.state.selection;

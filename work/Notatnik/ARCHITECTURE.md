@@ -140,7 +140,7 @@ z systemowego ColorDialog i zwraca kolor RGB jako #RRGGBB. Ostatnia barwa jest
 widoczna na pasku pod ikoną i staje się barwą głównego przycisku.
 
 Kontener grupujący blockGroup przechowuje bloki jako dzieci w modelu ProseMirror.
-Przycisk + Kontener tworzy grupę; przeciągnięcie do jej wnętrza przenosi tam
+Przycisk Kontener w dolnym interfejsie każdego kontenera tworzy grupę; przeciągnięcie do jej wnętrza przenosi tam
 sekcję. Grupy mogą zawierać kolejne grupy. Krawędzie celu nadal służą do
 przestawiania przed/za oraz ustawiania obok siebie. ContainerView obsługuje
 także dzieci grup, a wspólne transakcje zachowują zapis, formatowanie i undo.

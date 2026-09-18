@@ -123,7 +123,7 @@ export function setupBlockMovement(editor, noteId) {
     if (!block) return;
     const edge =
       (event.clientX < block.rect.left + 7 || event.clientX > block.rect.right - 7 || event.clientY < block.rect.top + 7 || event.clientY > block.rect.bottom - 7);
-    if (!edge && !event.target.closest('.image-drag,.container-grip') && !event.target.matches('.cell-tools')) return;
+    if (!edge && !event.target.closest('.image-drag,.container-type-label') && !event.target.matches('.cell-tools')) return;
     event.preventDefault(); event.stopImmediatePropagation(); begin(block, event);
   }
   document.addEventListener('pointerdown', pointerDown, true);
