@@ -28,11 +28,11 @@ export const CodeCell = Node.create({
       const dom = document.createElement('section'); dom.className = 'code-cell'; dom.dataset.codeCell = 'python';
       const tools = document.createElement('div'); tools.className = 'cell-tools'; tools.contentEditable = 'false';
       const language = document.createElement('span'); language.className = 'language'; language.textContent = 'Python'; tools.append(language);
-      language.title = 'Dwuklik: zmień język';
+      language.title = 'Kliknij, aby zmienić język';
       const languageInput = document.createElement('input'); languageInput.className = 'cell-language-input';
       languageInput.setAttribute('list', 'cell-languages'); languageInput.setAttribute('aria-label', 'Język komórki'); languageInput.hidden = true;
       tools.append(languageInput);
-      language.addEventListener('dblclick', event => {
+      language.addEventListener('click', event => {
         event.preventDefault(); event.stopPropagation(); language.hidden = true; languageInput.hidden = false;
         languageInput.value = findLanguage(node.attrs.language)?.name || node.attrs.language;
         languageInput.focus(); languageInput.select();

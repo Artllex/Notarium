@@ -111,7 +111,7 @@ export class ContainerView {
         if (s.boxWidth != null) this.dom.style.width = s.boxWidth + 'px';
         if (s.boxHeight != null) {
           this.dom.style.minHeight = s.boxHeight + 'px';
-          if (this.node.type.name === 'codeCell' || this.node.type.name === 'codeBlock') { this.inner.dom.style.minHeight = s.boxHeight + 'px'; this.inner.dom.style.height = s.boxHeight + 'px'; }
+          if (this.node.type.name === 'codeCell' || this.node.type.name === 'codeBlock') { this.dom.style.height = s.boxHeight + 'px'; this.inner.dom.style.minHeight = s.boxHeight + 'px'; this.inner.dom.style.height = s.boxHeight + 'px'; }
         }
       };
       const finish = e => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', finish); document.removeEventListener('pointercancel', cancel);
@@ -162,6 +162,7 @@ export class ContainerView {
     this.dom.style.backgroundColor = backgroundColor(a.boxBackground) || '';
     this.dom.style.width = a.boxWidth ? a.boxWidth + 'px' : this.node.type.name === 'image' ? (a.width || 200) + 'px' : '';
     this.dom.style.minHeight = a.boxHeight ? a.boxHeight + 'px' : '';
+    this.dom.style.height = codeContainer && a.boxHeight ? a.boxHeight + 'px' : '';
     this.inner.dom.style.minHeight = codeContainer && a.boxHeight ? a.boxHeight + 'px' : '';
     this.inner.dom.style.height = codeContainer && a.boxHeight ? a.boxHeight + 'px' : '';
     this.dom.addEventListener('pointermove', event => {

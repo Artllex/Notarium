@@ -310,7 +310,7 @@
 
 :root{color-scheme:dark;font-family:'Segoe UI',sans-serif;color:#f1f1f1;background:#1e1e1e;--text-size:16px;--line-height:1.25}
 .tiptap>p,.tiptap>h1,.tiptap>h2,.tiptap>h3,.tiptap>h4,.tiptap>h5,.tiptap>h6{position:relative;border-radius:3px;outline:1px solid transparent;outline-offset:3px}.tiptap>p:hover,.tiptap>h1:hover,.tiptap>h2:hover,.tiptap>h3:hover,.tiptap>h4:hover,.tiptap>h5:hover,.tiptap>h6:hover{outline-color:#464646}.tiptap>p.ProseMirror-selectednode{outline-color:#82b8f8}
-.cell-tools .language{cursor:text!important}.cell-language-input{flex:1;min-width:80px;max-width:240px;height:24px;background:#252526;color:#eee;border:1px solid #666;border-radius:3px;font:12px 'Segoe UI',sans-serif;padding:2px 6px}.cell-tools [hidden]{display:none!important}
+.cell-tools .language{flex:0 0 120px;width:120px;cursor:text!important}.cell-language-input{position:absolute;left:6px;top:3px;z-index:2;width:120px;height:24px;background:#252526;color:#eee;border:1px solid #82b8f8;border-radius:3px;font:12px 'Segoe UI',sans-serif;padding:2px 6px}.cell-tools [hidden]{display:none!important}
 .block-drop-marker{position:fixed;display:none;height:3px;background:#60a5fa;z-index:100;pointer-events:none}.moving-block,.moving-block *{cursor:grabbing!important;user-select:none!important}.cell-tools .language{cursor:grab}.tiptap:after{content:'';display:block;clear:both}.tiptap figure[data-note-image]{table-layout:fixed}.tiptap figure[data-note-image] figcaption{overflow-wrap:anywhere;word-break:break-word}
 .tiptap img{display:block;max-width:100%;height:auto;margin:0;cursor:default}
 .tiptap{counter-reset:equation}.tiptap [data-type="block-math"][data-numbered="true"]{counter-increment:equation;display:flex;align-items:center;gap:20px}.tiptap [data-numbered="true"] .block-math-inner{flex:1;min-width:0;overflow-x:auto}.tiptap [data-type="block-math"][data-numbered="true"]::after{content:'(' counter(equation) ')';flex:none;color:#ccc;padding-right:4px}
@@ -350,6 +350,7 @@ dialog{color:#eee;background:#292929;border:1px solid #666;border-radius:7px;min
 .object-container[data-align=justify]{width:100%!important}
 .object-container[data-container-type=codeCell],.object-container[data-container-type=codeBlock]{padding-bottom:0}
 .object-container[data-container-type=codeCell]>.code-cell,.object-container[data-container-type=codeBlock]>pre{margin:0!important}
+.object-container[data-container-type=codeBlock]>pre{box-sizing:border-box;width:100%;display:block}
 .block-group-content{padding:26px 16px 16px;min-height:90px;border:1px solid #454545;border-radius:4px}
 .block-group-content>.object-container{margin-bottom:18px}
 .block-group-content>.object-container:last-child{margin-bottom:0}

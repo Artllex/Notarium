@@ -6,6 +6,7 @@
 .object-container[data-align=justify]{width:100%!important}
 .object-container[data-container-type=codeCell],.object-container[data-container-type=codeBlock]{padding-bottom:0}
 .object-container[data-container-type=codeCell]>.code-cell,.object-container[data-container-type=codeBlock]>pre{margin:0!important}
+.object-container[data-container-type=codeBlock]>pre{box-sizing:border-box;width:100%;display:block}
 .block-group-content{padding:26px 16px 16px;min-height:90px;border:1px solid #454545;border-radius:4px}
 .block-group-content>.object-container{margin-bottom:18px}
 .block-group-content>.object-container:last-child{margin-bottom:0}
