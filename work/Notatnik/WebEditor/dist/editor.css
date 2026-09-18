@@ -348,12 +348,15 @@ dialog{color:#eee;background:#292929;border:1px solid #666;border-radius:7px;min
 .object-container[data-align=center]{margin-left:auto;margin-right:auto}
 .object-container[data-align=right]{margin-left:auto;margin-right:0}
 .object-container[data-align=justify]{width:100%!important}
+.object-container[data-container-type=codeCell],.object-container[data-container-type=codeBlock]{padding-bottom:0}
+.object-container[data-container-type=codeCell]>.code-cell,.object-container[data-container-type=codeBlock]>pre{margin:0!important}
 .block-group-content{padding:26px 16px 16px;min-height:90px;border:1px solid #454545;border-radius:4px}
 .block-group-content>.object-container{margin-bottom:18px}
 .block-group-content>.object-container:last-child{margin-bottom:0}
 .object-container:has(.object-container:hover)>.container-tools,.object-container:has(.object-container:hover)>.container-add-tools{display:none}
 .block-drop-marker[data-inside=true]{background:#60a5fa22;border:2px solid #60a5fa;border-radius:4px}
-.container-tools{position:absolute;right:100%;top:-4px;height:23px;display:none;z-index:20;background:#303030;border-radius:4px 0 0 4px;color:#bbb;align-items:center;width:max-content;white-space:nowrap}
+.container-tools{position:absolute;right:calc(100% + 3px);top:-4px;height:23px;display:none;z-index:20;background:#303030;border-radius:4px 0 0 4px;color:#bbb;align-items:center;width:max-content;white-space:nowrap}
+.container-tools:after{content:'';position:absolute;right:-3px;top:0;width:3px;height:23px;pointer-events:auto}
 .container-type-label{font:600 11px/23px 'Segoe UI',sans-serif;padding:0 8px;color:#ccc;border-right:1px solid #494949;user-select:none;cursor:grab}
 .container-type-label:before{content:attr(data-label)}
 .object-container:hover>.container-tools,.container-row-hover>.container-tools,.container-selected>.container-tools,.object-container:hover>.container-add-tools,.container-row-hover>.container-add-tools,.container-selected>.container-add-tools{display:flex}
@@ -374,14 +377,21 @@ dialog{color:#eee;background:#292929;border:1px solid #666;border-radius:7px;min
 #container-dialog .background-options input[type=checkbox]{width:auto}
 .container-tools button{background:none;border:0;color:inherit;padding:2px 7px;cursor:pointer}
 .container-tools button:before{content:'⚙'}
-.container-resize{position:absolute;right:-5px;bottom:-5px;width:11px;height:11px;background:#60a5fa;border:2px solid #1e1e1e;cursor:nwse-resize;display:none;z-index:21}
-.object-container:hover>.container-resize,.container-row-hover>.container-resize,.container-selected>.container-resize{display:block}
+.container-resize{position:absolute;width:11px;height:11px;background:#60a5fa;border:2px solid #1e1e1e;cursor:nwse-resize;display:none;z-index:21}
+.container-resize-bottom-right{right:-6px;bottom:-6px}.container-resize-bottom-left{left:-6px;bottom:-6px;cursor:nesw-resize}
+.object-container.corner-near-right>.container-resize-bottom-right,.object-container.corner-near-left>.container-resize-bottom-left{display:block}
 .container-resize-edge{position:absolute;z-index:20;display:block;background:transparent}
 .container-resize-right{right:-6px;top:-4px;bottom:-4px;width:6px;cursor:ew-resize}
+.container-resize-left{left:-6px;top:-4px;bottom:-4px;width:6px;cursor:ew-resize}
 .container-resize-bottom{bottom:-6px;left:-4px;right:-4px;height:6px;cursor:ns-resize}
 .container-resize-edge:hover{background:transparent}
-.object-container:has(>.container-resize-right:hover):before,.object-container:has(>.container-resize:hover):before{content:'';position:absolute;right:-4px;top:-4px;bottom:-4px;width:1px;background:#60a5fa;z-index:22;pointer-events:none}
-.object-container:has(>.container-resize-bottom:hover):after,.object-container:has(>.container-resize:hover):after{content:'';position:absolute;bottom:-4px;left:-4px;right:-4px;height:1px;background:#60a5fa;z-index:22;pointer-events:none}
+.object-container:has(>.container-resize-right:hover):before,.object-container:has(>.container-resize-left:hover):before{content:'';position:absolute;top:-4px;bottom:-4px;width:1px;background:#60a5fa;z-index:22;pointer-events:none}.object-container:has(>.container-resize-right:hover):before{right:-4px}.object-container:has(>.container-resize-left:hover):before{left:-4px}
+.object-container:has(>.container-resize-bottom:hover):after{content:'';position:absolute;bottom:-4px;left:-4px;right:-4px;height:1px;background:#60a5fa;z-index:22;pointer-events:none}
+.object-container:has(>.container-resize-right:hover):before,.object-container:has(>.container-resize-left:hover):before,.object-container:has(>.container-resize-bottom:hover):after{animation:edge-chrome-appear 180ms ease-out both}
+.object-container.corner-near-right>.container-resize-bottom-right,.object-container.corner-near-left>.container-resize-bottom-left{animation:corner-chrome-appear 180ms ease-out both}
+@keyframes edge-chrome-appear{from{opacity:.5}to{opacity:1}}
+@keyframes corner-chrome-appear{from{opacity:.5}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.object-container:before,.object-container:after,.object-container>.container-resize{animation:none!important}}
 .image-viewport{position:relative;overflow:hidden;width:100%}
 .image-viewport>img{display:block;transform-origin:top left}
 .inline-crop{position:relative;z-index:40;width:100%;height:360px;background:#202020}

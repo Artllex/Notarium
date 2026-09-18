@@ -54,7 +54,7 @@ export class ContainerView {
     this.tools.append(typeLabel, settings);
     this.addTools = document.createElement('div'); this.addTools.className = 'container-add-tools'; this.addTools.contentEditable = 'false';
     for (const [label, title, type] of [
-      ['+ text', 'Add text container', 'blockGroup'],
+      ['+ text', 'Add text container', 'paragraph'],
       ['+ code block', 'Add code block', 'codeBlock'],
       ['+ code cell', 'Add code cell', 'codeCell']
     ]) {
@@ -64,15 +64,17 @@ export class ContainerView {
       button.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); this.insertAfter(type); });
       this.addTools.append(button);
     }
-    this.resize = document.createElement('span'); this.resize.className = 'container-resize'; this.resize.contentEditable = 'false';
+    this.resize = document.createElement('span'); this.resize.className = 'container-resize container-resize-corner container-resize-bottom-right'; this.resize.contentEditable = 'false';
     this.resize.title = 'Zmień szerokość i wysokość';
     this.resizeRight = document.createElement('span'); this.resizeRight.className = 'container-resize-edge container-resize-right';
+    this.resizeLeft = document.createElement('span'); this.resizeLeft.className = 'container-resize-edge container-resize-left';
     this.resizeBottom = document.createElement('span'); this.resizeBottom.className = 'container-resize-edge container-resize-bottom';
-    this.resizeRight.contentEditable = this.resizeBottom.contentEditable = 'false';
-    this.resizeRight.title = 'Zmień szerokość'; this.resizeBottom.title = 'Zmień wysokość';
+    this.resizeBottomLeft = document.createElement('span'); this.resizeBottomLeft.className = 'container-resize container-resize-corner container-resize-bottom-left';
+    this.resizeRight.contentEditable = this.resizeLeft.contentEditable = this.resizeBottom.contentEditable = this.resizeBottomLeft.contentEditable = 'false';
+    this.resizeRight.title = this.resizeLeft.title = 'Zmień szerokość'; this.resizeBottom.title = this.resizeBottomLeft.title = 'Zmień wysokość i szerokość';
     this.dom.append(this.tools, this.header, inner.dom, this.footer, this.addTools, this.resize);
-    this.dom.append(this.resizeRight, this.resizeBottom);
-    for (const [handle, axis] of [[this.resize, 'both'], [this.resizeRight, 'width'], [this.resizeBottom, 'height']]) handle.addEventListener('dblclick', event => {
+    this.dom.append(this.resizeRight, this.resizeLeft, this.resizeBottom, this.resizeBottomLeft);
+    for (const [handle, axis] of [[this.resize, 'both'], [this.resizeRight, 'width'], [this.resizeLeft, 'width'], [this.resizeBottom, 'height'], [this.resizeBottomLeft, 'both']]) handle.addEventListener('dblclick', event => {
       event.preventDefault(); event.stopPropagation();
       this.resetDimensions(axis);
     });
@@ -92,13 +94,14 @@ export class ContainerView {
     });
     this.labels = [new RichLabelView(this.header, props.editor, props.getPos, 'boxTitle', 'Tytuł kontenera'),
       new RichLabelView(this.footer, props.editor, props.getPos, 'boxCaption', 'Stopka kontenera')];
-    for (const [handle, axis] of [[this.resize, 'both'], [this.resizeRight, 'width'], [this.resizeBottom, 'height']]) handle.addEventListener('pointerdown', event => {
+    for (const [handle, axis] of [[this.resize, 'both'], [this.resizeRight, 'width'], [this.resizeLeft, 'width'], [this.resizeBottom, 'height'], [this.resizeBottomLeft, 'both']]) handle.addEventListener('pointerdown', event => {
       if (event.button !== 0) return;
       event.preventDefault(); event.stopPropagation();
       const rect = this.dom.getBoundingClientRect(), x = event.clientX, y = event.clientY;
       const doc = props.editor.state.doc;
       let moved = false;
-      const size = e => ({ ...(axis !== 'height' ? { boxWidth: Math.round(Math.max(80, Math.min(4000, rect.width + e.clientX - x))) } : {}),
+      const fromLeft = handle === this.resizeLeft || handle === this.resizeBottomLeft;
+      const size = e => ({ ...(axis !== 'height' ? { boxWidth: Math.round(Math.max(80, Math.min(4000, rect.width + (fromLeft ? x - e.clientX : e.clientX - x)))) } : {}),
         ...(axis !== 'height' && this.node.attrs.boxAlign === 'justify' ? { boxAlign: 'left' } : {}),
         ...(axis !== 'width' ? { boxHeight: Math.round(Math.max(32, Math.min(4000, rect.height + e.clientY - y))) } : {}) });
       const move = e => {
@@ -106,7 +109,10 @@ export class ContainerView {
         moved = true; const s = size(e);
         if (s.boxAlign) this.dom.dataset.align = s.boxAlign;
         if (s.boxWidth != null) this.dom.style.width = s.boxWidth + 'px';
-        if (s.boxHeight != null) this.dom.style.minHeight = s.boxHeight + 'px';
+        if (s.boxHeight != null) {
+          this.dom.style.minHeight = s.boxHeight + 'px';
+          if (this.node.type.name === 'codeCell' || this.node.type.name === 'codeBlock') { this.inner.dom.style.minHeight = s.boxHeight + 'px'; this.inner.dom.style.height = s.boxHeight + 'px'; }
+        }
       };
       const finish = e => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', finish); document.removeEventListener('pointercancel', cancel);
         if (moved && doc === props.editor.state.doc) { this.lastEdgeClick = null; this.updateAttrs(size(e)); }
@@ -152,9 +158,18 @@ export class ContainerView {
   }
   paint() {
     const a = this.node.attrs;
+    const codeContainer = this.node.type.name === 'codeCell' || this.node.type.name === 'codeBlock';
     this.dom.style.backgroundColor = backgroundColor(a.boxBackground) || '';
     this.dom.style.width = a.boxWidth ? a.boxWidth + 'px' : this.node.type.name === 'image' ? (a.width || 200) + 'px' : '';
     this.dom.style.minHeight = a.boxHeight ? a.boxHeight + 'px' : '';
+    this.inner.dom.style.minHeight = codeContainer && a.boxHeight ? a.boxHeight + 'px' : '';
+    this.inner.dom.style.height = codeContainer && a.boxHeight ? a.boxHeight + 'px' : '';
+    this.dom.addEventListener('pointermove', event => {
+      const rect = this.dom.getBoundingClientRect(), nearLeft = event.clientX <= rect.left + 18 && event.clientY >= rect.bottom - 18;
+      const nearRight = event.clientX >= rect.right - 18 && event.clientY >= rect.bottom - 18;
+      this.dom.classList.toggle('corner-near-left', nearLeft); this.dom.classList.toggle('corner-near-right', nearRight);
+    });
+    this.dom.addEventListener('pointerleave', () => { this.dom.classList.remove('corner-near-left', 'corner-near-right'); });
     this.dom.dataset.align = a.boxAlign || (a.placement === 'block-center' ? 'center' : a.placement === 'block-right' ? 'right' : 'left');
     this.labels.forEach(label => label.update(this.node));
   }

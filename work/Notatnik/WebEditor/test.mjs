@@ -152,6 +152,24 @@ try {
     assert.equal(await page.locator('.code-cell').count(), 0);
     await command('undo'); assert.match(await page.locator('.cm-content').textContent(), /print\(42\)/);
   });
+  await check('Code containers resize together with their code surface', async () => {
+    await open('code-dimensions', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'codeCell', attrs: { boxHeight: 210, language: 'python' }, content: [{ type: 'text', text: 'print(1)' }] },
+      { type: 'codeBlock', attrs: { boxHeight: 180 }, content: [{ type: 'text', text: 'print(2)' }] }
+    ] } }));
+    for (const selector of ['codeCell', 'codeBlock']) {
+      const outer = page.locator(`[data-container-type=${selector}]`).first();
+      const inner = outer.locator(selector === 'codeCell' ? '.code-cell' : 'pre');
+      assert.ok(Math.abs((await outer.boundingBox()).height - (await inner.boundingBox()).height) <= 2);
+    }
+    const outer = page.locator('[data-container-type=codeCell]').first();
+    const edge = await outer.locator('.container-resize-bottom').boundingBox();
+    await page.mouse.move(edge.x + edge.width * .85, edge.y + edge.height / 2); await page.mouse.down();
+    await page.mouse.move(edge.x + edge.width * .85, edge.y + 70);
+    assert.ok((await outer.locator('.code-cell').boundingBox()).height > 210);
+    await page.mouse.up();
+    assert.ok((await outer.locator('.code-cell').boundingBox()).height > 210);
+  });
   await check('Cell language picker supports SQL and R, syntax highlighting, undo and persistence', async () => {
     await open('language-picker'); await command('cell');
     const label = page.locator('.cell-tools .language'), input = page.getByRole('combobox', { name: 'Język komórki' });
@@ -359,7 +377,9 @@ try {
     await command('alignRight');
     assert.equal(await page.locator('[data-container-type=image]').getAttribute('data-align'), 'right');
     await figure.click();
-    const handle = page.locator('[data-container-type=image]>.container-resize'), box = await handle.boundingBox();
+    const imageBox = await page.locator('[data-container-type=image]').boundingBox();
+    await page.mouse.move(imageBox.x + imageBox.width - 5, imageBox.y + imageBox.height - 5);
+    const handle = page.locator('[data-container-type=image]>.container-resize-bottom-right'), box = await handle.boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
     await page.mouse.move(box.x + box.width / 2 + 60, box.y + box.height / 2); await page.mouse.up();
     assert.equal(await figure.locator('img').evaluate(img => img.width), 260);
@@ -503,7 +523,9 @@ try {
     assert.equal(await page.locator('.layout-row').count(), 0);
     assert.equal((await json()).content.at(-1).content[0].text, 'A');
     await boxes.first().hover();
-    const resize = await boxes.first().locator('.container-resize').boundingBox();
+    const firstBox = await boxes.first().boundingBox();
+    await page.mouse.move(firstBox.x + firstBox.width - 5, firstBox.y + firstBox.height - 5);
+    const resize = await boxes.first().locator('.container-resize-bottom-right').boundingBox();
     await page.mouse.move(resize.x + 5, resize.y + 5); await page.mouse.down();
     await page.mouse.move(resize.x - 100, resize.y + 50); await page.mouse.up();
     assert.ok((await json()).content[0].attrs.boxHeight > 120);
@@ -526,7 +548,11 @@ try {
     await dragEdge('.container-resize-bottom', 25, 50);
     assert.equal((await json()).content[0].attrs.boxWidth, 480);
     assert.equal((await json()).content[0].attrs.boxHeight, 190);
-    await box.hover(); await box.locator('.container-resize').dblclick();
+    await box.hover();
+    const corner = await box.boundingBox();
+    await page.mouse.move(corner.x + corner.width - 5, corner.y + corner.height - 5);
+    const cornerHandle = await box.locator('.container-resize-bottom-right').boundingBox();
+    await page.mouse.dblclick(cornerHandle.x + cornerHandle.width / 2, cornerHandle.y + cornerHandle.height / 2);
     const attrs = (await json()).content[0].attrs;
     assert.equal(attrs.boxWidth, null); assert.equal(attrs.boxHeight, null); assert.equal(attrs.boxAlign, 'justify');
     assert.ok(Math.abs((await box.boundingBox()).width - (await page.locator('.tiptap').boundingBox()).width) < 2);
@@ -575,12 +601,21 @@ try {
     await page.mouse.dblclick(bottomEdge.x + bottomEdge.width * .85, bottomEdge.y + bottomEdge.height / 2);
     assert.equal((await json()).content[0].attrs.boxWidth, 420);
     assert.equal((await json()).content[0].attrs.boxHeight, null);
+    const leftEdge = await box.locator('.container-resize-left').boundingBox();
+    await page.mouse.move(leftEdge.x + leftEdge.width / 2, leftEdge.y + leftEdge.height / 2); await page.mouse.down();
+    await page.mouse.move(leftEdge.x - 50, leftEdge.y + leftEdge.height / 2); await page.mouse.up();
+    assert.ok((await json()).content[0].attrs.boxWidth > 420);
+    const leftBox = await box.boundingBox();
+    await page.mouse.move(leftBox.x + 5, leftBox.y + leftBox.height - 5);
+    assert.ok(await box.locator('.container-resize-bottom-left').boundingBox());
+    await page.waitForTimeout(20);
     for (const [handle, pseudo, length] of [['.container-resize-right', '::before', 'height'], ['.container-resize-bottom', '::after', 'width']]) {
       const edge = await box.locator(handle).boundingBox();
       await page.mouse.move(edge.x + edge.width * (handle.includes('bottom') ? .85 : .5), edge.y + edge.height / 2);
       const dimensions = await box.evaluate((el, { pseudo, length }) => ({ line: parseFloat(getComputedStyle(el, pseudo)[length]), box: el.getBoundingClientRect()[length] }), { pseudo, length });
       assert.ok(dimensions.line >= dimensions.box, 'Highlighted edge covers entire container');
     }
+    assert.ok(['corner-chrome-appear', 'container-chrome-appear'].includes(await box.locator('.container-resize-bottom-left').evaluate(el => getComputedStyle(el).animationName)));
   });
   await check('Natural image and table labels use text toolbar, caret, shared undo and both storage formats', async () => {
     for (const [id, selector, attr] of [['image-test', '.image-title', 'titleRich'], ['table-captions', '.container-caption', 'boxCaptionRich']]) {
@@ -652,7 +687,9 @@ try {
     await box.hover();
     const frames = await box.locator('.container-tools').evaluate(el => el.getAnimations()[0]?.effect.getKeyframes().map(f => f.opacity));
     assert.deepEqual(frames, ['0.5', '1']);
-    assert.deepEqual(await box.locator('.container-resize').evaluate(el => el.getAnimations()[0]?.effect.getKeyframes().map(f => f.opacity)), ['0.5', '1']);
+    const animationBox = await box.boundingBox();
+    await page.mouse.move(animationBox.x + animationBox.width - 5, animationBox.y + animationBox.height - 5);
+    assert.deepEqual(await box.locator('.container-resize-bottom-right').evaluate(el => el.getAnimations()[0]?.effect.getKeyframes().map(f => f.opacity)), ['0.5', '1']);
     assert.ok((await box.evaluate(el => el.getAnimations().length)) > 0);
     await box.locator('.container-type-label').click();
     await page.mouse.move(1000, 600); await box.hover();
@@ -757,7 +794,7 @@ try {
       assert.equal(await bar.locator('.container-type-label').getAttribute('data-label'), label);
       const box = await container.boundingBox(), tools = await bar.boundingBox();
       assert.ok(tools.x >= 0);
-      assert.ok(Math.abs(tools.x + tools.width - box.x) <= 1);
+      assert.ok(Math.abs(tools.x + tools.width - (box.x - 3)) <= 1);
       assert.ok(Math.abs(tools.y - (box.y - 4)) <= 1);
       const badge = await bar.locator('.container-type-label').boundingBox();
       assert.equal(await bar.locator('.container-grip').count(), 0);
@@ -782,9 +819,10 @@ try {
     assert.equal(await picture.evaluate(element => element.classList.contains('container-row-hover')), true);
     assert.equal(await picture.locator(':scope > .container-tools').isVisible(), true);
     await first.hover();
-    let actionBox = await add.locator('[data-action=blockGroup]').boundingBox();
+    let actionBox = await add.locator('[data-action=paragraph]').boundingBox();
     await page.mouse.click(actionBox.x + actionBox.width / 2, actionBox.y + actionBox.height / 2);
-    assert.equal(await page.locator('.block-group-content').count(), 1);
+    assert.equal(await page.locator('[data-container-type=paragraph]').count(), 3);
+    assert.equal(await page.locator('.block-group-content').count(), 0);
     await command('undo');
     await first.hover(); actionBox = await first.locator(':scope > .container-add-tools [data-action=codeBlock]').boundingBox();
     await page.mouse.click(actionBox.x + actionBox.width / 2, actionBox.y + actionBox.height / 2);
