@@ -25,6 +25,8 @@ public sealed class WebEditorControl : UserControl, IDisposable
     private double _spacing = 1.25;
     private int _zoom = 100;
     private readonly TaskCompletionSource<bool> _readyCompletion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public static readonly DependencyProperty HoveredContainerStatusProperty = DependencyProperty.Register(
+        nameof(HoveredContainerStatus), typeof(string), typeof(WebEditorControl), new PropertyMetadata(string.Empty));
 
     public event EventHandler<DocumentChangedEventArgs>? DocumentChanged;
     public event EventHandler? SelectionChanged;
@@ -37,6 +39,7 @@ public sealed class WebEditorControl : UserControl, IDisposable
     public bool CanUndoContent { get; private set; }
     public bool CanRedoContent { get; private set; }
     public bool IsCodeFocused { get; private set; }
+    public string HoveredContainerStatus { get => (string)GetValue(HoveredContainerStatusProperty); private set => SetValue(HoveredContainerStatusProperty, value); }
     public Task Ready => _readyCompletion.Task;
     public string? DataDirectory { get; set; }
     public double LineSpacingFactor { get => _spacing; set { _spacing = Math.Clamp(value, 1, 2); SendView(); } }
@@ -130,6 +133,10 @@ public sealed class WebEditorControl : UserControl, IDisposable
                     CanUndoContent = message.GetProperty("canUndo").GetBoolean(); CanRedoContent = message.GetProperty("canRedo").GetBoolean();
                     IsCodeFocused = message.GetProperty("inCode").GetBoolean();
                     SelectionChanged?.Invoke(this, EventArgs.Empty); CommandManager.InvalidateRequerySuggested(); break;
+                case "containerHover":
+                    var label = message.TryGetProperty("label", out var containerLabel) ? containerLabel.GetString() : null;
+                    HoveredContainerStatus = string.IsNullOrWhiteSpace(label) ? string.Empty : "Typ kontenera: " + label;
+                    break;
                 case "openLink": OpenLink(message.GetProperty("url").GetString()); break;
                 case "shortcut": ShortcutRequested?.Invoke(this, message.GetProperty("key").GetString()!); break;
                 case "error": EditorError?.Invoke(this, message.GetProperty("message").GetString()!); break;

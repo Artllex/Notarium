@@ -3,6 +3,7 @@ dialog.id = 'container-dialog';
 dialog.innerHTML = '<form method="dialog"><h3>Kontener</h3><label>Tytuł<input name="title" maxlength="500"></label><label>Stopka<input name="caption" maxlength="2000"></label><label>Szerokość (px, puste = automatyczna)<input name="width" type="number" min="80" max="4000"></label><label>Minimalna wysokość (px, puste = automatyczna)<input name="height" type="number" min="32" max="4000"></label><div><button value="cancel" formnovalidate>Anuluj</button><button value="save">Zapisz</button></div></form>';
 document.body.append(dialog);
 dialog.querySelector('form>div').insertAdjacentHTML('beforebegin', '<fieldset><legend>Tło kontenera</legend><div class="background-options"><label>Kolor<input name="background" type="color" aria-label="Kolor tła kontenera"></label><label><input name="noBackground" type="checkbox">Brak koloru</label></div></fieldset>');
+dialog.querySelector('form>div').insertAdjacentHTML('beforebegin', '<label class="code-narrow-option" hidden><input name="allowNarrow" type="checkbox"> Pozwól zmniejszać poniżej rozmiaru kodu</label>');
 let context;
 const field = name => dialog.querySelector('[name="' + name + '"]');
 field('background').addEventListener('input', () => { field('noBackground').checked = false; });
@@ -14,6 +15,9 @@ export function editContainer(view) {
   field('height').value = view.node.attrs.boxHeight || '';
   field('background').value = view.node.attrs.boxBackground || '#303030';
   field('noBackground').checked = !view.node.attrs.boxBackground;
+  const isCode = ['codeCell', 'codeBlock'].includes(view.node.type.name);
+  field('allowNarrow').closest('.code-narrow-option').hidden = !isCode;
+  field('allowNarrow').checked = Boolean(view.node.attrs.codeAllowNarrow);
   dialog.showModal();
 }
 export function dismissContainer() { context = null; if (dialog.open) dialog.close(); }
@@ -22,6 +26,7 @@ dialog.querySelector('form').addEventListener('submit', event => {
   event.preventDefault();
   context.updateAttrs({ boxTitle: field('title').value, boxCaption: field('caption').value,
     boxBackground: field('noBackground').checked ? null : field('background').value,
-    boxWidth: Number(field('width').value) || null, boxHeight: Number(field('height').value) || null });
+    boxWidth: Number(field('width').value) || null, boxHeight: Number(field('height').value) || null,
+    codeAllowNarrow: field('allowNarrow').checked });
   dialog.close(); context = null;
 });

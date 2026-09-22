@@ -12,7 +12,7 @@ import { setupMedia, openMath, openImage, editImage, openTable, dismissMedia } f
 import { EditorState, TextSelection } from '@tiptap/pm/state';
 import { DOMParser as PMParser } from '@tiptap/pm/model';
 import { closeHistory } from '@tiptap/pm/history';
-import { CodeCell } from './code-cell.js';
+import { CodeCell, CodeBlockSurface } from './code-cell.js';
 import { setupBlockMovement } from './block-movement.js';
 import { importLegacy, readDocument, snapshot } from './storage.js';
 import { ContainerAttributes, LayoutRow, BlockGroup, setupContainers, alignContainer } from './containers.js';
@@ -26,9 +26,9 @@ const dirty = new Set();
 let noteId = null, loading = false;
 const editor = new Editor({
   element: document.querySelector('#editor'),
-  extensions: [Extension.create({ name: 'documentLayout', addGlobalAttributes: () => [{ types: ['doc'], attributes: { layout: { default: 'note' }, contentWidth: { default: null } } }] }), StarterKit.configure({ link: { openOnClick: false, autolink: true } }), TextStyle, Color, FontFamily,
+  extensions: [Extension.create({ name: 'documentLayout', addGlobalAttributes: () => [{ types: ['doc'], attributes: { layout: { default: 'note' }, contentWidth: { default: null } } }] }), StarterKit.configure({ codeBlock: false, link: { openOnClick: false, autolink: true } }), TextStyle, Color, FontFamily,
     Highlight.configure({ multicolor: true }), TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    TaskList, TaskItem.configure({ nested: true }), CodeCell, ContainerAttributes, LayoutRow, BlockGroup,
+    TaskList, TaskItem.configure({ nested: true }), CodeCell, CodeBlockSurface, ContainerAttributes, LayoutRow, BlockGroup,
     CaptionImage.configure({ allowBase64: true, onEdit: editImage }),
     TableKit.configure({ table: { resizable: true } }),
     InlineMath.configure({ katexOptions: { throwOnError: false, trust: false, maxExpand: 1000 } }),

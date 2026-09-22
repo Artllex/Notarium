@@ -27,7 +27,7 @@ export function moveBeside(editor, from, targetPos, side) {
   if (!node || !target || targetPos >= from && targetPos < from + node.nodeSize || from >= targetPos && from < targetPos + target.nodeSize) return false;
   const tr = closeHistory(editor.state.tr).delete(from, from + node.nodeSize);
   const to = tr.mapping.map(targetPos), $to = tr.doc.resolve(to);
-  const reset = value => value.type.create({ ...value.attrs, boxWidth: null, placement: 'block-left' }, value.content, value.marks);
+  const reset = value => value.type.create({ ...value.attrs, boxWidth: null, boxOffsetX: null, placement: 'block-left' }, value.content, value.marks);
   if ($to.parent.type.name === 'layoutRow') tr.insert(side === 'left' ? to : to + target.nodeSize, reset(node));
   else {
     const children = side === 'left' ? [reset(node), reset(target)] : [reset(target), reset(node)];
@@ -41,7 +41,7 @@ export function setupBlockMovement(editor, noteId) {
   const root = editor.view.dom;
   const marker = document.createElement('div'); marker.className = 'block-drop-marker';
   document.body.append(marker);
-  let drag, frame, lastY = 0, lastX = 0, suppressClick = false;
+  let drag, frame, lastY = 0, lastX = 0, suppressClick = false, releaseTimer;
   const blocks = () => {
     const result = [];
     editor.state.doc.descendants((node, pos, parent) => {
@@ -57,7 +57,11 @@ export function setupBlockMovement(editor, noteId) {
   function finish(commit = false) {
     const moving = drag; const allowed = valid();
     cancelAnimationFrame(frame); drag = null; marker.style.display = 'none';
+    if (moving?.dom) { moving.dom.classList.remove('container-lifted'); moving.dom.style.removeProperty('--drag-x'); moving.dom.style.removeProperty('--drag-y'); }
     document.body.classList.remove('moving-block');
+    document.body.classList.add('moving-block-releasing');
+    clearTimeout(releaseTimer);
+    releaseTimer = setTimeout(() => document.body.classList.remove('moving-block-releasing'), 720);
     if (commit && allowed && !moving.active) {
       editor.view.dispatch(editor.state.tr.setSelection(NodeSelection.create(editor.state.doc, moving.pos)));
     }
@@ -113,12 +117,13 @@ export function setupBlockMovement(editor, noteId) {
   }
   function begin(block, event, native = false) {
     if (!block || !editor.isEditable || !noteId()) return;
-    drag = { pos: block.pos, doc: editor.state.doc, noteId: noteId(), startX: event.clientX, startY: event.clientY, active: native, native };
+    clearTimeout(releaseTimer); document.body.classList.remove('moving-block-releasing');
+    drag = { pos: block.pos, dom: block.dom, doc: editor.state.doc, noteId: noteId(), startX: event.clientX, startY: event.clientY, active: native, native };
     lastY = event.clientY; lastX = event.clientX;
-    if (native) { document.body.classList.add('moving-block'); target(lastY); scroll(); }
+    if (native) { block.dom.classList.add('container-lifted'); document.body.classList.add('moving-block'); target(lastY); scroll(); }
   }
   function pointerDown(event) {
-    if (event.button !== 0 || event.target.closest('button,input,select,.inline-crop,.inline-crop-tools,.image-title,figcaption,.container-title,.container-caption,.container-resize,.container-resize-edge,.image-resize,.column-resize-handle')) return;
+    if (event.button !== 0 || event.target.closest('button,input,select,.inline-crop,.inline-crop-tools,.image-title,figcaption,.container-title,.container-caption,.container-resize,.container-resize-edge,.container-select-edge,.container-pair-resize,.image-resize,.column-resize-handle')) return;
     const block = locate(event.target);
     if (!block) return;
     const edge =
@@ -131,9 +136,9 @@ export function setupBlockMovement(editor, noteId) {
     if (drag && !drag.native) {
       event.preventDefault(); lastY = event.clientY; lastX = event.clientX;
       if (!drag.active && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 5) {
-        drag.active = true; document.body.classList.add('moving-block'); scroll();
+        drag.active = true; drag.dom.classList.add('container-lifted'); document.body.classList.add('moving-block'); scroll();
       }
-      if (drag.active) target(lastY);
+      if (drag.active) { drag.dom.style.setProperty('--drag-x', `${event.clientX - drag.startX}px`); drag.dom.style.setProperty('--drag-y', `${event.clientY - drag.startY}px`); target(lastY); }
       return;
     }
   });

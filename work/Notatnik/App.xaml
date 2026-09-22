@@ -18,11 +18,11 @@
         <Style x:Key="PopupMenuItemStyle" TargetType="MenuItem">
             <Setter Property="Foreground" Value="#F1F1F1"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Padding" Value="10,2"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="MenuItem">
-                        <Border x:Name="ItemBackground" Background="{TemplateBinding Background}" CornerRadius="3" Padding="{TemplateBinding Padding}" Margin="3,1">
+                        <Border x:Name="ItemBackground" Background="{TemplateBinding Background}" CornerRadius="3" Padding="{TemplateBinding Padding}" Margin="3,0">
                             <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>

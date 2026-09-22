@@ -11,11 +11,14 @@
     <RootNamespace>Notatnik</RootNamespace>
     <Product>Notarium</Product>
     <Title>Notarium</Title>
+    <ApplicationIcon>Assets\Notarium.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Using Remove="System.Windows.Forms" />
     <Using Remove="System.Drawing" />
     <Content Include="../../LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Resource Include="Assets/Notarium.ico" />
+    <Resource Include="Assets/Notarium.png" />
     <EmbeddedResource Include="../../examples/Notarium — przykładowy artykuł.md" LogicalName="Notarium.Example.md" />
     <Compile Remove="Core/**/*.cs" />
     <Compile Remove="Legacy/**/*.cs" />

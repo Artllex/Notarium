@@ -148,9 +148,65 @@ try {
     assert.match(JSON.stringify(await json()), /print\(42\)/);
     await page.keyboard.press('Control+z'); assert.doesNotMatch(JSON.stringify(await json()), /print\(42\)/);
     await page.keyboard.press('Control+y'); assert.match(JSON.stringify(await json()), /print\(42\)/);
-    await page.getByRole('button', { name: 'Usuń komórkę', exact: true }).click();
+    await page.getByRole('button', { name: 'Usuń kontener', exact: true }).click();
     assert.equal(await page.locator('.code-cell').count(), 0);
     await command('undo'); assert.match(await page.locator('.cm-content').textContent(), /print\(42\)/);
+  });
+  await check('Container border selects immediately and supports repeated copy, paste and delete', async () => {
+    await open('container-clipboard', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'paragraph', attrs: { boxWidth: 360, boxTitle: 'Kopia' }, content: [{ type: 'text', text: 'Treść kontenera' }] }
+    ] } }));
+    const original = page.locator('[data-container-type=paragraph]').first();
+    const topEdge = original.locator(':scope > .container-select-top');
+    assert.equal(await topEdge.evaluate(element => getComputedStyle(element).cursor), 'pointer');
+    assert.ok((await topEdge.boundingBox()).height >= 10);
+    const edge = await topEdge.boundingBox();
+    const hitClass = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.className || '', { x: edge.x + edge.width / 2, y: edge.y + edge.height / 2 });
+    assert.match(hitClass, /container-select-top/);
+    await page.mouse.move(edge.x + edge.width / 2, edge.y + edge.height / 2); await page.mouse.down();
+    await page.mouse.up();
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.toJSON().type), 'node');
+    assert.equal(await original.evaluate(element => element.classList.contains('container-selected')), true);
+    await page.keyboard.press('Control+c'); await page.keyboard.press('Control+v'); await page.keyboard.press('Control+v');
+    assert.equal(await page.locator('[data-container-type=paragraph]').count(), 3);
+    const copied = await json();
+    assert.equal(copied.content[2].attrs.boxTitle, 'Kopia'); assert.equal(copied.content[2].attrs.boxWidth, 360);
+    await page.keyboard.press('Delete');
+    assert.equal(await page.locator('[data-container-type=paragraph]').count(), 2);
+  });
+  await check('Side edges anchor independently and the middle divider resizes both neighbors', async () => {
+    await open('anchored-row-resize', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'layoutRow', content: [
+        { type: 'paragraph', content: [{ type: 'text', text: 'Lewy' }] },
+        { type: 'paragraph', content: [{ type: 'text', text: 'Prawy' }] }
+      ] }
+    ] } }));
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const items = page.locator('.layout-row > .object-container'), left = items.nth(0), right = items.nth(1);
+    const initialLeft = await left.boundingBox(), initialRight = await right.boundingBox();
+    let handle = await left.locator(':scope > .container-resize-right').boundingBox();
+    await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2); await page.mouse.down();
+    await page.mouse.move(handle.x + handle.width / 2 - 70, handle.y + handle.height / 2, { steps: 4 }); await page.mouse.up();
+    const afterRightEdgeLeft = await left.boundingBox(), afterRightEdgeRight = await right.boundingBox();
+    assert.ok(Math.abs(afterRightEdgeLeft.x - initialLeft.x) <= 1, 'Right edge keeps the left side anchored');
+    assert.ok(afterRightEdgeLeft.width < initialLeft.width - 60);
+    assert.ok(Math.abs(afterRightEdgeRight.width - initialRight.width) <= 1, 'Neighbor does not grow into released space');
+    handle = await right.locator(':scope > .container-resize-left').boundingBox();
+    const beforeLeftEdge = await right.boundingBox(), stableLeftWidth = (await left.boundingBox()).width;
+    await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2); await page.mouse.down();
+    await page.mouse.move(handle.x + handle.width / 2 + 50, handle.y + handle.height / 2, { steps: 4 }); await page.mouse.up();
+    const afterLeftEdge = await right.boundingBox();
+    assert.ok(Math.abs(afterLeftEdge.x + afterLeftEdge.width - (beforeLeftEdge.x + beforeLeftEdge.width)) <= 1, 'Left edge keeps the right side anchored');
+    assert.ok(Math.abs((await left.boundingBox()).width - stableLeftWidth) <= 1, 'Left neighbor remains unchanged');
+    const divider = left.locator(':scope > .container-pair-resize');
+    assert.equal(await divider.evaluate(element => getComputedStyle(element).display), 'block');
+    const dividerBox = await divider.boundingBox(), beforePairLeft = await left.boundingBox(), beforePairRight = await right.boundingBox();
+    await page.mouse.move(dividerBox.x + dividerBox.width / 2, dividerBox.y + dividerBox.height / 2); await page.mouse.down();
+    await page.mouse.move(dividerBox.x + dividerBox.width / 2 + 30, dividerBox.y + dividerBox.height / 2, { steps: 4 }); await page.mouse.up();
+    const afterPairLeft = await left.boundingBox(), afterPairRight = await right.boundingBox();
+    assert.ok(afterPairLeft.width > beforePairLeft.width + 20 && afterPairRight.width < beforePairRight.width - 20);
+    assert.ok(Math.abs(afterPairLeft.x - beforePairLeft.x) <= 1);
+    assert.ok(Math.abs(afterPairRight.x + afterPairRight.width - (beforePairRight.x + beforePairRight.width)) <= 1);
   });
   await check('Code containers resize together with their code surface', async () => {
     await open('code-dimensions', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
@@ -159,7 +215,7 @@ try {
     ] } }));
     for (const selector of ['codeCell', 'codeBlock']) {
       const outer = page.locator(`[data-container-type=${selector}]`).first();
-      const inner = outer.locator(selector === 'codeCell' ? '.code-cell' : 'pre');
+      const inner = outer.locator('.code-cell');
       assert.ok(Math.abs((await outer.boundingBox()).height - (await inner.boundingBox()).height) <= 2);
     }
     const outer = page.locator('[data-container-type=codeCell]').first();
@@ -169,6 +225,38 @@ try {
     assert.ok((await outer.locator('.code-cell').boundingBox()).height > 210);
     await page.mouse.up();
     assert.ok((await outer.locator('.code-cell').boundingBox()).height > 210);
+    const block = page.locator('[data-container-type=codeBlock]').first();
+    const emptyLanguage = block.locator('.language');
+    assert.equal(await emptyLanguage.textContent(), '...');
+    assert.equal(await emptyLanguage.evaluate(element => getComputedStyle(element, ':after').content), 'none');
+    await page.mouse.move(0, 0);
+    assert.equal(await emptyLanguage.evaluate(element => getComputedStyle(element).visibility), 'hidden');
+    assert.equal(await block.locator(':scope > .container-add-tools [aria-label="Usuń kontener"]').count(), 1);
+    assert.equal(await block.locator(':scope > .container-add-tools [aria-label="Przenieś kontener w górę"]').count(), 1);
+    assert.equal(await block.locator(':scope > .container-add-tools [aria-label="Przenieś kontener w dół"]').count(), 1);
+    assert.equal(await block.locator('.cm-gutters').count(), 0);
+    assert.equal(await block.getByRole('button', { name: 'Wykonywanie kodu nie jest jeszcze dostępne' }).count(), 0);
+    await block.hover();
+    const blockBefore = (await block.boundingBox()).height, blockEdge = await block.locator('.container-resize-bottom').boundingBox();
+    const blockX = blockEdge.x + blockEdge.width * .15, blockY = blockEdge.y + blockEdge.height / 2;
+    await page.mouse.move(blockX, blockY); await page.mouse.down(); await page.mouse.move(blockX, blockY + 60, { steps: 4 });
+    assert.ok((await block.locator('.code-cell').boundingBox()).height > blockBefore, 'Code Block resizes live through the shared surface');
+    await page.mouse.up();
+    await block.hover(); await emptyLanguage.click();
+    const blockLanguage = block.getByRole('combobox', { name: 'Język komórki' });
+    await blockLanguage.fill('Python'); await blockLanguage.press('Enter');
+    assert.equal(await page.locator('[data-container-type=codeBlock]').count(), 0);
+    assert.equal(await page.locator('[data-container-type=codeCell]').count(), 2);
+    assert.equal(await page.locator('button[aria-label="Wykonywanie kodu nie jest jeszcze dostępne"]').count(), 2);
+    const converted = page.locator('[data-container-type=codeCell]').nth(1);
+    await converted.hover(); await converted.locator('.language').click();
+    const convertedLanguage = converted.getByRole('combobox', { name: 'Język komórki' });
+    await convertedLanguage.fill(''); await convertedLanguage.press('Enter');
+    assert.equal(await page.locator('[data-container-type=codeBlock]').count(), 1);
+    assert.equal(await page.locator('[data-container-type=codeBlock] .language').textContent(), '...');
+    const restoredBlock = page.locator('[data-container-type=codeBlock]');
+    await restoredBlock.hover(); await restoredBlock.locator(':scope > .container-add-tools [data-action=blockMath]').click();
+    assert.equal(await page.locator('[data-container-type=blockMath]').count(), 1);
   });
   await check('Cell language picker supports SQL and R, syntax highlighting, undo and persistence', async () => {
     await open('language-picker'); await command('cell');
