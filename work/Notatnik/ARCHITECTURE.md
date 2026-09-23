@@ -51,7 +51,7 @@ wymaga dostępu do rejestrów npm/NuGet. Testy używają izolowanych danych.
 
 Nazwa produktu i pliku wykonywalnego: Notarium. Istniejący katalog danych
 LocalAppData/Notatnik pozostaje zachowany, aby otwierać dotychczasowe notatki.
-Dwuklik w nazwę języka komórki otwiera pole z katalogiem CodeMirror language-data.
+Jedno kliknięcie nazwy języka komórki otwiera pole z katalogiem CodeMirror language-data.
 Enter lub wybór z podpowiedzi zatwierdza język, Esc anuluje. Język steruje
 kolorowaniem składni i jest zachowany w JSON oraz eksporcie Markdown.
 Parsery są dołączone do lokalnego pakietu; wykonywanie kodu pozostaje nieaktywne.
@@ -63,13 +63,14 @@ a dokument artykułowy zachowuje ją także w znaczniku eksportu Markdown.
 Starszy znacznik `<!-- notarium:article -->` jest importowany jako 790 px.
 
 Przenoszenie sekcji: wspólny moduł `block-movement.js` operuje na kontenerach
-pierwszego poziomu dokumentu (akapit, nagłówek, lista, tabela, komórka kodu,
+dokumentu i grup (akapit, nagłówek, lista, tabela, komórka kodu,
 wzór, obraz). Uchwyt w górnym pasku kontenera pozwala przenosić każdy taki blok.
 Komórkę można także chwycić za obramowanie lub nagłówek, a obraz i wzór
 bezpośrednio. Linia wskazuje granicę wstawienia przed/za sekcją; przy krawędzi
 widoku dokument przewija się automatycznie. Listy i tabele przenoszone są
 w całości, wraz z zawartością. Esc anuluje ruch, zmiana notatki lub dokumentu
 przerywa nieaktualny gest. Każdy ruch to jedna transakcja wspólnej historii.
+Szczegółowe zasady geometrii i gestów opisuje [CONTAINER_INTERACTIONS.md](CONTAINER_INTERACTIONS.md).
 Każdy blok najwyższego poziomu otrzymuje wspólny widok ContainerView.
 Klasa deleguje edycję treści do istniejącego widoku Tiptap/CodeMirror/TableKit,
 a sama zapewnia ramkę, uchwyt przesuwania, zmianę szerokości i minimalnej
@@ -114,8 +115,9 @@ Pola tworzą silnik dopiero, kiedy mają treść. Zmiana notatki niszczy stare
 widoki i usuwa aktywny cel paska. Obsługa zaznaczenia należy do danego pola,
 nie do nadrzędnego kontenera.
 
-ContainerView.resetDimensions resetuje szerokość (prawa krawędź), wysokość
-(dolna) lub oba wymiary (róg). Reset szerokości oznacza pełną szerokość.
+ContainerView.resetDimensions resetuje szerokość albo wysokość pojedynczego
+kontenera. W wierszu dwuklik dolnej krawędzi lub narożnika dopasowuje wysokość
+do sąsiada; boczna krawędź może wypełnić dostępny odstęp bez przesuwania sąsiadów.
 Przezroczysty obszar chwytania pozostaje większy od ciągłej linii 1 px.
 ImageCropSession zarządza sesją Cropper.js w miejscu obrazu. Pole X:Y ustawia
 proporcje; puste oznacza dowolne. Enter, przycisk akceptacji lub kliknięcie
@@ -140,7 +142,7 @@ z systemowego ColorDialog i zwraca kolor RGB jako #RRGGBB. Ostatnia barwa jest
 widoczna na pasku pod ikoną i staje się barwą głównego przycisku.
 
 Kontener grupujący blockGroup przechowuje bloki jako dzieci w modelu ProseMirror.
-Przycisk Kontener w dolnym interfejsie każdego kontenera tworzy grupę; przeciągnięcie do jej wnętrza przenosi tam
+Polecenie Kontener w edytorze tworzy grupę; przeciągnięcie do jej wnętrza przenosi tam
 sekcję. Grupy mogą zawierać kolejne grupy. Krawędzie celu nadal służą do
 przestawiania przed/za oraz ustawiania obok siebie. ContainerView obsługuje
 także dzieci grup, a wspólne transakcje zachowują zapis, formatowanie i undo.

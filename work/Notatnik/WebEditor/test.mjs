@@ -261,11 +261,11 @@ try {
   await check('Cell language picker supports SQL and R, syntax highlighting, undo and persistence', async () => {
     await open('language-picker'); await command('cell');
     const label = page.locator('.cell-tools .language'), input = page.getByRole('combobox', { name: 'Język komórki' });
-    await label.dblclick(); await input.fill('SQL'); await input.press('Enter');
+    await page.locator('.code-cell').first().hover(); await label.click(); await input.fill('SQL'); await input.press('Enter');
     assert.equal(await label.textContent(), 'SQL');
     await page.locator('.cm-content').click(); await page.keyboard.type('SELECT * FROM users WHERE id = 1;');
     await page.waitForFunction(() => document.querySelector('.cm-line span')?.textContent === 'SELECT');
-    await label.dblclick(); await input.fill('R'); await input.press('Enter');
+    await page.locator('.code-cell').first().hover(); await label.click(); await input.fill('R'); await input.press('Enter');
     assert.equal(await label.textContent(), 'R');
     await command('undo'); assert.equal(await label.textContent(), 'SQL');
     await command('redo'); assert.equal(await label.textContent(), 'R');
@@ -274,10 +274,10 @@ try {
     await open('language-json', '', saved.documentJson); assert.equal(await label.textContent(), 'R');
     await open('language-md', saved.markdown); assert.equal(await label.textContent(), 'R');
     assert.match(await page.locator('.cm-content').textContent(), /SELECT/);
-    await label.dblclick(); await input.fill('Unknown language'); await input.press('Enter');
+    await page.locator('.code-cell').first().hover(); await label.click(); await input.fill('Unknown language'); await input.press('Enter');
     assert.equal(await input.isVisible(), true); await input.press('Escape');
     assert.equal(await label.textContent(), 'R');
-    await label.dblclick(); await input.fill('C++'); await input.press('Enter');
+    await page.locator('.code-cell').first().hover(); await label.click(); await input.fill('C++'); await input.press('Enter');
     const cpp = await page.evaluate(() => window.notatnik.snapshot());
     await open('cpp-markdown', cpp.markdown); assert.equal(await label.textContent(), 'C++');
     await open('cells');
@@ -460,22 +460,26 @@ try {
     await (await chosen).setFiles({ name: 'move.png', mimeType: 'image/png', buffer: Buffer.from(data, 'base64') });
     const figure = page.locator('figure[data-note-image]'); await figure.click();
     assert.ok((await figure.boundingBox()).width < 230, 'Selection frame should fit the image');
-    assert.equal(await figure.getAttribute('draggable'), 'true');
+    assert.equal(await figure.getAttribute('draggable'), 'false');
     assert.equal(await page.locator('#image-placement').count(), 0);
     await command('alignRight');
     assert.equal(await page.locator('[data-container-type=image]').getAttribute('data-align'), 'right');
     await figure.click();
     const imageBox = await page.locator('[data-container-type=image]').boundingBox();
-    await page.mouse.move(imageBox.x + imageBox.width - 5, imageBox.y + imageBox.height - 5);
-    const handle = page.locator('[data-container-type=image]>.container-resize-bottom-right'), box = await handle.boundingBox();
+    await page.mouse.move(imageBox.x + 5, imageBox.y + imageBox.height - 5);
+    const handle = page.locator('[data-container-type=image]>.container-resize-bottom-left'), box = await handle.boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
-    await page.mouse.move(box.x + box.width / 2 + 60, box.y + box.height / 2); await page.mouse.up();
+    await page.mouse.move(box.x + box.width / 2 - 60, box.y + box.height / 2); await page.mouse.up();
     assert.equal(await figure.locator('img').evaluate(img => img.width), 260);
     await command('undo'); assert.equal(await figure.locator('img').evaluate(img => img.width), 200);
     await page.locator('.tiptap p').last().click(); await page.keyboard.type('Cel przeniesienia');
     const beforeMove = await page.evaluate(() => window.notatnik.editor.getJSON().content.map(node => node.type));
     const target = page.locator('.tiptap p').last(), targetBox = await target.boundingBox();
-    await figure.dragTo(target, { targetPosition: { x: 300, y: Math.max(1, targetBox.height - 1) } });
+    const sourceBox = await figure.boundingBox();
+    await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(targetBox.x + 300, targetBox.y + Math.max(1, targetBox.height - 1), { steps: 8 });
+    await page.mouse.up();
     const afterMove = await page.evaluate(() => window.notatnik.editor.getJSON().content.map(node => node.type));
     assert.notDeepEqual(afterMove, beforeMove);
     await command('undo');
@@ -484,19 +488,17 @@ try {
     await open('image-controls-reopen', '', saved.documentJson);
     assert.equal(await page.locator('[data-container-type=image]').getAttribute('data-align'), 'right');
   });
-  await check('Block equations expose native drag-and-drop movement', async () => {
-    await open('math-drag');
-    for (const latex of ['x=1', 'y=2']) {
-      await command('math'); await page.locator('#math-layout').selectOption('blockMath');
-      await page.locator('#math-source').fill(latex); await page.locator('#math-save').click();
-      await page.evaluate(() => window.notatnik.editor.commands.focus('end'));
-    }
+  await check('Block equations use shared container movement', async () => {
+    await open('math-drag', '', JSON.stringify({ version: 1, doc: { type: 'doc', content:
+      ['x=1', 'y=2'].map(latex => ({ type: 'blockMath', attrs: { latex, numbered: false } })) } }));
     const formulas = page.locator('[data-type="block-math"]');
     assert.equal(await formulas.count(), 2);
-    assert.deepEqual(await formulas.evaluateAll(nodes => nodes.map(node => node.draggable)), [true, true]);
+    assert.deepEqual(await formulas.evaluateAll(nodes => nodes.map(node => node.draggable)), [false, false]);
     const before = await page.evaluate(() => window.notatnik.editor.getJSON().content.filter(node => node.type === 'blockMath').map(node => node.attrs.latex));
     const destination = await formulas.nth(1).boundingBox();
-    await formulas.first().dragTo(formulas.nth(1), { targetPosition: { x: 10, y: destination.height - 1 } });
+    const source = await formulas.first().boundingBox();
+    await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2); await page.mouse.down();
+    await page.mouse.move(destination.x + Math.min(10, destination.width / 2), destination.y + destination.height - 1, { steps: 8 }); await page.mouse.up();
     const after = await page.evaluate(() => window.notatnik.editor.getJSON().content.filter(node => node.type === 'blockMath').map(node => node.attrs.latex));
     assert.notDeepEqual(after, before);
     await command('undo');
@@ -516,7 +518,10 @@ try {
     ] };
     await open('mixed-movement', '', JSON.stringify({ version: 1, doc }));
     const original = await json();
-    await page.locator('[data-type="block-math"]').dragTo(page.locator('.code-cell').last(), { targetPosition: { x: 100, y: 40 } });
+    const mathBox = await page.locator('[data-type="block-math"]').boundingBox();
+    const cellBox = await page.locator('.code-cell').last().boundingBox();
+    await page.mouse.move(mathBox.x + mathBox.width / 2, mathBox.y + mathBox.height / 2); await page.mouse.down();
+    await page.mouse.move(cellBox.x + 100, cellBox.y + 40, { steps: 8 }); await page.mouse.up();
     const moved = await json();
     assert.notDeepEqual(moved, original);
     const descendants = node => [node, ...(node.content || []).flatMap(descendants)];
@@ -686,20 +691,23 @@ try {
     assert.equal((await json()).content[0].attrs.boxHeight, 180);
     await command('undo');
     const bottomEdge = await box.locator('.container-resize-bottom').boundingBox();
-    await page.mouse.dblclick(bottomEdge.x + bottomEdge.width * .85, bottomEdge.y + bottomEdge.height / 2);
+    await page.mouse.dblclick(bottomEdge.x + 10, bottomEdge.y + bottomEdge.height / 2);
     assert.equal((await json()).content[0].attrs.boxWidth, 420);
     assert.equal((await json()).content[0].attrs.boxHeight, null);
     const leftEdge = await box.locator('.container-resize-left').boundingBox();
+    const beforeLeftResize = await box.boundingBox();
     await page.mouse.move(leftEdge.x + leftEdge.width / 2, leftEdge.y + leftEdge.height / 2); await page.mouse.down();
-    await page.mouse.move(leftEdge.x - 50, leftEdge.y + leftEdge.height / 2); await page.mouse.up();
-    assert.ok((await json()).content[0].attrs.boxWidth > 420);
+    await page.mouse.move(leftEdge.x + 50, leftEdge.y + leftEdge.height / 2); await page.mouse.up();
+    assert.ok((await json()).content[0].attrs.boxWidth < 420);
+    const afterLeftResize = await box.boundingBox();
+    assert.ok(Math.abs(afterLeftResize.x + afterLeftResize.width - beforeLeftResize.x - beforeLeftResize.width) <= 2);
     const leftBox = await box.boundingBox();
     await page.mouse.move(leftBox.x + 5, leftBox.y + leftBox.height - 5);
     assert.ok(await box.locator('.container-resize-bottom-left').boundingBox());
     await page.waitForTimeout(20);
     for (const [handle, pseudo, length] of [['.container-resize-right', '::before', 'height'], ['.container-resize-bottom', '::after', 'width']]) {
       const edge = await box.locator(handle).boundingBox();
-      await page.mouse.move(edge.x + edge.width * (handle.includes('bottom') ? .85 : .5), edge.y + edge.height / 2);
+      await page.mouse.move(edge.x + (handle.includes('bottom') ? 10 : edge.width / 2), edge.y + edge.height / 2);
       const dimensions = await box.evaluate((el, { pseudo, length }) => ({ line: parseFloat(getComputedStyle(el, pseudo)[length]), box: el.getBoundingClientRect()[length] }), { pseudo, length });
       assert.ok(dimensions.line >= dimensions.box, 'Highlighted edge covers entire container');
     }
@@ -895,7 +903,8 @@ try {
     assert.equal(await first.locator(':scope > .container-tools').isVisible(), true);
     const add = first.locator(':scope > .container-add-tools');
     await add.waitFor({ state: 'visible' });
-    assert.deepEqual(await add.locator('button').evaluateAll(buttons => buttons.map(button => button.dataset.label)), ['+ text', '+ code block', '+ code cell']);
+    assert.deepEqual(await add.locator('button').evaluateAll(buttons => buttons.map(button => button.dataset.label)),
+      ['↑', '↓', '×', '+ text', '+ code block', '+ code cell', '+ math']);
     let addBox = await add.boundingBox(), firstBox = await first.boundingBox();
     assert.ok(addBox.y < firstBox.y + firstBox.height && addBox.y + addBox.height > firstBox.y + firstBox.height);
     assert.ok(Math.abs(addBox.y + addBox.height / 2 - (firstBox.y + firstBox.height + 3)) <= 1);

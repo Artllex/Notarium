@@ -6,7 +6,7 @@ import { RichLabelView, richAttribute } from './rich-label.js';
 
 // A derived CSS counter avoids renumbering transactions polluting undo history.
 export const NumberedMath = BlockMath.extend({
-  draggable: true,
+  draggable: false,
   addAttributes() {
     return { ...this.parent?.(), numbered: { default: false,
       parseHTML: el => el.dataset.numbered === 'true',
@@ -17,7 +17,7 @@ export const NumberedMath = BlockMath.extend({
     return props => {
       const view = parent(props);
       view.dom.dataset.numbered = String(props.node.attrs.numbered);
-      view.dom.draggable = true;
+      view.dom.draggable = false;
       view.dom.title = 'Przeciągnij, aby przenieść wzór';
       return view;
     };
@@ -25,7 +25,7 @@ export const NumberedMath = BlockMath.extend({
 });
 
 export const CaptionImage = Image.extend({
-  draggable: true,
+  draggable: false,
   parseHTML() {
     return [{ tag: 'figure[data-note-image]', getAttrs: element => {
       const img = element.querySelector('img'); if (!img) return false;
@@ -60,7 +60,7 @@ export const CaptionImage = Image.extend({
       const drag = document.createElement('span'); drag.className = 'image-drag'; drag.textContent = '⠿'; drag.title = 'Przeciągnij obraz';
       const settings = document.createElement('button'); settings.type = 'button'; settings.textContent = '⚙'; settings.title = 'Rozmiar, podpis i otaczanie tekstem';
       const resize = document.createElement('span'); resize.className = 'image-resize'; resize.title = 'Przeciągnij, aby zmienić rozmiar';
-      tools.append(drag, settings); dom.append(tools, title, viewport, caption, resize); dom.draggable = true;
+      tools.append(drag, settings); dom.append(tools, title, viewport, caption, resize); dom.draggable = false;
       const labels = [new RichLabelView(title, this.editor, getPos, 'title', 'Tytuł obrazu'),
         new RichLabelView(caption, this.editor, getPos, 'caption', 'Stopka obrazu')];
       const paint = value => {
@@ -80,7 +80,7 @@ export const CaptionImage = Image.extend({
         const startX = event.clientX, startWidth = img.getBoundingClientRect().width;
         const move = moveEvent => { dom.style.width = img.style.width = `${Math.max(20, Math.min(4000, startWidth + moveEvent.clientX - startX))}px`; };
         const up = upEvent => {
-          document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); dom.draggable = true;
+          document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); dom.draggable = false;
           img.style.width = ''; const width = Math.round(Math.max(20, Math.min(4000, startWidth + upEvent.clientX - startX)));
           const pos = getPos();
           if (typeof pos === 'number') {

@@ -5,21 +5,29 @@ import { closeHistory } from '@tiptap/pm/history';
 export function moveBlock(editor, from, boundary) {
   const node = editor.state.doc.nodeAt(from);
   if (!node || boundary >= from && boundary <= from + node.nodeSize) return false;
+  const fromRow = editor.state.doc.resolve(from).parent.type.name === 'layoutRow';
   const tr = closeHistory(editor.state.tr).delete(from, from + node.nodeSize);
   const to = tr.mapping.map(boundary);
-  tr.insert(to, node).setSelection(NodeSelection.create(tr.doc, to));
+  const moving = fromRow && tr.doc.resolve(to).parent.type.name !== 'layoutRow' ?
+    node.type.create({ ...node.attrs, boxOffsetX: null }, node.content, node.marks) : node;
+  tr.insert(to, moving).setSelection(NodeSelection.create(tr.doc, to));
   collapseRows(tr);
   editor.view.dispatch(tr);
   editor.view.dispatch(closeHistory(editor.state.tr));
   return true;
 }
 
-function collapseRows(tr) {
+export function collapseRows(tr) {
   const rows = [];
   tr.doc.descendants((node, pos) => { if (node.type.name === 'layoutRow' && node.childCount < 2) rows.push(pos); });
   for (const pos of rows.reverse()) {
     const node = tr.doc.nodeAt(pos);
-    if (node?.type.name === 'layoutRow') tr.replaceWith(pos, pos + node.nodeSize, node.content);
+    if (node?.type.name === 'layoutRow') {
+      const child = node.firstChild;
+      const replacement = child && child.attrs.boxOffsetX ?
+        child.type.create({ ...child.attrs, boxOffsetX: null }, child.content, child.marks) : child;
+      tr.replaceWith(pos, pos + node.nodeSize, replacement || []);
+    }
   }
 }
 export function moveBeside(editor, from, targetPos, side) {
@@ -27,7 +35,8 @@ export function moveBeside(editor, from, targetPos, side) {
   if (!node || !target || targetPos >= from && targetPos < from + node.nodeSize || from >= targetPos && from < targetPos + target.nodeSize) return false;
   const tr = closeHistory(editor.state.tr).delete(from, from + node.nodeSize);
   const to = tr.mapping.map(targetPos), $to = tr.doc.resolve(to);
-  const reset = value => value.type.create({ ...value.attrs, boxWidth: null, boxOffsetX: null, placement: 'block-left' }, value.content, value.marks);
+  const reset = value => value.type.create({ ...value.attrs, boxWidth: null, boxOffsetX: null,
+    boxAlign: value.attrs.boxAlign === 'justify' ? 'left' : value.attrs.boxAlign, placement: 'block-left' }, value.content, value.marks);
   if ($to.parent.type.name === 'layoutRow') tr.insert(side === 'left' ? to : to + target.nodeSize, reset(node));
   else {
     const children = side === 'left' ? [reset(node), reset(target)] : [reset(target), reset(node)];
@@ -55,13 +64,16 @@ export function setupBlockMovement(editor, noteId) {
   const locate = target => blocks().reverse().find(block => block.dom === target || block.dom.contains(target));
   const valid = () => drag && drag.noteId === noteId() && drag.doc === editor.state.doc;
   function finish(commit = false) {
+    if (!drag) return;
     const moving = drag; const allowed = valid();
     cancelAnimationFrame(frame); drag = null; marker.style.display = 'none';
     if (moving?.dom) { moving.dom.classList.remove('container-lifted'); moving.dom.style.removeProperty('--drag-x'); moving.dom.style.removeProperty('--drag-y'); }
     document.body.classList.remove('moving-block');
-    document.body.classList.add('moving-block-releasing');
-    clearTimeout(releaseTimer);
-    releaseTimer = setTimeout(() => document.body.classList.remove('moving-block-releasing'), 720);
+    if (moving.active) {
+      document.body.classList.add('moving-block-releasing');
+      clearTimeout(releaseTimer);
+      releaseTimer = setTimeout(() => document.body.classList.remove('moving-block-releasing'), 720);
+    }
     if (commit && allowed && !moving.active) {
       editor.view.dispatch(editor.state.tr.setSelection(NodeSelection.create(editor.state.doc, moving.pos)));
     }
@@ -73,6 +85,13 @@ export function setupBlockMovement(editor, noteId) {
   }
   function target(y) {
     if (!valid()) { finish(); return; }
+    const editorRect = root.getBoundingClientRect();
+    const dropMargin = 32;
+    if (lastX < editorRect.left - dropMargin || lastX > editorRect.right + dropMargin ||
+      y < editorRect.top - dropMargin || y > editorRect.bottom + dropMargin) {
+      drag.side = null; drag.inside = false; drag.boundary = null;
+      marker.style.display = 'none'; return;
+    }
     const source = editor.state.doc.nodeAt(drag.pos);
     let candidates = blocks().filter(block => block.pos < drag.pos || block.pos >= drag.pos + source.nodeSize);
     drag.side = null; drag.inside = false; drag.boundary = null; marker.dataset.inside = 'false';
@@ -115,25 +134,25 @@ export function setupBlockMovement(editor, noteId) {
     if (delta) { window.scrollBy(0, delta); target(lastY); }
     frame = requestAnimationFrame(scroll);
   }
-  function begin(block, event, native = false) {
+  function begin(block, event) {
     if (!block || !editor.isEditable || !noteId()) return;
+    if (drag) finish();
     clearTimeout(releaseTimer); document.body.classList.remove('moving-block-releasing');
-    drag = { pos: block.pos, dom: block.dom, doc: editor.state.doc, noteId: noteId(), startX: event.clientX, startY: event.clientY, active: native, native };
+    drag = { pos: block.pos, dom: block.dom, doc: editor.state.doc, noteId: noteId(), startX: event.clientX, startY: event.clientY, active: false };
     lastY = event.clientY; lastX = event.clientX;
-    if (native) { block.dom.classList.add('container-lifted'); document.body.classList.add('moving-block'); target(lastY); scroll(); }
   }
   function pointerDown(event) {
-    if (event.button !== 0 || event.target.closest('button,input,select,.inline-crop,.inline-crop-tools,.image-title,figcaption,.container-title,.container-caption,.container-resize,.container-resize-edge,.container-select-edge,.container-pair-resize,.image-resize,.column-resize-handle')) return;
+    if (event.button !== 0 || event.target.closest('button,input,select,.inline-crop,.inline-crop-tools,.image-title,figcaption,.container-title,.container-caption,.container-resize,.container-resize-edge,.container-select-edge,.container-pair-resize,.container-gap-boundary,.image-resize,.column-resize-handle')) return;
     const block = locate(event.target);
     if (!block) return;
     const edge =
       (event.clientX < block.rect.left + 7 || event.clientX > block.rect.right - 7 || event.clientY < block.rect.top + 7 || event.clientY > block.rect.bottom - 7);
-    if (!edge && !event.target.closest('.image-drag,.container-type-label') && !event.target.matches('.cell-tools')) return;
+    if (!edge && !event.target.closest('.image-drag,.image-viewport,.container-type-label,[data-type=block-math] .katex') && !event.target.matches('.cell-tools')) return;
     event.preventDefault(); event.stopImmediatePropagation(); begin(block, event);
   }
   document.addEventListener('pointerdown', pointerDown, true);
   document.addEventListener('pointermove', event => {
-    if (drag && !drag.native) {
+    if (drag) {
       event.preventDefault(); lastY = event.clientY; lastX = event.clientX;
       if (!drag.active && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 5) {
         drag.active = true; drag.dom.classList.add('container-lifted'); document.body.classList.add('moving-block'); scroll();
@@ -143,31 +162,13 @@ export function setupBlockMovement(editor, noteId) {
     }
   });
   document.addEventListener('pointerup', () => {
-    if (!drag || drag.native) return;
+    if (!drag) return;
     suppressClick = drag.active; finish(true);
   }, true);
-  document.addEventListener('pointercancel', () => { if (!drag?.native) finish(); }, true);
+  document.addEventListener('pointercancel', () => { if (drag) finish(); }, true);
   document.addEventListener('click', event => {
     if (suppressClick) { event.preventDefault(); event.stopImmediatePropagation(); suppressClick = false; }
   }, true);
-  root.addEventListener('dragstart', event => {
-    if (event.target.closest('.rich-label')) return;
-    const block = locate(event.target);
-    if (!block || !['image', 'blockMath'].includes(block.node.type.name)) return;
-    begin(block, event, true);
-    event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('application/x-notatnik-block', block.node.type.name);
-    event.stopImmediatePropagation();
-  }, true);
-  root.addEventListener('dragover', event => {
-    if (!drag) return;
-    event.preventDefault(); event.stopImmediatePropagation(); lastY = event.clientY; lastX = event.clientX;
-    event.dataTransfer.dropEffect = 'move'; target(lastY);
-  }, true);
-  root.addEventListener('drop', event => {
-    if (!drag) return;
-    event.preventDefault(); event.stopImmediatePropagation(); target(event.clientY); finish(true);
-  }, true);
-  document.addEventListener('dragend', () => finish(), true);
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && drag) { event.preventDefault(); finish(); } }, true);
   window.addEventListener('blur', event => { if (event.target === window) finish(); });
   editor.on('transaction', () => { if (drag && !valid()) finish(); });
@@ -181,7 +182,9 @@ export function moveInto(editor, from, targetPos) {
   const mapped = tr.mapping.map(targetPos), group = tr.doc.nodeAt(mapped);
   if (group?.type.name !== 'blockGroup') return false;
   const to = mapped + group.nodeSize - 1;
-  tr.insert(to, source).setSelection(NodeSelection.create(tr.doc, to));
+  const moving = source.attrs.boxOffsetX ?
+    source.type.create({ ...source.attrs, boxOffsetX: null }, source.content, source.marks) : source;
+  tr.insert(to, moving).setSelection(NodeSelection.create(tr.doc, to));
   collapseRows(tr);
   editor.view.dispatch(tr); editor.view.dispatch(closeHistory(editor.state.tr));
   return true;

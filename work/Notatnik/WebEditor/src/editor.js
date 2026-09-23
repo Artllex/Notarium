@@ -54,7 +54,7 @@ const editor = new Editor({
 
 const movement = setupBlockMovement(editor, () => noteId);
 setupMedia(editor, () => noteId);
-setupContainers(editor, { editImage, openMath, editContainer, imageDialogOpen: () => document.querySelector('#image-dialog').open });
+setupContainers(editor, { editImage, openMath, editContainer, noteId: () => noteId, imageDialogOpen: () => document.querySelector('#image-dialog').open });
 new ContainerKeyboard(editor);
 editor.view.dom.addEventListener('dblclick', event => {
   const dom = event.target.closest('[data-type="inline-math"]');

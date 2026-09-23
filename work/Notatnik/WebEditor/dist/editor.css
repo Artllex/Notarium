@@ -361,7 +361,8 @@ dialog{color:#eee;background:#292929;border:1px solid #666;border-radius:7px;min
 .container-type-label{font:600 11px/23px 'Segoe UI',sans-serif;padding:0 8px;color:#ccc;border-right:1px solid #494949;user-select:none;cursor:grab}
 .container-type-label:before{content:attr(data-label)}
 .object-container:hover>.container-tools,.container-row-hover>.container-tools,.container-selected>.container-tools,.object-container:hover>.container-add-tools,.container-row-hover>.container-add-tools,.container-selected>.container-add-tools{display:flex}
-.container-add-tools{position:absolute;left:50%;bottom:-15px;transform:translateX(-50%);height:25px;display:none;z-index:24;align-items:center;background:#303030;border:1px solid #444;border-radius:4px;padding:0;white-space:nowrap}
+.container-add-tools{position:absolute;left:50%;bottom:-15px;transform:translateX(-50%);height:25px;display:none;z-index:24;align-items:center;background:#303030;border:1px solid #444;border-radius:4px;padding:0;white-space:nowrap;max-width:calc(100% - 28px);overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+.container-add-tools::-webkit-scrollbar{display:none}
 .container-add-tools button{height:23px;padding:1px 9px;border:0;border-left:1px solid #555;background:transparent;color:#bbb;font:11px 'Segoe UI',sans-serif;cursor:pointer;border-radius:0;display:block;flex:0 0 auto;white-space:nowrap;line-height:20px}
 .container-add-tools .container-action-button{width:24px;padding:1px 5px}
 .container-add-tools button:first-child{border-left:0;border-radius:3px 0 0 3px}.container-add-tools button:last-child{border-radius:0 3px 3px 0}
@@ -379,18 +380,23 @@ dialog{color:#eee;background:#292929;border:1px solid #666;border-radius:7px;min
 #container-dialog .background-options input[type=checkbox]{width:auto}
 .container-tools button{background:none;border:0;color:inherit;padding:2px 7px;cursor:pointer}
 .container-tools button:before{content:'⚙'}
-.container-resize{position:absolute;width:11px;height:11px;background:#60a5fa;border:2px solid #1e1e1e;cursor:nwse-resize;display:none;z-index:21}
+.container-resize{position:absolute;width:11px;height:11px;background:#60a5fa;border:2px solid #1e1e1e;cursor:nwse-resize;display:none;z-index:26}
 .container-resize-bottom-right{right:-6px;bottom:-6px}.container-resize-bottom-left{left:-6px;bottom:-6px;cursor:nesw-resize}
 .object-container.corner-near-right>.container-resize-bottom-right,.object-container.corner-near-left>.container-resize-bottom-left{display:block}
-.container-resize-edge{position:absolute;z-index:20;display:block;background:transparent;cursor:pointer}
-.container-resize-right{right:-5px;top:-4px;bottom:-4px;width:10px}
-.container-resize-left{left:-5px;top:-4px;bottom:-4px;width:10px}
-.container-resize-bottom{bottom:-5px;left:-4px;right:-4px;height:10px}
+.container-resize-edge{position:absolute;z-index:25;display:block;background:transparent;cursor:pointer}
+.container-resize-right{right:-10px;top:-4px;bottom:-4px;width:10px}
+.container-resize-left{left:-10px;top:-4px;bottom:-4px;width:10px}
+.container-resize-bottom{bottom:-10px;left:-4px;right:-4px;height:10px}
 .container-select-edge{position:absolute;z-index:19;display:block;background:transparent;cursor:pointer}
-.container-select-top{left:-4px;right:-4px;top:-5px;height:10px}
+.container-select-top{left:-4px;right:-4px;top:-10px;height:10px}
 .container-pair-resize{display:none;position:absolute;z-index:23;right:-16px;top:5px;bottom:5px;width:10px;cursor:col-resize;background:linear-gradient(to right,transparent 4px,#555 4px,#555 5px,transparent 5px)}
+.container-gap-boundary{display:none;position:absolute;z-index:23;left:-16px;top:5px;bottom:5px;width:10px;cursor:col-resize;background:linear-gradient(to right,transparent 4px,#555 4px,#555 5px,transparent 5px)}
 .layout-row>.object-container:not(:last-child)>.container-pair-resize{display:block}
-.container-pair-resize:hover{background:linear-gradient(to right,transparent 4px,#60a5fa 4px,#60a5fa 5px,transparent 5px)}
+.container-pair-resize:hover,.container-gap-boundary:hover{background:linear-gradient(to right,transparent 4px,#60a5fa 4px,#60a5fa 5px,transparent 5px)}
+.container-horizontal-layer{position:fixed;inset:0;z-index:1000;pointer-events:none}
+.object-container>.container-add-tools{z-index:1001}
+.container-between-horizontal{position:fixed;pointer-events:auto;cursor:copy;background:linear-gradient(to bottom,transparent calc(50% - .5px),#555 calc(50% - .5px),#555 calc(50% + .5px),transparent calc(50% + .5px))}
+.container-between-horizontal:hover{background:linear-gradient(to bottom,transparent calc(50% - .5px),#60a5fa calc(50% - .5px),#60a5fa calc(50% + .5px),transparent calc(50% + .5px))}
 .container-resize-edge:hover{background:transparent}
 .object-container:has(>.container-resize-right:hover):before,.object-container:has(>.container-resize-left:hover):before{content:'';position:absolute;top:-4px;bottom:-4px;width:1px;background:#60a5fa;z-index:22;pointer-events:none}.object-container:has(>.container-resize-right:hover):before{right:-4px}.object-container:has(>.container-resize-left:hover):before{left:-4px}
 .object-container:has(>.container-resize-bottom:hover):after{content:'';position:absolute;bottom:-4px;left:-4px;right:-4px;height:1px;background:#60a5fa;z-index:22;pointer-events:none}
@@ -410,8 +416,8 @@ dialog{color:#eee;background:#292929;border:1px solid #666;border-radius:7px;min
 .rich-label .label-editor{outline:none;min-height:1em;text-align:inherit;font-size:inherit;line-height:inherit;white-space:pre-wrap}
 .rich-label .label-editor p{margin:0;min-height:1em}
 .rich-label .label-editor h1,.rich-label .label-editor h2{margin:.3em 0;font-size:1.3em}
-.object-container:has(.inline-crop)>.container-resize,.object-container:has(.inline-crop)>.container-resize-edge,.object-container:has(.inline-crop)>.container-pair-resize{display:none}
-.moving-block .container-resize-edge,.moving-block .container-resize,.moving-block .container-pair-resize{pointer-events:none}
+.object-container:has(.inline-crop)>.container-resize,.object-container:has(.inline-crop)>.container-resize-edge,.object-container:has(.inline-crop)>.container-pair-resize,.object-container:has(.inline-crop)>.container-gap-boundary{display:none!important}
+.moving-block .container-resize-edge,.moving-block .container-resize,.moving-block .container-pair-resize,.moving-block .container-gap-boundary{pointer-events:none}
 .moving-block .object-container{outline-color:#444;animation:drag-outline-appear 720ms ease-out both}
 .moving-block-releasing .object-container{outline-color:transparent;animation:drag-outline-disappear 720ms ease-in both}
 .moving-block-releasing .object-container.container-selected{outline-color:#82b8f8;animation:none}
@@ -446,7 +452,7 @@ dialog{color:#eee;background:#292929;border:1px solid #666;border-radius:7px;min
 .code-cell .cell-tools .cell-language-input:focus{visibility:visible;opacity:1;pointer-events:auto;animation:container-chrome-appear 180ms ease-out both}
 .layout-row{display:flex;gap:22px;align-items:flex-start;clear:both;margin:12px 0}
 .layout-row>.object-container{flex:1 1 0;width:0;min-width:60px}
-.layout-row>.object-container[style*="width:"]{flex-basis:auto;flex-grow:0;flex-shrink:1}
+.layout-row>.object-container[style*="width:"]{flex:0 0 auto;max-width:none}
 .object-container>figure[data-note-image]{float:none!important;clear:none!important;margin:0!important;max-width:100%;width:100%!important}
 .object-container>figure img{width:100%;object-fit:contain}
 .object-container .image-tools,.object-container .image-resize{display:none!important}
