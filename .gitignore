@@ -13,9 +13,8 @@
 /product/releases/
 /product/runtime/
 /product/test_installation/
-/product/operations/
 /AI/
-/operations/tests/*.json
-/operations/tests/*.png
-/operations/tests/*.log
+/product/operations/tests/*.json
+/product/operations/tests/*.png
+/product/operations/tests/*.log
 *.tmp

@@ -7,4 +7,4 @@
 - [Silnik Notatnika](../source/Modules/Notebook/ARCHITECTURE.md): format dokumentu i komunikacja.
 - [Interakcje kontenerów](../source/Modules/Notebook/CONTAINER_INTERACTIONS.md): zasady zachowania.
 
-Raporty weryfikacji: C:/NOTARIUM/operations/tests. Opisy architektury należy aktualizować wraz ze zmianą odpowiedzialności; wyniki konkretnego testu zapisywać osobno.
+Raporty weryfikacji: C:/NOTARIUM/product/operations/tests. Opisy architektury należy aktualizować wraz ze zmianą odpowiedzialności; wyniki konkretnego testu zapisywać osobno.

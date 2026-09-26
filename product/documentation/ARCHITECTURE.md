@@ -18,12 +18,11 @@ C:/NOTARIUM
 │   ├── test_installation  instalacje testowe
 │   ├── runtime            miejsce na zasoby uruchomieniowe
 │   ├── documentation      dokumentacja produktu
-│   └── operations
+│   └── operations/tests   raporty weryfikacji
 ├── management/documentation
 │   ├── notes
 │   ├── comments
 │   └── milestones
-├── operations/tests       raporty weryfikacji
 ├── AI/chatgpt
 └── .project-control
 ```
