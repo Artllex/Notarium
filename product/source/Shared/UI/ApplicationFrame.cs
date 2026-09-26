@@ -17,6 +17,7 @@ public sealed class ApplicationFrame : Grid
         owner.Background = UiPolicy.Current.SurfaceBrush; owner.Foreground = UiPolicy.Current.TextBrush;
         owner.FontFamily = new FontFamily(UiPolicy.Current.FontFamily);
         owner.WindowStyle = WindowStyle.None; owner.ResizeMode = ResizeMode.CanResize;
+        WorkAreaMaximizer.Attach(owner);
         WindowChrome.SetWindowChrome(owner, new WindowChrome { CaptionHeight = 30, ResizeBorderThickness = new Thickness(6), GlassFrameThickness = new Thickness(0), UseAeroCaptionButtons = false });
         RowDefinitions.Add(new RowDefinition { Height = new GridLength(30) });
         RowDefinitions.Add(new RowDefinition { Height = new GridLength(25) });
