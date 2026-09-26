@@ -11,6 +11,22 @@ public sealed class UiPolicy
     public string MenuText { get; set; } = "";
     public double ItemMinHeight { get; set; }
     public double MenuMaxHeight { get; set; }
+    public string Surface { get; set; } = "";
+    public string Panel { get; set; } = "";
+    public string Accent { get; set; } = "";
+    public string FontFamily { get; set; } = "";
+    public double FontSize { get; set; }
+    public double MenuPadding { get; set; }
+    public double RowPaddingX { get; set; }
+    public double RowPaddingY { get; set; }
+    public double RowMarginX { get; set; }
+    public double RowRadius { get; set; }
+    public double MenuRadius { get; set; }
+    public double DisabledOpacity { get; set; }
+    public System.Windows.Media.Brush SurfaceBrush => Brush(Surface);
+    public System.Windows.Media.Brush PanelBrush => Brush(Panel);
+    public System.Windows.Media.Brush TextBrush => Brush(MenuText);
+    public System.Windows.Media.Brush AccentBrush => Brush(Accent);
     public static UiPolicy Current { get; } = Load();
     private static UiPolicy Load()
     {

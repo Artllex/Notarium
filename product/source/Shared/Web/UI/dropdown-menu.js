@@ -1,5 +1,6 @@
 import { ActionButton, VisualElement } from './components.js';
 import policy from '../../UI/ui-policy.json';
+import { applyTheme } from './theme.js';
 
 // One popup implementation for choice lists, context menus and autocomplete.
 // Caller supplies actions; this component owns focus, anchoring and dismissal.
@@ -12,6 +13,7 @@ export class DropDownMenu extends VisualElement {
     this.anchor = anchor; this.restoreFocus = restoreFocus;
     this.dom.setAttribute('role', 'menu');
     this.dom.id = 'ui-dropdown-' + ++DropDownMenu.nextId;
+    applyTheme(this.dom);
     for (const [name, value] of Object.entries({ '--ui-menu-background': policy.menuBackground, '--ui-menu-border': policy.menuBorder, '--ui-menu-hover': policy.menuHover, '--ui-menu-selected': policy.menuSelected, '--ui-menu-text': policy.menuText, '--ui-menu-min-height': policy.itemMinHeight + 'px', '--ui-menu-max-height': policy.menuMaxHeight + 'px' })) this.dom.style.setProperty(name, value);
   }
   open(items, point = null, focus = true) {

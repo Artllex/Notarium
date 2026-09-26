@@ -5,5 +5,17 @@
   "menuSelected": "#304B66",
   "menuText": "#F1F1F1",
   "itemMinHeight": 24,
-  "menuMaxHeight": 520
+  "menuMaxHeight": 520,
+  "surface": "#1E1E1E",
+  "panel": "#202020",
+  "accent": "#60A5FA",
+  "fontFamily": "Segoe UI",
+  "fontSize": 14,
+  "menuPadding": 2,
+  "rowPaddingX": 10,
+  "rowPaddingY": 2,
+  "rowMarginX": 2,
+  "rowRadius": 3,
+  "menuRadius": 0,
+  "disabledOpacity": 0.45
 }

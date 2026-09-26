@@ -16,6 +16,8 @@ try {
   });
   await check('dropdown keyboard, disabled item and anchor', async () => {
     const trigger = page.getByRole('button', { name: 'Otwórz dropdown', exact: true }); await trigger.click();
+    const style = await page.locator('.ui-dropdown').evaluate(el => { const s = getComputedStyle(el); return [s.borderRadius, s.boxShadow, s.padding, s.fontSize]; });
+    assert.deepEqual(style, ['0px', 'none', '2px', '14px']);
     const anchor = await trigger.boundingBox(), box = await page.locator('.ui-dropdown').boundingBox(); assert.ok(Math.abs(anchor.x - box.x) < 1); assert.ok(Math.abs(anchor.y + anchor.height - box.y) < 1);
     assert.equal(await page.getByRole('menuitem', { name: 'Opcja wyłączona' }).isEnabled(), false);
     await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter'); assert.match(await page.locator('#result').textContent(), /zaznaczona opcja/);

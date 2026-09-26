@@ -13,13 +13,14 @@ public sealed class DevWindow : Window
     public DevWindow()
     {
         Title = "Notarium — DEV tests"; Width = 1050; Height = 800; MinWidth = 650; MinHeight = 450;
-        Background = UiPolicy.Brush(UiPolicy.Current.MenuBackground); Foreground = Brushes.White;
+        Background = UiPolicy.Current.SurfaceBrush; Foreground = UiPolicy.Current.TextBrush;
+        FontFamily = new FontFamily(UiPolicy.Current.FontFamily); FontSize = UiPolicy.Current.FontSize;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        var tabs = new TabControl { Margin = new Thickness(12) };
-        tabs.Items.Add(new TabItem { Header = "Windows · WPF", Content = new ScrollViewer { Content = Samples, VerticalScrollBarVisibility = ScrollBarVisibility.Auto } });
+        var tabs = new TabControl { Margin = new Thickness(12), Background = UiPolicy.Current.SurfaceBrush, Foreground = UiPolicy.Current.TextBrush };
+        tabs.Items.Add(new TabItem { Header = "Windows · WPF", Content = new ScrollViewer { Content = Samples, Background = UiPolicy.Current.SurfaceBrush, Foreground = UiPolicy.Current.TextBrush, VerticalScrollBarVisibility = ScrollBarVisibility.Auto } });
         tabs.Items.Add(new TabItem { Header = "Edytor · Web", Content = WebGallery });
         Content = tabs;
-        AddTitle("Wspólne komponenty Windows", "To rzeczywiste klasy z Shared/UI, nie kopie ich wyglądu. Przykłady nie zmieniają danych notatek.");
+        AddTitle("Wspólne komponenty Notarium", "Tutaj oceniamy styl aplikacji. Motyw: Shared/UI/Theme.xaml; wspólne parametry Windows i Web: Shared/UI/ui-policy.json. Przykłady nie zmieniają danych notatek.");
         var buttons = new WrapPanel();
         buttons.Children.Add(Button("ActionButton", () => _result.Text = "ActionButton: kliknięcie działa."));
         buttons.Children.Add(new ActionButton { Content = "Przycisk wyłączony", IsEnabled = false });
@@ -27,6 +28,10 @@ public sealed class DevWindow : Window
         var dropdown = Button("Otwórz dropdown", () => { });
         dropdown.Click += (_, _) => Menu(dropdown).IsOpen = true;
         AddSection("DropDownMenu — zwykła, zaznaczana i wyłączona pozycja", dropdown);
+        var font = Button("Segoe UI ▾", () => { });
+        font.Foreground = UiPolicy.Current.AccentBrush;
+        font.Click += (_, _) => FontPicker.Create(font, name => { font.Content = name + " ▾"; _result.Text = "Czcionka: " + name; }).IsOpen = true;
+        AddSection("FontPicker — ten sam wybór czcionki co w Notatniku", font);
         var menuBar = new MenuBar { FontSize = 14 };
         foreach (var title in new[] { "_File", "_View", "_Help" })
         {

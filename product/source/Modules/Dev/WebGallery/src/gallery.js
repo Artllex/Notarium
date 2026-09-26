@@ -1,11 +1,13 @@
 import { ActionButton, ToolPanel, TextField, Toggle, Label, Handle, Dialog, VisualElement } from '../../../../Shared/Web/UI/components.js';
 import { DropDownMenu } from '../../../../Shared/Web/UI/dropdown-menu.js';
 import { VisualRegistry } from '../../../../Shared/Web/UI/registry.js';
+import '../../../../Shared/Web/UI/theme.js';
+document.body.classList.add('ui-surface');
 
 const host = document.querySelector('#samples'), result = document.querySelector('#result');
 const report = text => result.textContent = text;
 function section(title, ...children) { const panel = ToolPanel.create('sample'); const heading = document.createElement('h2'); heading.textContent = title; panel.append(heading, ...children); host.append(panel); return panel; }
-function button(label, action) { const dom = ActionButton.create(); dom.textContent = label; dom.onclick = action; return dom; }
+function button(label, action) { const dom = ActionButton.create(); dom.classList.add('ui-action'); dom.textContent = label; dom.onclick = action; return dom; }
 const disabled = button('Przycisk wyłączony', () => report('Nie powinno się pojawić')); disabled.disabled = true;
 section('ActionButton / ToolPanel', button('Przycisk', () => report('ActionButton: kliknięcie działa.')), disabled);
 const dropdownButton = button('Otwórz dropdown', () => dropdown.open([

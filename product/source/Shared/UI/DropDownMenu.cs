@@ -80,8 +80,10 @@ public sealed class DropDownMenu
                 MinWidth = _itemWidth ?? 150,
                 Width = _itemWidth ?? double.NaN,
                 MinHeight = UiPolicy.Current.ItemMinHeight,
-                Padding = new Thickness(10, 2, 10, 2),
-                Margin = new Thickness(2, 0, 2, 0),
+                Padding = new Thickness(UiPolicy.Current.RowPaddingX, UiPolicy.Current.RowPaddingY, UiPolicy.Current.RowPaddingX, UiPolicy.Current.RowPaddingY),
+                Margin = new Thickness(UiPolicy.Current.RowMarginX, 0, UiPolicy.Current.RowMarginX, 0),
+                FontFamily = new FontFamily(UiPolicy.Current.FontFamily),
+                FontSize = UiPolicy.Current.FontSize,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 VerticalContentAlignment = VerticalAlignment.Center,
                 Foreground = UiPolicy.Brush(UiPolicy.Current.MenuText),
@@ -106,7 +108,8 @@ public sealed class DropDownMenu
             Background = UiPolicy.Brush(UiPolicy.Current.MenuBackground),
             BorderBrush = UiPolicy.Brush(UiPolicy.Current.MenuBorder),
             BorderThickness = new Thickness(1),
-            Padding = new Thickness(2),
+            Padding = new Thickness(UiPolicy.Current.MenuPadding),
+            CornerRadius = new CornerRadius(UiPolicy.Current.MenuRadius),
             Child = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, MaxHeight = UiPolicy.Current.MenuMaxHeight, Content = _itemsHost }
         };
     }
@@ -116,7 +119,7 @@ public sealed class DropDownMenu
         var border = new FrameworkElementFactory(typeof(Border), "Row");
         border.SetBinding(Border.BackgroundProperty, new System.Windows.Data.Binding(nameof(Button.Background)) { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent) });
         border.SetBinding(Border.PaddingProperty, new System.Windows.Data.Binding(nameof(Button.Padding)) { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent) });
-        border.SetValue(Border.CornerRadiusProperty, new CornerRadius(3));
+        border.SetValue(Border.CornerRadiusProperty, new CornerRadius(UiPolicy.Current.RowRadius));
         var content = new FrameworkElementFactory(typeof(ContentPresenter));
         content.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
         border.AppendChild(content);
@@ -128,7 +131,7 @@ public sealed class DropDownMenu
         focus.Setters.Add(new Setter(Border.BackgroundProperty, UiPolicy.Brush(UiPolicy.Current.MenuHover), "Row"));
         template.Triggers.Add(focus);
         var disabled = new Trigger { Property = UIElement.IsEnabledProperty, Value = false };
-        disabled.Setters.Add(new Setter(UIElement.OpacityProperty, 0.45)); template.Triggers.Add(disabled);
+        disabled.Setters.Add(new Setter(UIElement.OpacityProperty, UiPolicy.Current.DisabledOpacity)); template.Triggers.Add(disabled);
         return template;
     }
 }

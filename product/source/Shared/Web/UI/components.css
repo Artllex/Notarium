@@ -1,6 +1,11 @@
-.ui-dropdown{position:fixed;z-index:3000;max-width:calc(100vw - 12px);max-height:min(var(--ui-menu-max-height),70vh);overflow:auto;padding:4px;background:var(--ui-menu-background);border:1px solid var(--ui-menu-border);border-radius:4px;box-shadow:0 4px 18px #0008}
-.ui-dropdown button{display:block;width:100%;min-height:var(--ui-menu-min-height);border:0;background:transparent;color:var(--ui-menu-text);text-align:left;padding:4px 12px;white-space:nowrap}
+.ui-dropdown{position:fixed;z-index:3000;box-sizing:border-box;max-width:calc(100vw - 12px);max-height:min(var(--ui-menu-max-height),70vh);overflow:auto;padding:var(--ui-menu-padding);background:var(--ui-menu-background);border:1px solid var(--ui-menu-border);border-radius:var(--ui-menu-radius);box-shadow:none;font:var(--ui-font-size) var(--ui-font-family),sans-serif;color:var(--ui-menu-text)}
+.ui-dropdown button{display:block;box-sizing:border-box;width:calc(100% - 2 * var(--ui-row-margin-x));min-width:150px;min-height:var(--ui-menu-min-height);margin:0 var(--ui-row-margin-x);border:0;border-radius:var(--ui-row-radius);background:transparent;color:var(--ui-menu-text);font:inherit;text-align:left;padding:var(--ui-row-padding-y) var(--ui-row-padding-x);white-space:nowrap;cursor:pointer}
+.ui-dropdown button.checked{background:var(--ui-menu-selected)}
 .ui-dropdown button:hover,.ui-dropdown button:focus{background:var(--ui-menu-hover);outline:none}
-.ui-dropdown button.checked{background:var(--ui-menu-selected)}.ui-dropdown button:disabled{opacity:.45}
-.ui-choice{font:inherit;color:inherit;background:#292929;border:1px solid #555;padding:5px 10px;cursor:pointer}
+.ui-dropdown button:disabled{opacity:var(--ui-disabled-opacity);cursor:default}
+.ui-choice{font:inherit;color:inherit;background:var(--ui-menu-background);border:1px solid var(--ui-menu-border);padding:5px 10px;cursor:pointer}
 .ui-choice:after{content:' ▾'}
+.ui-action{font:var(--ui-font-size) var(--ui-font-family),sans-serif;color:var(--ui-menu-text);background:transparent;border:0;border-radius:4px;padding:6px 10px;cursor:pointer}
+.ui-action:hover,.ui-action:focus-visible{background:var(--ui-menu-hover)}
+.ui-action:disabled{opacity:var(--ui-disabled-opacity);cursor:default}
+.ui-surface{background:var(--ui-surface);color:var(--ui-menu-text);font:var(--ui-font-size) var(--ui-font-family),sans-serif}

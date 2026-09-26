@@ -60,22 +60,11 @@ public sealed class NotebookFormatting
 
     private void ShowFontMenu(Button source)
     {
-        var fonts = new[] { "Segoe UI", "Arial", "Calibri", "Georgia", "Times New Roman", "Verdana", "Cascadia Mono", "Consolas" };
-        var menu = CreatePopupMenu(source);
-        foreach (var font in fonts)
+        var menu = FontPicker.Create(source, font =>
         {
-            var item = new MenuItem
-            {
-                Header = new TextBlock { Text = font, FontFamily = new System.Windows.Media.FontFamily(font), FontSize = 14 },
-                Tag = font,
-            };
-            item.Click += (_, _) =>
-            {
-                Editor.Execute("font", font);
-                _fontLabel($"{font} ▾");
-            };
-            menu.Items.Add(item);
-        }
+            Editor.Execute("font", font);
+            _fontLabel($"{font} ▾");
+        });
         menu.IsOpen = true;
     }
 
