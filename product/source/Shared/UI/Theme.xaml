@@ -2,7 +2,8 @@
         <SolidColorBrush x:Key="TitleBar" Color="#202020"/><SolidColorBrush x:Key="CommandBar" Color="#272727"/>
         <SolidColorBrush x:Key="Panel" Color="{Binding Panel, Source={x:Static ui:UiPolicy.Current}}"/><SolidColorBrush x:Key="Editor" Color="{Binding Surface, Source={x:Static ui:UiPolicy.Current}}"/>
         <SolidColorBrush x:Key="Selected" Color="#3B3B3B"/><SolidColorBrush x:Key="Line" Color="#3D3D3D"/>
-        <SolidColorBrush x:Key="Text" Color="{Binding MenuText, Source={x:Static ui:UiPolicy.Current}}"/><SolidColorBrush x:Key="Muted" Color="{Binding MenuText, Source={x:Static ui:UiPolicy.Current}}"/>
+        <SolidColorBrush x:Key="Text" Color="{Binding MenuText, Source={x:Static ui:UiPolicy.Current}}"/><SolidColorBrush x:Key="Muted" Color="#A0A0A0"/>
+        <Style x:Key="SectionHeading" TargetType="TextBlock"><Setter Property="Foreground" Value="{Binding AccentBrush, Source={x:Static ui:UiPolicy.Current}}"/></Style>
         <SolidColorBrush x:Key="Accent" Color="{Binding Accent, Source={x:Static ui:UiPolicy.Current}}"/>
         <Geometry x:Key="WorkspaceTabShape">M 14,36 L 0,36 L 8,5 Q 9,0 15,0 L 185,0 Q 191,0 192,5 L 200,36 L 186,36 Z</Geometry>
         <SolidColorBrush x:Key="WorkspaceTabActive" Color="#333333"/>

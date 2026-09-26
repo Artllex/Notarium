@@ -31,7 +31,8 @@ internal static class Program
         Check(window.Samples.Children.OfType<MenuBar>().Count() == 1 && window.Samples.Children.OfType<ToolPanel>().Count() == 1 && window.Samples.Children.OfType<TabCard>().Count() == 1, "gallery composes actual shared WPF components");
         var native = window.WebGallery; native.DataDirectory = Path.Combine(fixture, "web");
         var tabs = window.GalleryTabs; window.ShowInTaskbar = false; window.Show(); window.UpdateLayout();
-        Check(window.Samples.Children.OfType<TextBlock>().All(text => text.Foreground.ToString() == UiPolicy.Current.TextBrush.ToString()), "rendered WPF sample labels inherit production text color");
+        Check(window.Samples.Children.OfType<TextBlock>().Where(text => text.FontSize < 16).All(text => text.Foreground.ToString() == UiPolicy.Current.TextBrush.ToString()), "ordinary labels and descriptions use white production text");
+        Check(window.Samples.Children.OfType<TextBlock>().Where(text => text.FontSize >= 16).All(text => text.Foreground.ToString() == UiPolicy.Current.AccentBrush.ToString()), "main headings use blue accent, not body text");
         var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)window.Frame.ActualWidth, (int)window.Frame.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
         bitmap.Render(window.Frame);
         var pixel = new byte[4]; bitmap.CopyPixels(new Int32Rect(30, 40, 1, 1), pixel, 4, 0);

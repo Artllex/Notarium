@@ -9,3 +9,4 @@
 .ui-action:hover,.ui-action:focus-visible{background:var(--ui-menu-hover)}
 .ui-action:disabled{opacity:var(--ui-disabled-opacity);cursor:default}
 .ui-surface{background:var(--ui-surface);color:var(--ui-menu-text);font:var(--ui-font-size) var(--ui-font-family),sans-serif}
+.ui-surface h1,.ui-surface h2{color:var(--ui-accent)}

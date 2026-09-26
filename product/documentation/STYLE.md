@@ -2,6 +2,10 @@
 
 DEV jest miejscem oceny wspólnych komponentów aplikacji, nie osobnym motywem.
 Zmiana wspólnego stylu musi obowiązywać również w modułach produkcyjnych.
+Kolory tekstu interfejsu: zwykłe etykiety, menu i opisy białe (#F1F1F1),
+główne nagłówki i wyróżnienia błękitne (#3B82D0), napisy pomocnicze szare.
+W Windows nagłówki używają wspólnego stylu SectionHeading; w galerii Web
+odpowiadają mu h1/h2 w ui-surface. Treść dokumentów nie dziedziczy tego stylu.
 
 ## Wspólna rama aplikacji
 

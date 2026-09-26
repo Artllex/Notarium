@@ -2,7 +2,7 @@
                 <Grid.RowDefinitions><RowDefinition Height="52" /><RowDefinition Height="46" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                 <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <ui:BrandIcon Width="28" Height="28" HorizontalAlignment="Left" Margin="14,0,0,0" />
-                    <TextBlock Text="Notarium" Margin="51,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" />
+                    <TextBlock Text="Notarium" Foreground="{StaticResource Accent}" Margin="51,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" />
                 </Grid>
 
                 <Grid Grid.Row="1" Margin="10,3,10,7">
@@ -13,7 +13,7 @@
                     <ui:ActionButton Content="＋" ToolTip="Utwórz nową notatkę" HorizontalAlignment="Right" Width="34" Height="32" Margin="0,0,2,0" Padding="0" FontSize="18" Background="#3B82D0" Foreground="White" FontWeight="SemiBold" Click="NewNote_Click" />
                 </Grid>
 
-                <TextBlock Grid.Row="2" Text="NOTATKI" Margin="17,13,0,7" Foreground="{StaticResource Text}" FontSize="10" FontWeight="SemiBold" />
+                <TextBlock Grid.Row="2" Text="NOTATKI" Margin="17,13,0,7" Foreground="{StaticResource Accent}" FontSize="10" FontWeight="SemiBold" />
 
                 <ListBox Grid.Row="3" x:Name="NotesList" ItemsSource="{Binding Notes}" SelectedItem="{Binding ActiveNote, Mode=OneWay}" SelectionChanged="NotesList_SelectionChanged" Background="Transparent" BorderThickness="0" Padding="8,0" Foreground="{StaticResource Text}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Padding" Value="0" /><Setter Property="Margin" Value="0" /><Setter Property="BorderThickness" Value="0" /><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><Border x:Name="ItemBorder" Padding="9,5" BorderBrush="#353535" BorderThickness="0,0,0,1" Background="Transparent"><ContentPresenter /></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="ItemBorder" Property="Background" Value="#2D2D2D" /></Trigger><Trigger Property="IsSelected" Value="True"><Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource Selected}" /></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter></Style></ListBox.ItemContainerStyle>

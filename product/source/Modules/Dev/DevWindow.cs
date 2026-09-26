@@ -87,9 +87,9 @@ public sealed class DevWindow : Window
     private static ActionButton Button(string label, Action action)
     { var button = new ActionButton { Content = label, Margin = new Thickness(0, 0, 8, 4) }; button.Click += (_, _) => action(); return button; }
     private void AddTitle(string title, string text)
-    { Samples.Children.Add(new TextBlock { Text = title, FontSize = 24 }); Samples.Children.Add(new TextBlock { Text = text, Margin = new Thickness(0, 8, 0, 12), TextWrapping = TextWrapping.Wrap }); }
+    { Samples.Children.Add(new TextBlock { Text = title, FontSize = 24, Style = (Style)FindResource("SectionHeading") }); Samples.Children.Add(new TextBlock { Text = text, Margin = new Thickness(0, 8, 0, 12), TextWrapping = TextWrapping.Wrap }); }
     private void AddSection(string title, UIElement content)
-    { Samples.Children.Add(new TextBlock { Text = title, FontSize = 16, Margin = new Thickness(0, 16, 0, 8) }); Samples.Children.Add(content); }
+    { Samples.Children.Add(new TextBlock { Text = title, FontSize = 16, Style = (Style)FindResource("SectionHeading"), Margin = new Thickness(0, 16, 0, 8) }); Samples.Children.Add(content); }
     private sealed class DemoComposite : CompositePanel
     { public DemoComposite() { Content = Button("Wyślij zdarzenie", () => Emit("demo", this, new RoutedEventArgs())); } }
 }
