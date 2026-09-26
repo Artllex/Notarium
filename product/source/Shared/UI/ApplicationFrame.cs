@@ -48,7 +48,7 @@ public sealed class ApplicationFrame : Grid
         var label = new TextBlock { Text = heading, Foreground = UiPolicy.Current.AccentBrush, FontSize = 10, Margin = new Thickness(17, 10, 0, 0) }; SetRow(label, 1); grid.Children.Add(label);
         SetRow(navigation, 2); grid.Children.Add(navigation);
         var footer = new StackPanel { Margin = new Thickness(8, 10, 8, 20) };
-        foreach (var text in new[] { "Konto", "Ustawienia" }) footer.Children.Add(new ActionButton { Content = text, HorizontalContentAlignment = HorizontalAlignment.Left, Height = 32, Foreground = (Brush)Application.Current.FindResource("Muted"), IsEnabled = false });
+        foreach (var text in new[] { "Konto", "Ustawienia" }) footer.Children.Add(new ActionButton { Content = text, HorizontalContentAlignment = HorizontalAlignment.Left, Height = 32, Foreground = UiPolicy.Current.AccentBrush, IsEnabled = false });
         SetRow(footer, 3); grid.Children.Add(footer); return grid;
     }
 }

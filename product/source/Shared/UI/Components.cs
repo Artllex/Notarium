@@ -33,7 +33,7 @@ public sealed class MenuBar : ItemsControl
         _bar.Children.Clear();
         foreach (var definition in Items.OfType<MenuItem>())
         {
-            var button = new ActionButton { Content = new AccessText { Text = definition.Header?.ToString() ?? "" }, Padding = new Thickness(10, 2, 10, 2), FontSize = FontSize };
+            var button = new ActionButton { Content = new AccessText { Text = definition.Header?.ToString() ?? "" }, Foreground = UiPolicy.Current.AccentBrush, Padding = new Thickness(10, 2, 10, 2), FontSize = FontSize };
             System.Windows.Automation.AutomationProperties.SetName(button, (definition.Header?.ToString() ?? "").Replace("_", ""));
             void Open()
             {

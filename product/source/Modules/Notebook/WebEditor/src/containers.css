@@ -133,5 +133,5 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 .tiptap[data-layout=article]>.object-container>h1{font-size:2.65em;font-weight:650;letter-spacing:-.035em;line-height:1.12;margin:0 0 .65em}
 .tiptap[data-layout=article]>.object-container>h2{font-size:1.4em;line-height:1.3;margin:1.8em 0 .65em}
 .code-cell-empty .cm-gutters{display:none}
-.container-tools,.container-type-label,.container-add-tools button,.container-add-tools button:hover{color:var(--ui-menu-text)}
+.container-tools,.container-type-label,.container-add-tools button,.container-add-tools button:hover{color:var(--ui-accent)}
 .object-container{position:relative;min-width:0;max-width:100%;padding-bottom:13px;margin-bottom:13px;outline:1px solid transparent;outline-offset:3px;box-sizing:border-box}
