@@ -20,7 +20,8 @@ internal static class Program
         Check(missing.Entries.All(entry => !entry.IsAvailable) && missing.Errors.Count == 0, "missing implementation is a normal state");
         var module = new DevModule(); Check(module.Id == "dev", "DEV implements the module contract");
         var icon = new BrandIcon();
-        Check(icon.Source is System.Windows.Media.Imaging.BitmapImage image && image.PixelWidth > 0 && image.UriSource.ToString().Contains("Notarium.UI;component/Assets/Notarium.png") && icon.Stretch == System.Windows.Media.Stretch.Uniform, "shared original feather and book icon loads without cropping");
+        Check(icon.Artwork.Source is System.Windows.Media.Imaging.BitmapImage image && image.PixelWidth > 0 && image.UriSource.ToString().Contains("Notarium.UI;component/Assets/Notarium.png") && icon.Artwork.Stretch == System.Windows.Media.Stretch.Uniform, "shared original feather and book icon loads without cropping");
+        Check(icon.Children[0] is System.Windows.Shapes.Ellipse circle && circle.Fill.ToString() == UiPolicy.Current.AccentBrush.ToString(), "brand icon retains the previous star blue circular background");
         var window = (DevWindow)module.CreateWindow();
         var themedTabs = window.GalleryTabs;
         Check(window.Content is ApplicationFrame && window.Frame.Workspace.Content == themedTabs && window.Frame.Sidebar.Content is Grid, "DEV composes module-free application frame and gallery workspace");
