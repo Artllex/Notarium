@@ -1,0 +1,6 @@
+.ui-dropdown{position:fixed;z-index:3000;max-width:calc(100vw - 12px);max-height:min(var(--ui-menu-max-height),70vh);overflow:auto;padding:4px;background:var(--ui-menu-background);border:1px solid var(--ui-menu-border);border-radius:4px;box-shadow:0 4px 18px #0008}
+.ui-dropdown button{display:block;width:100%;min-height:var(--ui-menu-min-height);border:0;background:transparent;color:var(--ui-menu-text);text-align:left;padding:4px 12px;white-space:nowrap}
+.ui-dropdown button:hover,.ui-dropdown button:focus{background:var(--ui-menu-hover);outline:none}
+.ui-dropdown button.checked{background:var(--ui-menu-selected)}.ui-dropdown button:disabled{opacity:.45}
+.ui-choice{font:inherit;color:inherit;background:#292929;border:1px solid #555;padding:5px 10px;cursor:pointer}
+.ui-choice:after{content:' ▾'}

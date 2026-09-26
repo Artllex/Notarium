@@ -1,0 +1,9 @@
+{
+  "menuBackground": "#252525",
+  "menuBorder": "#4E4E4E",
+  "menuHover": "#3A3A3A",
+  "menuSelected": "#304B66",
+  "menuText": "#F1F1F1",
+  "itemMinHeight": 24,
+  "menuMaxHeight": 520
+}

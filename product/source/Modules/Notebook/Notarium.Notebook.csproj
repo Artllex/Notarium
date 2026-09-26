@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0-windows10.0.19041.0</TargetFramework><UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><AssemblyName>Notarium.Notebook</AssemblyName><RootNamespace>Notatnik</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms"/><Using Remove="System.Drawing"/>
+    <Compile Remove="Core/**/*.cs;Legacy/**/*.cs"/><Page Remove="Legacy/**/*.xaml"/>
+    <ProjectReference Include="Core/Notatnik.Core.csproj;../../Shared/Contracts/Notarium.Contracts.csproj;../../Shared/UI/Notarium.UI.csproj;../../Shared/WebHost/Notarium.WebHost.csproj"/>
+    <PackageReference Include="Emoji.Wpf" Version="0.3.4"/><PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3719.77"/>
+    <Resource Include="Assets/Notarium.ico;Assets/Notarium.png"/>
+    <EmbeddedResource Include="examples/Notarium — przykładowy artykuł.md" LogicalName="Notarium.Example.md"/>
+    <EmbeddedResource Include="WebEditor/dist/index.html;WebEditor/dist/editor.js;WebEditor/dist/editor.css;WebEditor/dist/math.css"><LogicalName>Notatnik.WebAssets.%(Filename)%(Extension)</LogicalName></EmbeddedResource>
+    <Content Include="WebEditor/dist/THIRD-PARTY-NOTICES.txt" CopyToPublishDirectory="PreserveNewest"/>
+  </ItemGroup>
+</Project>

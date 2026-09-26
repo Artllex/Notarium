@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Notarium</AssemblyName><RootNamespace>Notatnik</RootNamespace>
+    <ApplicationIcon>Assets/Notarium.ico</ApplicationIcon><EnableDefaultItems>false</EnableDefaultItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml"/><Compile Include="App.xaml.cs;Shell/**/*.cs"/>
+    <Resource Include="Assets/Notarium.ico;Assets/Notarium.png"/>
+    <Content Include="LICENSE" CopyToPublishDirectory="PreserveNewest"/>
+    <Content Include="Modules/*/README.md" CopyToPublishDirectory="PreserveNewest"/>
+    <OptionalModule Include="Modules/*/Notarium.*.csproj"/>
+    <ProjectReference Include="Shared/Contracts/Notarium.Contracts.csproj;Shared/UI/Notarium.UI.csproj"/>
+  </ItemGroup>
+  <Target Name="PublishOptionalModules" AfterTargets="Publish">
+    <Exec Command="dotnet publish &quot;%(OptionalModule.FullPath)&quot; -c $(Configuration) -o &quot;$(PublishDir)%(OptionalModule.RelativeDir).&quot; --self-contained false" Condition="'@(OptionalModule)' != ''"/>
+  </Target>
+</Project>

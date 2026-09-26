@@ -1,23 +1,13 @@
 # Notarium
 
-Minimalistyczny notatnik dla Windows: lista notatek, karty, edycja tekstu
-z Tiptap/ProseMirror i komórki kodu CodeMirror 6, osadzone w WPF przez WebView2.
+Kanoniczne repozytorium: C:/NOTARIUM. Kod: product/source. Dokumentacja: product/documentation.
 
-## Budowanie
+Historia kodu jest w Git, zachowana od dotychczasowego repozytorium Artllex/Notarium. Nie używamy katalogów final/verified ani kopii źródeł jako systemu wersjonowania.
 
-Wymagane: Windows, .NET SDK 6, Node.js z npm, Microsoft Edge do testów
-oraz WebView2 Runtime do uruchomienia aplikacji.
+- Aktualna aplikacja: product/builds/Notarium/Notarium.exe.
+- Budowanie i testy: product/source/build.ps1.
+- Wybrane wydania: product/releases, wyłącznie przy świadomym tworzeniu wydania.
+- Tymczasowe warianty testowe: katalog systemowy Temp, sprzątany po sprawdzeniu.
+- Opis architektury: [product/documentation/ARCHITECTURE.md](product/documentation/ARCHITECTURE.md).
 
-```powershell
-./work/Notatnik/build.ps1
-dotnet run --project work/WebHostCheck/WebHostCheck.csproj -c Release
-```
-
-Gotowa aplikacja trafia do `outputs/Notarium`.
-Szczegóły: [architektura](work/Notatnik/ARCHITECTURE.md).
-Komórki Python obsługują edycję; wykonywanie kodu nie jest jeszcze podłączone.
-
-## Licencja
-
-Kod projektu: [MIT](LICENSE). Zależności zachowują własne licencje;
-pakiet edytora zawiera `THIRD-PARTY-NOTICES.txt`.
+Wszystkie zależności, binaria i wygenerowane zasoby są wyłączone z Git. Po zmianach wykonujemy logiczne commity; push jest oddzielną operacją.

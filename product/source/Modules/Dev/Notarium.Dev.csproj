@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net6.0-windows10.0.19041.0</TargetFramework><UseWPF>true</UseWPF><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><AssemblyName>Notarium.Dev</AssemblyName></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Shared/Contracts/Notarium.Contracts.csproj;../../Shared/UI/Notarium.UI.csproj;../../Shared/WebHost/Notarium.WebHost.csproj"/>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3719.77"/>
+    <EmbeddedResource Include="WebGallery/dist/index.html;WebGallery/dist/gallery.js;WebGallery/dist/gallery.css"><LogicalName>Notarium.Dev.Web.%(Filename)%(Extension)</LogicalName></EmbeddedResource>
+  </ItemGroup>
+</Project>

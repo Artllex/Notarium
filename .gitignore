@@ -1,7 +1,21 @@
+# Generated dependencies and compilation output
 **/bin/
 **/obj/
 **/node_modules/
-outputs/
+**/dist/
+**/outputs/
 .vs/
 *.user
 *.suo
+# Product artifacts are not source history
+/product/builds/
+/product/environment/
+/product/releases/
+/product/runtime/
+/product/test_installation/
+/product/operations/
+/AI/
+/operations/tests/*.json
+/operations/tests/*.png
+/operations/tests/*.log
+*.tmp
