@@ -2,4 +2,5 @@
   <PropertyGroup><TargetFramework>net6.0-windows10.0.19041.0</TargetFramework><UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
   <ItemGroup><Using Remove="System.Windows.Forms"/><Using Remove="System.Drawing"/></ItemGroup>
   <ItemGroup><EmbeddedResource Include="ui-policy.json" LogicalName="Notarium.UI.Policy.json"/></ItemGroup>
+  <ItemGroup><Resource Include="../../Assets/Notarium.png" Link="Assets/Notarium.png"/></ItemGroup>
 </Project>

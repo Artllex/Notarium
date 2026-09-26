@@ -43,7 +43,7 @@ public sealed class ApplicationFrame : Grid
         var grid = new Grid();
         foreach (var height in new[] { new GridLength(52), new GridLength(34), new GridLength(1, GridUnitType.Star), GridLength.Auto }) grid.RowDefinitions.Add(new RowDefinition { Height = height });
         var brand = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(14, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-        brand.Children.Add(new Border { Width = 28, Height = 28, CornerRadius = new CornerRadius(14), Background = UiPolicy.Current.AccentBrush, Child = new TextBlock { Text = "✦", HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center } });
+        brand.Children.Add(new BrandIcon { Width = 28, Height = 28 });
         brand.Children.Add(new TextBlock { Text = "Notarium", FontWeight = FontWeights.SemiBold, Margin = new Thickness(9, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center }); grid.Children.Add(brand);
         var label = new TextBlock { Text = heading, Foreground = (Brush)Application.Current.FindResource("Muted"), FontSize = 10, Margin = new Thickness(17, 10, 0, 0) }; SetRow(label, 1); grid.Children.Add(label);
         SetRow(navigation, 2); grid.Children.Add(navigation);
