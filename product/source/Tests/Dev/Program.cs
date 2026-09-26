@@ -14,7 +14,7 @@ internal static class Program
         var count = 0;
         void Check(bool value, string name) { if (!value) throw new InvalidOperationException(name); Console.WriteLine("PASS " + name); count++; }
         var app = new Application(); app.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/Notarium.UI;component/Theme.xaml") });
-        var fixture = Path.Combine(Path.GetTempPath(), "Notarium-Dev-tests-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(fixture);
+        var fixture = Path.Combine(Environment.GetEnvironmentVariable("NOTARIUM_TEST_ROOT") ?? Path.GetTempPath(), "Notarium-Dev-tests-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(fixture);
         var missing = new ModuleCatalog(Path.Combine(fixture, "missing-modules"));
         Check(missing.Entries.Select(entry => entry.Id).SequenceEqual(new[] { "notebook", "calendar", "collections", "prompting", "dev" }), "all planned modules visible without files");
         Check(missing.Entries.All(entry => !entry.IsAvailable) && missing.Errors.Count == 0, "missing implementation is a normal state");

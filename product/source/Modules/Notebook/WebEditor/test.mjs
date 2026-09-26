@@ -1,8 +1,11 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
-import { resolve } from 'node:path';
-import { mkdir } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+const temporaryReports = !process.env.NOTARIUM_TEST_OUTPUT;
+const reportDirectory = process.env.NOTARIUM_TEST_OUTPUT || await mkdtemp(join(tmpdir(), 'Notarium-editor-tests-'));
 
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const page = await browser.newPage({ viewport: { width: 1100, height: 650 } });
@@ -11,7 +14,7 @@ page.on('pageerror', error => { errors.push(error.message); console.error('PAGEE
 await page.addInitScript(() => { window.bridgeMessages = []; window.chrome ||= {}; window.chrome.webview = { postMessage: message => window.bridgeMessages.push(message), addEventListener() {} }; });
 await page.goto(pathToFileURL(resolve('dist/index.html')).href);
 await page.waitForFunction(() => window.notatnik);
-await mkdir('../../../../operations/tests/editor', { recursive: true });
+await mkdir(reportDirectory, { recursive: true });
 let passed = 0;
 const open = (id, markdown = '', documentJson = null) => page.evaluate(message => window.notatnik.receive(message), { type: 'open', noteId: id, markdown, documentJson });
 const command = (action, value) => page.evaluate(message => window.notatnik.receive(message), { type: 'command', action, value });
@@ -433,7 +436,7 @@ try {
     await open('image-md', saved.markdown); assert.equal(await page.locator('.tiptap img').count(), 2);
     await page.waitForFunction(() => [...document.images].every(image => image.complete));
     assert.deepEqual(await page.locator('.tiptap img').evaluateAll(images => images.map(image => image.width)), [200, 80]);
-    await page.screenshot({ path: '../../../../operations/tests/editor/images.png' });
+    await page.screenshot({ path: resolve(reportDirectory, 'images.png') });
   });
   await check('Automatic equation numbering survives edit, delete, undo and both storage formats', async () => {
     await open('numbered-math');
@@ -491,7 +494,7 @@ try {
     assert.equal(await page.locator('#image-dialog').evaluate(el => el.open), false);
     await page.locator('.cropper-container').waitFor();
     await page.getByRole('textbox', { name: 'Proporcje X:Y' }).fill('1:1');
-    await page.screenshot({ path: '../../../../operations/tests/editor/inline-crop.png' });
+    await page.screenshot({ path: resolve(reportDirectory, 'inline-crop.png') });
     await page.keyboard.press('Enter');
     assert.equal(await page.locator('.inline-crop').count(), 0);
     await page.locator('.tiptap p').last().click({ position: { x: 12, y: 8 } });
@@ -676,7 +679,7 @@ try {
     await page.mouse.move(aboveTable.x + 30, aboveTable.y + 1, { steps: 8 }); await page.mouse.up();
     assert.equal((await json()).content[0].type, 'table');
     await command('undo'); assert.deepEqual(await json(), originalTableDocument);
-    await page.screenshot({ path: '../../../../operations/tests/editor/table.png' });
+    await page.screenshot({ path: resolve(reportDirectory, 'table.png') });
   });
   await check('Containers drag into columns, resize, persist and leave columns with undo', async () => {
     const doc = { type: 'doc', content: ['A', 'B', 'C'].map(text => ({ type: 'paragraph', attrs: { boxHeight: 120 }, content: [{ type: 'text', text }] })) };
@@ -712,7 +715,7 @@ try {
     await page.mouse.move(resize.x - 100, resize.y + 50); await page.mouse.up();
     assert.ok((await json()).content[0].attrs.boxHeight > 120);
     await command('undo'); assert.equal((await json()).content[0].attrs.boxHeight, 120);
-    await page.screenshot({ path: '../../../../operations/tests/editor/containers.png' });
+    await page.screenshot({ path: resolve(reportDirectory, 'containers.png') });
   });
   await check('Right and bottom edges resize independently; corner double click resets layout with undo', async () => {
     await open('edge-resize', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
@@ -848,7 +851,7 @@ try {
     assert.ok(Math.abs(after.height - after.width * crop.height / crop.width) < 1, 'Viewport is exactly the selected crop');
     assert.ok(Math.abs((await image.boundingBox()).height - before.height) < 1, 'Source pixels keep their scale');
     assert.ok(after.height < before.height - 30);
-    await page.screenshot({ path: '../../../../operations/tests/editor/bottom-crop.png' });
+    await page.screenshot({ path: resolve(reportDirectory, 'bottom-crop.png') });
     const saved = await page.evaluate(() => window.notatnik.snapshot());
     await command('undo'); assert.ok(Math.abs((await viewport.boundingBox()).height - before.height) < 1);
     await command('redo');
@@ -1016,11 +1019,11 @@ try {
     await first.hover(); actionBox = await first.locator(':scope > .container-add-tools [data-action=codeCell]').boundingBox();
     await page.mouse.click(actionBox.x + actionBox.width / 2, actionBox.y + actionBox.height / 2);
     assert.equal(await page.locator('.code-cell').count(), 2);
-    await page.screenshot({ path: '../../../../operations/tests/editor/container-badges.png' });
+    await page.screenshot({ path: resolve(reportDirectory, 'container-badges.png') });
   });
   await open('demo', '# Notatnik 🦊\n\n**Tiptap** — tekst, listy i formatowanie.\n\n1. Pierwszy punkt\n2. Drugi punkt');
   await command('cell'); await page.locator('.cm-content').click(); await page.keyboard.type('def greeting(name):\n    return f"Hello, {name}!"');
-  await mkdir('../../../../operations/tests/editor', { recursive: true });
-  await page.screenshot({ path: '../../../../operations/tests/editor/editor.png' });
+  await mkdir(reportDirectory, { recursive: true });
+  await page.screenshot({ path: resolve(reportDirectory, 'editor.png') });
   console.log(`PASS ${passed} browser integration scenarios`);
-} finally { await browser.close(); }
+} finally { await browser.close(); if (temporaryReports) await rm(reportDirectory, { recursive: true, force: true }); }

@@ -93,7 +93,9 @@ Dobry model nie musi uwzględniać wszystkiego naraz. Powinien jasno pokazywać 
   await page.locator('.tiptap > p').nth(1).hover();
   assert.equal(await page.locator('.block-drag-handle').isVisible(),true);
   await page.mouse.move(1050, 10);
-  await mkdir('../../../../operations/tests/editor', { recursive: true });
-  await page.screenshot({ path:'../../../../operations/tests/editor/example-article.png', fullPage:true });
+  if (process.env.NOTARIUM_TEST_OUTPUT) {
+    await mkdir(process.env.NOTARIUM_TEST_OUTPUT, { recursive: true });
+    await page.screenshot({ path: resolve(process.env.NOTARIUM_TEST_OUTPUT, 'example-article.png'), fullPage: true });
+  }
   console.log('Verified example: '+output);
 } finally { await browser.close(); }

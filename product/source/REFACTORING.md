@@ -61,7 +61,7 @@ Osobno:
 - `npm run build`, `node ui-test.mjs`, `npm test` w katalogu WebEditor.
 - `dotnet run --project Tests/Notarium.ArchitectureTests.csproj -c Release` dla kontrolerów, menu i rzeczywistej kompozycji XAML w izolowanych danych testowych.
 - Ten sam zestaw uruchamia prawdziwe WebView2 w izolowanym katalogu i czeka na sygnał gotowości edytora.
-- `dotnet publish Notatnik.csproj -c Release -o ../builds/Refactored` buduje powłokę i warunkowo publikuje moduł.
+- `./build.ps1` jest standardową drogą do jednego bieżącego `product/builds/Notarium`. Publikuje do Temp, weryfikuje moduły i dopiero po sukcesie wymienia aktualny pakiet. Nie tworzymy katalogów final/verified ani katalogów nazwanych commitami.
 - `Notarium.exe --check-modules <raport.json>` sprawdza wykrywanie modułów bez otwierania danych użytkownika.
 
 Weryfikacja obejmuje także świeżą kopię źródeł powłoki bez plików modułu i uruchomienie wydania bez katalogu Modules. Wyniki końcowej weryfikacji są w `operations/tests/refactor-20260926.md`.

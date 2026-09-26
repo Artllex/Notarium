@@ -26,7 +26,7 @@ internal static class Program
         popup.Items.Add(new MenuItem { Header = visualHeader });
         _ = popup.View; _ = popup.View;
         Check(visualHeader.Parent is Grid, "shared menu rebuild preserves visual headers");
-        var fixture = Path.Combine(Path.GetTempPath(), "Notarium-refactor-tests-" + Guid.NewGuid().ToString("N"));
+        var fixture = Path.Combine(Environment.GetEnvironmentVariable("NOTARIUM_TEST_ROOT") ?? Path.GetTempPath(), "Notarium-refactor-tests-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(fixture);
         var library = new NotebookLibrary(new NoteStore(Path.Combine(fixture, "notes.json")));
         library.Load(); var first = library.Create(); library.Rename(first, "  Pierwsza  ");

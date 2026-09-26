@@ -130,3 +130,17 @@ Kalendarz, Kolekcje i Prompting mają jedynie katalogi z opisami. Wspólna baza,
 build.ps1 warunkowo buduje i testuje obecne moduły. Publikacja wykrywa ich projekty, bez odwołań powłoki do konkretnych implementacji. Testy webowe sprawdzają rzeczywiste interakcje; natywne używają izolowanych danych, tworzą prawdziwe widoki i czekają na gotowość WebView2.
 
 DEV jest miejscem ręcznych prób komponentów, nie zamiennikiem automatycznych testów ani dowodem braku wszystkich błędów. Opisy odpowiedzialności należy aktualizować wraz z kodem; raporty testów są oddzielne.
+
+## 12. Git i artefakty
+
+Kanoniczne repozytorium jest w C:/NOTARIUM. Historia zaczyna się od poprzednich commitów repozytorium Artllex/Notarium; przeniesienie i refaktoryzacja są kolejnym commitem, nie nową, oderwaną historią.
+
+- Kod i dokumentacja: logiczne commity Git, nie foldery final/verified.
+- Jedyny bieżący pakiet: product/builds/Notarium.
+- build.ps1 publikuje i testuje w systemowym Temp. Gdy test lub kontrola pakietu zawiedzie, nie wymienia poprzedniej aplikacji. Po sukcesie sprząta sesję tymczasową.
+- Warianty bez modułów testujemy w Temp i usuwamy po weryfikacji; nie zostają w builds ani environment.
+- Binaria, zależności, dist, cache i zrzuty testów są ignorowane przez Git. build-info.json w bieżącym pakiecie wskazuje commit użyty do budowania.
+- releases służy tylko świadomie wybranym wydaniom, nie automatycznemu składowaniu wszystkich prób.
+- Push jest osobną operacją. Lokalny commit nie oznacza wysłania zmian na GitHub.
+
+Starsze raporty zawierają historyczne ścieżki sprawdzonych pakietów; po porządkowaniu nie są one bieżącym miejscem uruchamiania. Aktualny workflow jest opisany tutaj i w AGENTS.md.
