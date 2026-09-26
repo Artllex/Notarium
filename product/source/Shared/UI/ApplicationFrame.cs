@@ -31,7 +31,10 @@ public sealed class ApplicationFrame : Grid
             var button = new ActionButton { Content = label, Width = 40, Padding = new Thickness(4), FontSize = 13 };
             button.Click += (_, _) => action(); WindowChrome.SetIsHitTestVisibleInChrome(button, true); DockPanel.SetDock(button, Dock.Right); title.Children.Add(button);
         }
-        title.Children.Add(new TextBlock { Text = "Notarium", Margin = new Thickness(10, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, FontSize = 12 });
+        var windowBrand = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+        windowBrand.Children.Add(new BrandIcon { Width = 16, Height = 16, Margin = new Thickness(0, 0, 7, 0) });
+        windowBrand.Children.Add(new TextBlock { Text = "Notarium", VerticalAlignment = VerticalAlignment.Center, FontSize = 12 });
+        title.Children.Add(windowBrand);
         title.MouseLeftButtonDown += (_, e) => { if (e.ClickCount == 2) owner.WindowState = owner.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized; else if (e.ButtonState == MouseButtonState.Pressed) owner.DragMove(); };
         SetColumnSpan(title, 3); Children.Add(title);
         SetRow(Menu, 1); SetColumnSpan(Menu, 3); Menu.Background = UiPolicy.Current.PanelBrush; Children.Add(Menu);
