@@ -49,7 +49,7 @@ public sealed class Note : INotifyPropertyChanged
     }
 
     [JsonIgnore] public string FavoriteGlyph => IsFavorite ? "★" : "☆";
-    [JsonIgnore] public string FavoriteColor => "#3B82D0";
+    [JsonIgnore] public string FavoriteColor => IsFavorite ? "#3B82D0" : "#858585";
     [JsonIgnore] public string CreatedAtText => $"Utworzono: {CreatedAtUtc.ToLocalTime():dd.MM.yyyy, HH:mm}";
 
     public string Content
