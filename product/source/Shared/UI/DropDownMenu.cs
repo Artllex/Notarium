@@ -69,7 +69,7 @@ public sealed class DropDownMenu
             Grid.SetColumn(header, 1); row.Children.Add(header);
             if (!string.IsNullOrWhiteSpace(item.InputGestureText))
             {
-                var shortcut = new TextBlock { Text = item.InputGestureText, Foreground = new SolidColorBrush(Color.FromRgb(155, 155, 155)), Margin = new Thickness(18, 0, 0, 0) };
+                var shortcut = new TextBlock { Text = item.InputGestureText, Foreground = UiPolicy.Current.TextBrush, Margin = new Thickness(18, 0, 0, 0) };
                 Grid.SetColumn(shortcut, 2);
                 row.Children.Add(shortcut);
             }
