@@ -3,6 +3,21 @@
 DEV jest miejscem oceny wspólnych komponentów aplikacji, nie osobnym motywem.
 Zmiana wspólnego stylu musi obowiązywać również w modułach produkcyjnych.
 
+## Wspólna rama aplikacji
+
+`Shared/UI/ApplicationFrame.cs` definiuje pasek tytułu, kontrolki okna, miejsce menu,
+panel boczny 250 px, separator i obszar roboczy. Korzystają z niego ekran główny,
+DEV i Notatnik. Rama nie ładuje modułów ani danych: otrzymuje zawartość obszarów.
+DEV wypełnia obszar roboczy kartami „Elementy Windows” i „Elementy Web”, bez
+uruchamiania Notatnika. Panel boczny służy do przełączania galerii.
+Karty DEV korzystają ze wspólnego szablonu TabControl/TabItem; karty dokumentów
+Notatnika zachowują edycję tytułów, zamykanie i paginację, ale używają tych samych
+zasobów `WorkspaceTabShape` oraz `WorkspaceTabActive`. Zmiana sylwetki lub koloru
+karty w motywie obowiązuje w obu miejscach.
+
+Nowy moduł powinien wypełniać wspólną ramę własną zawartością, nie kopiować
+paska tytułu, menu ani szablonu galerii DEV.
+
 - `product/source/Shared/UI/ui-policy.json`: wspólna paleta, czcionka i geometria dropdownów dla Windows oraz Web.
 - `Shared/UI/Theme.xaml`: szablony Windows, w tym przyciski i zakładki DEV.
 - `Shared/Web/UI/theme.js` i `components.css`: adapter tych samych parametrów w Web.

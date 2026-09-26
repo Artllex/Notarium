@@ -8,6 +8,8 @@ public sealed class DevWindow : Window
 {
     public DevWebGallery WebGallery { get; } = new();
     public StackPanel Samples { get; } = new() { Margin = new Thickness(20) };
+    public ApplicationFrame Frame { get; }
+    public TabControl GalleryTabs { get; }
     private readonly TextBlock _result = new() { Text = "Wybierz kontrolkę, aby sprawdzić jej zachowanie.", TextWrapping = TextWrapping.Wrap };
     private bool _checked;
     public DevWindow()
@@ -16,10 +18,25 @@ public sealed class DevWindow : Window
         Background = UiPolicy.Current.SurfaceBrush; Foreground = UiPolicy.Current.TextBrush;
         FontFamily = new FontFamily(UiPolicy.Current.FontFamily); FontSize = UiPolicy.Current.FontSize;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        var tabs = new TabControl { Margin = new Thickness(12), Background = UiPolicy.Current.SurfaceBrush, Foreground = UiPolicy.Current.TextBrush };
-        tabs.Items.Add(new TabItem { Header = "Windows · WPF", Content = new ScrollViewer { Content = Samples, Background = UiPolicy.Current.SurfaceBrush, Foreground = UiPolicy.Current.TextBrush, VerticalScrollBarVisibility = ScrollBarVisibility.Auto } });
-        tabs.Items.Add(new TabItem { Header = "Edytor · Web", Content = WebGallery });
-        Content = tabs;
+        Frame = new ApplicationFrame(this);
+        var tabs = GalleryTabs = new TabControl { Background = UiPolicy.Current.SurfaceBrush, Foreground = UiPolicy.Current.TextBrush };
+        tabs.Items.Add(new TabItem { Header = "Elementy Windows", Content = new ScrollViewer { Content = Samples, Background = UiPolicy.Current.SurfaceBrush, Foreground = UiPolicy.Current.TextBrush, VerticalScrollBarVisibility = ScrollBarVisibility.Auto } });
+        tabs.Items.Add(new TabItem { Header = "Elementy Web", Content = WebGallery });
+        Frame.Workspace.Content = tabs;
+        var navigation = new StackPanel { Margin = new Thickness(8, 0, 8, 0) };
+        foreach (var (label, index) in new[] { ("Elementy Windows", 0), ("Elementy Web", 1) })
+        { var item = Button(label, () => tabs.SelectedIndex = index); item.HorizontalContentAlignment = HorizontalAlignment.Left; navigation.Children.Add(item); }
+        Frame.Sidebar.Content = ApplicationFrame.SidebarLayout(navigation, "DEV · WZORZEC APLIKACJI");
+        var mainMenu = new MenuBar { FontSize = 12 };
+        foreach (var label in new[] { "_File", "_Edit", "_View", "_Help" })
+        {
+            var definition = new MenuItem { Header = label };
+            if (label == "_View") foreach (var (name, index) in new[] { ("Elementy Windows", 0), ("Elementy Web", 1) })
+            { var item = new MenuItem { Header = name }; item.Click += (_, _) => tabs.SelectedIndex = index; definition.Items.Add(item); }
+            else { var item = new MenuItem { Header = label == "_File" ? "Zamknij DEV" : "Informacje o wzorcu" }; item.Click += (_, _) => { if (label == "_File") Close(); else _result.Text = "DEV prezentuje wspólną ramę aplikacji, bez otwierania modułów i danych notatek."; }; definition.Items.Add(item); }
+            mainMenu.Items.Add(definition);
+        }
+        Frame.Menu.Content = mainMenu; Content = Frame;
         AddTitle("Wspólne komponenty Notarium", "Tutaj oceniamy styl aplikacji. Motyw: Shared/UI/Theme.xaml; wspólne parametry Windows i Web: Shared/UI/ui-policy.json. Przykłady nie zmieniają danych notatek.");
         var buttons = new WrapPanel();
         buttons.Children.Add(Button("ActionButton", () => _result.Text = "ActionButton: kliknięcie działa."));

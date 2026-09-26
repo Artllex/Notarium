@@ -47,6 +47,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         _library = new NotebookLibrary(store);
         InitializeComponent();
+        // Preserve notebook-specific views and behavior, share the application frame.
+        var original = (Grid)((Border)Content).Child;
+        var workspace = (Grid)((Grid)TabsView.Parent).Parent;
+        original.Children.Remove(LibraryView); original.Children.Remove(MainMenu); original.Children.Remove(workspace);
+        var frame = new ApplicationFrame(this);
+        frame.Sidebar.Content = LibraryView; frame.Menu.Content = MainMenu; frame.Workspace.Content = workspace;
+        Content = frame;
         _formatting = new NotebookFormatting(Editor, () => ActiveNote,
             label => FontFamilyButton.Content = label, label => LineSpacingButton.Content = label,
             (highlight, hex) => { var brush = UiPolicy.Brush(hex); if (highlight) HighlightColorSwatch.Background = brush; else FontColorSwatch.Background = brush; });

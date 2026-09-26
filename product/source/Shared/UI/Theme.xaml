@@ -4,17 +4,25 @@
         <SolidColorBrush x:Key="Selected" Color="#3B3B3B"/><SolidColorBrush x:Key="Line" Color="#3D3D3D"/>
         <SolidColorBrush x:Key="Text" Color="{Binding MenuText, Source={x:Static ui:UiPolicy.Current}}"/><SolidColorBrush x:Key="Muted" Color="#A0A0A0"/>
         <SolidColorBrush x:Key="Accent" Color="{Binding Accent, Source={x:Static ui:UiPolicy.Current}}"/>
+        <Geometry x:Key="WorkspaceTabShape">M 14,36 L 0,36 L 8,5 Q 9,0 15,0 L 185,0 Q 191,0 192,5 L 200,36 L 186,36 Z</Geometry>
+        <SolidColorBrush x:Key="WorkspaceTabActive" Color="#333333"/>
         <Style TargetType="TabControl">
             <Setter Property="Background" Value="{StaticResource Editor}"/><Setter Property="Foreground" Value="{StaticResource Text}"/>
             <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabControl">
+                <Grid Background="{TemplateBinding Background}"><Grid.RowDefinitions><RowDefinition Height="34"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                    <TabPanel IsItemsHost="True"/>
+                    <ContentPresenter Grid.Row="1" ContentSource="SelectedContent"/>
+                </Grid>
+            </ControlTemplate></Setter.Value></Setter>
         </Style>
         <Style TargetType="TabItem">
-            <Setter Property="Foreground" Value="{StaticResource Text}"/><Setter Property="Background" Value="{StaticResource Panel}"/><Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Foreground" Value="{StaticResource Text}"/><Setter Property="Background" Value="Transparent"/><Setter Property="Padding" Value="18,0,14,2"/><Setter Property="Width" Value="200"/><Setter Property="Height" Value="34"/><Setter Property="FontSize" Value="13"/>
             <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem">
-                <Border x:Name="B" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}"><ContentPresenter ContentSource="Header"/></Border>
+                <Grid><Path x:Name="B" Data="{StaticResource WorkspaceTabShape}" Stretch="Fill" Fill="{TemplateBinding Background}"/><ContentPresenter ContentSource="Header" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/></Grid>
                 <ControlTemplate.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="B" Property="Background" Value="{StaticResource Selected}"/></Trigger>
-                    <Trigger Property="IsSelected" Value="True"><Setter TargetName="B" Property="Background" Value="{StaticResource CommandBar}"/><Setter Property="Foreground" Value="{StaticResource Accent}"/></Trigger>
+                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="B" Property="Fill" Value="{StaticResource Selected}"/></Trigger>
+                    <Trigger Property="IsSelected" Value="True"><Setter TargetName="B" Property="Fill" Value="{StaticResource WorkspaceTabActive}"/></Trigger>
                 </ControlTemplate.Triggers>
             </ControlTemplate></Setter.Value></Setter>
         </Style>

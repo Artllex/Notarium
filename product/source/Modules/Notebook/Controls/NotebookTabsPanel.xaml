@@ -5,8 +5,8 @@
                             <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate><DataTemplate>
                                 <ui:TabCard Width="{Binding DataContext.TabWidth, RelativeSource={RelativeSource AncestorType=Window}}" Height="34" Margin="-7,2,0,0" MouseLeftButtonDown="Tab_MouseLeftButtonDown" shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                                    <Path x:Name="TabBase" Stretch="Fill" Fill="Transparent" Data="M 14,36 L 0,36 L 8,5 Q 9,0 15,0 L 185,0 Q 191,0 192,5 L 200,36 L 186,36 Z" />
-                                    <Path x:Name="HoverShape" Stretch="Fill" Fill="#505050" Opacity="0" IsHitTestVisible="False" Data="M 14,36 L 0,36 L 8,5 Q 9,0 15,0 L 185,0 Q 191,0 192,5 L 200,36 L 186,36 Z">
+                                    <Path x:Name="TabBase" Stretch="Fill" Fill="Transparent" Data="{StaticResource WorkspaceTabShape}" />
+                                    <Path x:Name="HoverShape" Stretch="Fill" Fill="#505050" Opacity="0" IsHitTestVisible="False" Data="{StaticResource WorkspaceTabShape}">
                                         <Path.Triggers>
                                             <EventTrigger RoutedEvent="Mouse.MouseEnter"><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.34" Duration="0:0:0.14" /></Storyboard></BeginStoryboard></EventTrigger>
                                             <EventTrigger RoutedEvent="Mouse.MouseLeave"><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18" /></Storyboard></BeginStoryboard></EventTrigger>
@@ -17,7 +17,7 @@
                                         <ui:ActionButton Grid.Column="1" Content="×" Tag="{Binding}" Click="CloseTab_Click" Padding="5,1" FontSize="16" Foreground="{StaticResource Muted}" shell:WindowChrome.IsHitTestVisibleInChrome="True" />
                                     </Grid>
                                 </ui:TabCard>
-                                <DataTemplate.Triggers><DataTrigger Binding="{Binding IsActive}" Value="True"><Setter TargetName="TabBase" Property="Fill" Value="#333333" /></DataTrigger><DataTrigger Binding="{Binding Note.IsRenamingInTab}" Value="True"><Setter TargetName="TabTitle" Property="Visibility" Value="Collapsed" /><Setter TargetName="TabTitleEditor" Property="Visibility" Value="Visible" /></DataTrigger></DataTemplate.Triggers>
+                                <DataTemplate.Triggers><DataTrigger Binding="{Binding IsActive}" Value="True"><Setter TargetName="TabBase" Property="Fill" Value="{StaticResource WorkspaceTabActive}" /></DataTrigger><DataTrigger Binding="{Binding Note.IsRenamingInTab}" Value="True"><Setter TargetName="TabTitle" Property="Visibility" Value="Collapsed" /><Setter TargetName="TabTitleEditor" Property="Visibility" Value="Visible" /></DataTrigger></DataTemplate.Triggers>
                             </DataTemplate></ItemsControl.ItemTemplate>
                         </ItemsControl>
                         <ui:ActionButton Grid.Column="2" x:Name="RightTabsButton" Content="›" Width="30" Margin="2,3,2,2" FontSize="19" Visibility="Collapsed" Click="NextTabs_Click" shell:WindowChrome.IsHitTestVisibleInChrome="True" />
