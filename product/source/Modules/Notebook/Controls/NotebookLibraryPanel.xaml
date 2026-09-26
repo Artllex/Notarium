@@ -2,7 +2,7 @@
                 <Grid.RowDefinitions><RowDefinition Height="52" /><RowDefinition Height="46" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                 <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <ui:BrandIcon Width="28" Height="28" HorizontalAlignment="Left" Margin="14,0,0,0" />
-                    <TextBlock Text="Notarium" Foreground="{StaticResource Accent}" Margin="51,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" />
+                    <TextBlock Text="Notarium" Foreground="{StaticResource Text}" Margin="51,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" />
                 </Grid>
 
                 <Grid Grid.Row="1" Margin="10,3,10,7">
@@ -22,10 +22,10 @@
 
                 <Border Grid.Row="4" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="8,10,8,20">
                     <StackPanel>
-                        <ui:ActionButton ToolTip="Konto — makieta" Height="32" Padding="9,2" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Foreground="{StaticResource Accent}">
+                        <ui:ActionButton ToolTip="Konto — makieta" Height="32" Padding="9,2" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Foreground="{StaticResource Text}">
                             <StackPanel Orientation="Horizontal"><TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="16" Width="28" VerticalAlignment="Center" /><TextBlock Text="Konto" FontSize="13" VerticalAlignment="Center" /></StackPanel>
                         </ui:ActionButton>
-                        <ui:ActionButton ToolTip="Ustawienia — makieta" Height="32" Padding="9,2" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Foreground="{StaticResource Accent}">
+                        <ui:ActionButton ToolTip="Ustawienia — makieta" Height="32" Padding="9,2" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Foreground="{StaticResource Text}">
                             <StackPanel Orientation="Horizontal"><TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="16" Width="28" VerticalAlignment="Center" /><TextBlock Text="Ustawienia" FontSize="13" VerticalAlignment="Center" /></StackPanel>
                         </ui:ActionButton>
                     </StackPanel>

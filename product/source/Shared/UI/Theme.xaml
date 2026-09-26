@@ -18,7 +18,7 @@
             </ControlTemplate></Setter.Value></Setter>
         </Style>
         <Style TargetType="TabItem">
-            <Setter Property="Foreground" Value="{StaticResource Accent}"/><Setter Property="Background" Value="Transparent"/><Setter Property="Padding" Value="18,0,14,2"/><Setter Property="Width" Value="200"/><Setter Property="Height" Value="34"/><Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{StaticResource Text}"/><Setter Property="Background" Value="Transparent"/><Setter Property="Padding" Value="18,0,14,2"/><Setter Property="Width" Value="200"/><Setter Property="Height" Value="34"/><Setter Property="FontSize" Value="13"/>
             <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem">
                 <Grid><Path x:Name="B" Data="{StaticResource WorkspaceTabShape}" Stretch="Fill" Fill="{TemplateBinding Background}"/><ContentPresenter ContentSource="Header" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/></Grid>
                 <ControlTemplate.Triggers>
