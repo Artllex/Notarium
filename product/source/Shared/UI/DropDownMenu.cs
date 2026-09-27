@@ -28,6 +28,7 @@ public sealed class DropDownMenu
         // A button menu always starts at the button's left, not at its right.
         _popup = new Popup { PlacementTarget = target, Placement = target is null ? PlacementMode.MousePoint : submenu ? PlacementMode.Custom : PlacementMode.Custom, StaysOpen = submenu, AllowsTransparency = true, PopupAnimation = PopupAnimation.None };
         _popup.CustomPopupPlacementCallback = (_, targetSize, _) => new[] { new CustomPopupPlacement(submenu ? new Point(targetSize.Width - 2, -4) : new Point(0, targetSize.Height), submenu ? PopupPrimaryAxis.Horizontal : PopupPrimaryAxis.Vertical) };
+        _popup.Opened += (_, _) => MenuBackdrop.Apply((FrameworkElement)_popup.Child);
         _itemsHost.PreviewKeyDown += (_, e) =>
         {
             if (e.Key == Key.Escape) { Close(); _target?.Focus(); e.Handled = true; }
@@ -64,7 +65,7 @@ public sealed class DropDownMenu
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             if (item.IsCheckable) row.Children.Add(new TextBlock { Text = item.IsChecked ? "✓" : "", Width = 18, Margin = new Thickness(0, 0, 5, 0) });
-            var header = item.Header as UIElement ?? (Headers.TryGetValue(item, out var cached) ? cached : new TextBlock { Text = (item.Header?.ToString() ?? string.Empty).Replace("_", "") });
+            var header = item.Header as UIElement ?? (Headers.TryGetValue(item, out var cached) ? cached : new TextBlock { Text = (item.Header?.ToString() ?? string.Empty).Replace("_", ""), FontSize = 11 });
             if (item.Header is UIElement && !Headers.TryGetValue(item, out _)) Headers.Add(item, header);
             if (VisualTreeHelper.GetParent(header) is Panel parent) parent.Children.Remove(header);
             // HeaderedItemsControl owns UIElement headers logically. Release that
@@ -73,7 +74,7 @@ public sealed class DropDownMenu
             Grid.SetColumn(header, 1); row.Children.Add(header);
             if (!string.IsNullOrWhiteSpace(item.InputGestureText))
             {
-                var shortcut = new TextBlock { Text = item.InputGestureText, Foreground = new SolidColorBrush(Color.FromRgb(145, 145, 145)), Margin = new Thickness(18, 0, 0, 0) };
+                var shortcut = new TextBlock { Text = item.InputGestureText, FontSize = 11, Foreground = new SolidColorBrush(Color.FromRgb(145, 145, 145)), Margin = new Thickness(18, 0, 0, 0) };
                 Grid.SetColumn(shortcut, 2);
                 row.Children.Add(shortcut);
             }
@@ -93,7 +94,7 @@ public sealed class DropDownMenu
                 Padding = new Thickness(UiPolicy.Current.RowPaddingX, UiPolicy.Current.RowPaddingY, UiPolicy.Current.RowPaddingX, UiPolicy.Current.RowPaddingY),
                 Margin = new Thickness(UiPolicy.Current.RowMarginX, 0, UiPolicy.Current.RowMarginX, 0),
                 FontFamily = new FontFamily(UiPolicy.Current.FontFamily),
-                FontSize = 13,
+                FontSize = 11,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 VerticalContentAlignment = VerticalAlignment.Center,
                 Foreground = UiPolicy.Brush(UiPolicy.Current.MenuText),
