@@ -33,7 +33,7 @@ public sealed class MainPanel : Window
         }
         if (catalog.Modules.Count == 0) panel.Children.Add(new TextBlock { Text = "Brak zainstalowanych modułów." });
         foreach (var error in catalog.Errors) panel.Children.Add(new TextBlock { Text = "Nie można załadować modułu: " + error, TextWrapping = TextWrapping.Wrap });
-        frame.Sidebar.Content = ApplicationFrame.SidebarLayout(panel, "MODUŁY");
+        frame.Sidebar.Content = ApplicationFrame.SidebarLayout(panel, null);
         frame.Workspace.Content = new TextBlock { Text = "Notarium", FontSize = 28, Margin = new Thickness(24) };
         var menu = new MenuBar { FontSize = 12 }; var file = new MenuItem { Header = "_File" }; var exit = new MenuItem { Header = "Zamknij" }; exit.Click += (_, _) => Close(); file.Items.Add(exit); menu.Items.Add(file); frame.Menu.Content = menu;
         Content = frame;
