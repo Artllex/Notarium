@@ -19,7 +19,11 @@ public sealed class MainPanel : Window
         var catalog = new ModuleCatalog(Path.Combine(AppContext.BaseDirectory, "Modules"));
         foreach (var entry in catalog.Entries)
         {
-            var button = new ActionButton { Content = entry.DisplayName, HorizontalAlignment = HorizontalAlignment.Left, MinWidth = 160, Margin = new Thickness(0, 4, 0, 4), ToolTip = entry.IsAvailable ? "Otwórz moduł" : "Moduł nie jest zainstalowany" };
+            var label = new StackPanel { Orientation = Orientation.Horizontal };
+            label.Children.Add(new ModuleIcon(entry.Id) { Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center });
+            label.Children.Add(new TextBlock { Text = entry.DisplayName, VerticalAlignment = VerticalAlignment.Center });
+            var button = new ActionButton { Content = label, HorizontalAlignment = HorizontalAlignment.Left, HorizontalContentAlignment = HorizontalAlignment.Left, MinWidth = 160, Margin = new Thickness(0, 4, 0, 4), ToolTip = entry.IsAvailable ? "Otwórz moduł" : "Moduł nie jest zainstalowany" };
+            System.Windows.Automation.AutomationProperties.SetName(button, entry.DisplayName);
             button.Click += (_, _) =>
             {
                 if (entry.Implementation is { } module) Open(module);
