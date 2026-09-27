@@ -19,15 +19,25 @@ public sealed class DropDownMenu
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<MenuItem, UIElement> Headers = new();
     public Collection<object> Items { get; } = new();
 
-    public DropDownMenu(UIElement? target, double? itemWidth = null, bool submenu = false, Action? onLeafClick = null)
+    public DropDownMenu(UIElement? target, double? itemWidth = null, bool submenu = false, Action? onLeafClick = null, FrameworkElement? parentSurface = null)
     {
         _itemWidth = itemWidth;
         _target = target;
         _onLeafClick = onLeafClick;
         // Custom placement is immune to the system's right-aligned menu policy.
         // A button menu always starts at the button's left, not at its right.
-        _popup = new Popup { PlacementTarget = target, Placement = target is null ? PlacementMode.MousePoint : submenu ? PlacementMode.Custom : PlacementMode.Custom, StaysOpen = submenu, AllowsTransparency = true, PopupAnimation = PopupAnimation.None };
-        _popup.CustomPopupPlacementCallback = (_, targetSize, _) => new[] { new CustomPopupPlacement(submenu ? new Point(targetSize.Width - 2, -4) : new Point(0, targetSize.Height), submenu ? PopupPrimaryAxis.Horizontal : PopupPrimaryAxis.Vertical) };
+        _popup = new Popup { PlacementTarget = target, Placement = target is null ? PlacementMode.MousePoint : PlacementMode.Custom, StaysOpen = submenu, AllowsTransparency = true, PopupAnimation = SystemParameters.MenuAnimation ? PopupAnimation.Fade : PopupAnimation.None };
+        _popup.CustomPopupPlacementCallback = (popupSize, targetSize, _) =>
+        {
+            if (!submenu) return new[] { new CustomPopupPlacement(new Point(0, targetSize.Height), PopupPrimaryAxis.Vertical) };
+            var origin = target is FrameworkElement anchor && parentSurface is not null ? anchor.TranslatePoint(new Point(), parentSurface) : new Point();
+            var parentWidth = parentSurface?.ActualWidth ?? targetSize.Width;
+            return new[]
+            {
+                new CustomPopupPlacement(new Point(parentWidth - origin.X + 2, 0), PopupPrimaryAxis.Horizontal),
+                new CustomPopupPlacement(new Point(-origin.X - popupSize.Width - 2, 0), PopupPrimaryAxis.Horizontal)
+            };
+        };
         _popup.Opened += (_, _) => MenuBackdrop.Apply((FrameworkElement)_popup.Child);
         _popup.Closed += (_, _) => _childMenu?.Close();
         if (!submenu && target is FrameworkElement anchor)
@@ -123,7 +133,7 @@ public sealed class DropDownMenu
                 if (item.HasItems)
                 {
                     _childMenu?.Close();
-                    var child = _childMenu = new DropDownMenu(button, submenu: true, onLeafClick: Close);
+                    var child = _childMenu = new DropDownMenu(button, submenu: true, onLeafClick: Close, parentSurface: (FrameworkElement)_popup.Child);
                     foreach (var childItem in item.Items) child.Items.Add(childItem);
                     _popup.StaysOpen = true;
                     child.IsOpen = true;
@@ -142,7 +152,7 @@ public sealed class DropDownMenu
                 if (!item.IsEnabled || !_popup.IsOpen) return;
                 if (!item.HasItems) { _childMenu?.Close(); return; }
                 _childMenu?.Close();
-                var child = _childMenu = new DropDownMenu(button, submenu: true, onLeafClick: Close);
+                var child = _childMenu = new DropDownMenu(button, submenu: true, onLeafClick: Close, parentSurface: (FrameworkElement)_popup.Child);
                 foreach (var childItem in item.Items) child.Items.Add(childItem);
                 _popup.StaysOpen = true;
                 child.IsOpen = true;
