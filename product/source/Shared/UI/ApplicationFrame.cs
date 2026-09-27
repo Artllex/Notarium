@@ -52,7 +52,15 @@ public sealed class ApplicationFrame : Grid
         var label = new TextBlock { Text = heading, Foreground = UiPolicy.Current.TextBrush, FontSize = 10, Margin = new Thickness(17, 10, 0, 0) }; SetRow(label, 1); grid.Children.Add(label);
         SetRow(navigation, 2); grid.Children.Add(navigation);
         var footer = new StackPanel { Margin = new Thickness(8, 10, 8, 20) };
-        foreach (var text in new[] { "Konto", "Ustawienia" }) footer.Children.Add(new ActionButton { Content = text, HorizontalContentAlignment = HorizontalAlignment.Left, Height = 32, Foreground = UiPolicy.Current.TextBrush, IsEnabled = false });
+        foreach (var (text, glyph) in new[] { ("Konto", "\uE77B"), ("Ustawienia", "\uE713") })
+        {
+            var content = new StackPanel { Orientation = Orientation.Horizontal };
+            content.Children.Add(new TextBlock { Text = glyph, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 16, Width = 28, Foreground = UiPolicy.Current.AccentBrush, VerticalAlignment = VerticalAlignment.Center });
+            content.Children.Add(new TextBlock { Text = text, FontSize = 13, VerticalAlignment = VerticalAlignment.Center });
+            var button = new ActionButton { Content = content, ToolTip = text + " — makieta", Padding = new Thickness(9, 2, 9, 2), HorizontalContentAlignment = HorizontalAlignment.Left, Height = 32, Foreground = UiPolicy.Current.TextBrush };
+            System.Windows.Automation.AutomationProperties.SetName(button, text);
+            footer.Children.Add(button);
+        }
         SetRow(footer, 3); grid.Children.Add(footer); return grid;
     }
 }
