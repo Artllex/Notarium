@@ -3,14 +3,17 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 namespace Notarium.UI;
 
-// Original asset unchanged, on the shared blue circular brand background.
+// Original asset unchanged, on the shared blue rounded-square brand background.
 public sealed class BrandIcon : Grid
 {
     public Image Artwork { get; }
     public BrandIcon()
     {
-        SizeChanged += (_, _) => Clip = new EllipseGeometry(new System.Windows.Rect(0, 0, ActualWidth, ActualHeight));
-        Children.Add(new System.Windows.Shapes.Ellipse { Fill = UiPolicy.Current.AccentBrush });
+        Children.Add(new Border
+        {
+            Background = UiPolicy.Current.AccentBrush,
+            CornerRadius = new CornerRadius(Width > 20 ? 9 : 4)
+        });
         Artwork = new Image {
             Source = new BitmapImage(new Uri("pack://application:,,,/Notarium.UI;component/Assets/Notarium.png")),
             Stretch = Stretch.Uniform,
