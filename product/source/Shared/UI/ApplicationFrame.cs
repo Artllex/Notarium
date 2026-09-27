@@ -51,7 +51,7 @@ public sealed class ApplicationFrame : Grid
             : new[] { new GridLength(52), new GridLength(1, GridUnitType.Star), GridLength.Auto }) grid.RowDefinitions.Add(new RowDefinition { Height = height });
         var brand = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(14, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
         brand.Children.Add(new BrandIcon { Width = 28, Height = 28 });
-        brand.Children.Add(new TextBlock { Text = "Notarium", Foreground = UiPolicy.Current.TextBrush, FontSize = 20, FontWeight = FontWeights.SemiBold, Margin = new Thickness(9, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center }); grid.Children.Add(brand);
+        brand.Children.Add(new TextBlock { Text = "Notarium", Foreground = UiPolicy.Current.TextBrush, FontSize = 18, FontWeight = FontWeights.SemiBold, Margin = new Thickness(9, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center }); grid.Children.Add(brand);
         var navigationRow = 1;
         if (hasHeading)
         {
