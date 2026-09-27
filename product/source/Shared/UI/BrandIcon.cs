@@ -15,7 +15,8 @@ public sealed class BrandIcon : Grid
             Source = new BitmapImage(new Uri("pack://application:,,,/Notarium.UI;component/Assets/Notarium.png")),
             Stretch = Stretch.Uniform,
             RenderTransformOrigin = new System.Windows.Point(0.5, 0.5),
-            RenderTransform = new ScaleTransform(1.2, 1.2)
+            Margin = new System.Windows.Thickness(2),
+            RenderTransform = new ScaleTransform(1.05, 1.05)
         };
         Children.Add(Artwork);
         System.Windows.Automation.AutomationProperties.SetName(this, "Notarium — pióro i książka");
