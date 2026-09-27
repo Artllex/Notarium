@@ -11,7 +11,7 @@ public sealed class DropDownMenu
 {
 
     private readonly Popup _popup;
-    private readonly StackPanel _itemsHost = new();
+    private readonly StackPanel _itemsHost = new() { Focusable = true };
     private readonly double? _itemWidth;
     private readonly UIElement? _target;
     private readonly Action? _onLeafClick;
@@ -29,6 +29,20 @@ public sealed class DropDownMenu
         _popup = new Popup { PlacementTarget = target, Placement = target is null ? PlacementMode.MousePoint : submenu ? PlacementMode.Custom : PlacementMode.Custom, StaysOpen = submenu, AllowsTransparency = true, PopupAnimation = PopupAnimation.None };
         _popup.CustomPopupPlacementCallback = (_, targetSize, _) => new[] { new CustomPopupPlacement(submenu ? new Point(targetSize.Width - 2, -4) : new Point(0, targetSize.Height), submenu ? PopupPrimaryAxis.Horizontal : PopupPrimaryAxis.Vertical) };
         _popup.Opened += (_, _) => MenuBackdrop.Apply((FrameworkElement)_popup.Child);
+        _popup.Closed += (_, _) => _childMenu?.Close();
+        if (!submenu && target is FrameworkElement anchor)
+        {
+            void AttachOutsideClose()
+            {
+                if (Window.GetWindow(anchor) is not { } owner) return;
+                owner.PreviewMouseDown += OutsideClick;
+                owner.Deactivated += OwnerDeactivated;
+                _popup.Closed += (_, _) => { owner.PreviewMouseDown -= OutsideClick; owner.Deactivated -= OwnerDeactivated; };
+            }
+            void OutsideClick(object sender, MouseButtonEventArgs args) => Close();
+            void OwnerDeactivated(object? sender, EventArgs args) => Close();
+            _popup.Opened += (_, _) => AttachOutsideClose();
+        }
         _itemsHost.PreviewKeyDown += (_, e) =>
         {
             if (e.Key == Key.Escape) { Close(); _target?.Focus(); e.Handled = true; }
@@ -42,9 +56,9 @@ public sealed class DropDownMenu
     public bool IsOpen
     {
         get => _popup.IsOpen;
-        set { if (value) Build(); _popup.IsOpen = value; if (value) _itemsHost.Dispatcher.BeginInvoke(new Action(() => _itemsHost.Children.OfType<Button>().FirstOrDefault(button => button.IsEnabled)?.Focus())); }
+        set { if (value) Build(); _popup.IsOpen = value; if (value) _itemsHost.Dispatcher.BeginInvoke(new Action(() => _itemsHost.Focus())); }
     }
-    public void Close() => _popup.IsOpen = false;
+    public void Close() { _childMenu?.Close(); _popup.IsOpen = false; }
     public FrameworkElement View { get { Build(); return (FrameworkElement)_popup.Child; } }
 
     private void Build()
@@ -71,6 +85,7 @@ public sealed class DropDownMenu
             // HeaderedItemsControl owns UIElement headers logically. Release that
             // ownership before attaching the same visual to the popup row.
             if (item.Header is UIElement) item.Header = null;
+            header.SetValue(System.Windows.Documents.TextElement.ForegroundProperty, item.IsEnabled ? UiPolicy.Current.TextBrush : new SolidColorBrush(Color.FromRgb(125, 125, 125)));
             Grid.SetColumn(header, 1); row.Children.Add(header);
             if (!string.IsNullOrWhiteSpace(item.InputGestureText))
             {
@@ -80,7 +95,7 @@ public sealed class DropDownMenu
             }
             if (item.HasItems)
             {
-                var arrow = new TextBlock { Text = ">", FontSize = 15, Foreground = UiPolicy.Brush(UiPolicy.Current.MenuText), Margin = new Thickness(14, 0, 2, 0), VerticalAlignment = VerticalAlignment.Center };
+                var arrow = new TextBlock { Text = ">", FontSize = 15, Foreground = item.IsEnabled ? UiPolicy.Current.TextBrush : new SolidColorBrush(Color.FromRgb(125, 125, 125)), Margin = new Thickness(14, 0, 2, 0), VerticalAlignment = VerticalAlignment.Center };
                 Grid.SetColumn(arrow, 3);
                 row.Children.Add(arrow);
             }
@@ -98,7 +113,7 @@ public sealed class DropDownMenu
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 VerticalContentAlignment = VerticalAlignment.Center,
                 Foreground = UiPolicy.Brush(UiPolicy.Current.MenuText),
-                Background = item.IsChecked ? UiPolicy.Brush(UiPolicy.Current.MenuSelected) : Brushes.Transparent,
+                Background = Brushes.Transparent,
                 IsEnabled = item.IsEnabled
             };
             button.Template = RowTemplate();
@@ -124,7 +139,8 @@ public sealed class DropDownMenu
             };
             button.MouseEnter += (_, _) =>
             {
-                if (!item.HasItems || _popup.IsOpen == false) return;
+                if (!item.IsEnabled || !_popup.IsOpen) return;
+                if (!item.HasItems) { _childMenu?.Close(); return; }
                 _childMenu?.Close();
                 var child = _childMenu = new DropDownMenu(button, submenu: true, onLeafClick: Close);
                 foreach (var childItem in item.Items) child.Items.Add(childItem);
@@ -158,11 +174,8 @@ public sealed class DropDownMenu
         var hover = new Trigger { Property = UIElement.IsMouseOverProperty, Value = true };
         hover.Setters.Add(new Setter(Border.BackgroundProperty, UiPolicy.Brush(UiPolicy.Current.MenuHover), "Row"));
         template.Triggers.Add(hover);
-        var focus = new Trigger { Property = UIElement.IsKeyboardFocusedProperty, Value = true };
-        focus.Setters.Add(new Setter(Border.BackgroundProperty, UiPolicy.Brush(UiPolicy.Current.MenuHover), "Row"));
-        template.Triggers.Add(focus);
         var disabled = new Trigger { Property = UIElement.IsEnabledProperty, Value = false };
-        disabled.Setters.Add(new Setter(UIElement.OpacityProperty, UiPolicy.Current.DisabledOpacity)); template.Triggers.Add(disabled);
+        disabled.Setters.Add(new Setter(Border.BackgroundProperty, Brushes.Transparent, "Row")); template.Triggers.Add(disabled);
         return template;
     }
 }

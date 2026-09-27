@@ -13,8 +13,9 @@ using Notarium.UI;
 
 namespace Notatnik;
 
-public partial class MainWindow : Window, INotifyPropertyChanged
+public partial class MainWindow : Window, INotifyPropertyChanged, Notarium.Contracts.INewItemWindow
 {
+    public void CreateNewItem() => NewNote_Click(this, new RoutedEventArgs());
     private readonly NotebookLibrary _library;
     private readonly NotebookTabs _tabs = new();
     private readonly NotebookAutosave _saveTimer;
