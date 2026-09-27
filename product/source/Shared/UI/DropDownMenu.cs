@@ -14,17 +14,20 @@ public sealed class DropDownMenu
     private readonly StackPanel _itemsHost = new();
     private readonly double? _itemWidth;
     private readonly UIElement? _target;
+    private readonly Action? _onLeafClick;
+    private DropDownMenu? _childMenu;
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<MenuItem, UIElement> Headers = new();
     public Collection<object> Items { get; } = new();
 
-    public DropDownMenu(UIElement? target, double? itemWidth = null)
+    public DropDownMenu(UIElement? target, double? itemWidth = null, bool submenu = false, Action? onLeafClick = null)
     {
         _itemWidth = itemWidth;
         _target = target;
+        _onLeafClick = onLeafClick;
         // Custom placement is immune to the system's right-aligned menu policy.
         // A button menu always starts at the button's left, not at its right.
-        _popup = new Popup { PlacementTarget = target, Placement = target is null ? PlacementMode.MousePoint : PlacementMode.Custom, StaysOpen = false, AllowsTransparency = true, PopupAnimation = PopupAnimation.None };
-        _popup.CustomPopupPlacementCallback = (_, targetSize, _) => new[] { new CustomPopupPlacement(new Point(0, targetSize.Height), PopupPrimaryAxis.Vertical) };
+        _popup = new Popup { PlacementTarget = target, Placement = target is null ? PlacementMode.MousePoint : submenu ? PlacementMode.Custom : PlacementMode.Custom, StaysOpen = submenu, AllowsTransparency = true, PopupAnimation = PopupAnimation.None };
+        _popup.CustomPopupPlacementCallback = (_, targetSize, _) => new[] { new CustomPopupPlacement(submenu ? new Point(targetSize.Width - 2, -4) : new Point(0, targetSize.Height), submenu ? PopupPrimaryAxis.Horizontal : PopupPrimaryAxis.Vertical) };
         _itemsHost.PreviewKeyDown += (_, e) =>
         {
             if (e.Key == Key.Escape) { Close(); _target?.Focus(); e.Handled = true; }
@@ -59,6 +62,7 @@ public sealed class DropDownMenu
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             if (item.IsCheckable) row.Children.Add(new TextBlock { Text = item.IsChecked ? "✓" : "", Width = 18, Margin = new Thickness(0, 0, 5, 0) });
             var header = item.Header as UIElement ?? (Headers.TryGetValue(item, out var cached) ? cached : new TextBlock { Text = (item.Header?.ToString() ?? string.Empty).Replace("_", "") });
             if (item.Header is UIElement && !Headers.TryGetValue(item, out _)) Headers.Add(item, header);
@@ -69,9 +73,15 @@ public sealed class DropDownMenu
             Grid.SetColumn(header, 1); row.Children.Add(header);
             if (!string.IsNullOrWhiteSpace(item.InputGestureText))
             {
-                var shortcut = new TextBlock { Text = item.InputGestureText, Foreground = UiPolicy.Current.TextBrush, Margin = new Thickness(18, 0, 0, 0) };
+                var shortcut = new TextBlock { Text = item.InputGestureText, Foreground = new SolidColorBrush(Color.FromRgb(145, 145, 145)), Margin = new Thickness(18, 0, 0, 0) };
                 Grid.SetColumn(shortcut, 2);
                 row.Children.Add(shortcut);
+            }
+            if (item.HasItems)
+            {
+                var arrow = new TextBlock { Text = ">", FontSize = 15, Foreground = UiPolicy.Brush(UiPolicy.Current.MenuText), Margin = new Thickness(14, 0, 2, 0), VerticalAlignment = VerticalAlignment.Center };
+                Grid.SetColumn(arrow, 3);
+                row.Children.Add(arrow);
             }
 
             var button = new ActionButton
@@ -83,7 +93,7 @@ public sealed class DropDownMenu
                 Padding = new Thickness(UiPolicy.Current.RowPaddingX, UiPolicy.Current.RowPaddingY, UiPolicy.Current.RowPaddingX, UiPolicy.Current.RowPaddingY),
                 Margin = new Thickness(UiPolicy.Current.RowMarginX, 0, UiPolicy.Current.RowMarginX, 0),
                 FontFamily = new FontFamily(UiPolicy.Current.FontFamily),
-                FontSize = UiPolicy.Current.FontSize,
+                FontSize = 13,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 VerticalContentAlignment = VerticalAlignment.Center,
                 Foreground = UiPolicy.Brush(UiPolicy.Current.MenuText),
@@ -94,11 +104,31 @@ public sealed class DropDownMenu
             System.Windows.Automation.AutomationProperties.SetName(button, item.Header?.ToString()?.Replace("_", "") ?? (header as TextBlock)?.Text ?? "Menu option");
             button.Click += (_, _) =>
             {
+                if (item.HasItems)
+                {
+                    _childMenu?.Close();
+                    var child = _childMenu = new DropDownMenu(button, submenu: true, onLeafClick: Close);
+                    foreach (var childItem in item.Items) child.Items.Add(childItem);
+                    _popup.StaysOpen = true;
+                    child.IsOpen = true;
+                    return;
+                }
                 if (item.IsCheckable) item.IsChecked = !item.IsChecked;
                 if (item.Command is RoutedCommand routed && routed.CanExecute(item.CommandParameter, item.CommandTarget)) routed.Execute(item.CommandParameter, item.CommandTarget);
                 else if (item.Command is ICommand command && command.CanExecute(item.CommandParameter)) command.Execute(item.CommandParameter);
                 item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent, item));
                 _popup.IsOpen = false;
+                _childMenu?.Close();
+                _onLeafClick?.Invoke();
+            };
+            button.MouseEnter += (_, _) =>
+            {
+                if (!item.HasItems || _popup.IsOpen == false) return;
+                _childMenu?.Close();
+                var child = _childMenu = new DropDownMenu(button, submenu: true, onLeafClick: Close);
+                foreach (var childItem in item.Items) child.Items.Add(childItem);
+                _popup.StaysOpen = true;
+                child.IsOpen = true;
             };
             _itemsHost.Children.Add(button);
         }

@@ -1,5 +1,5 @@
 {
-  "menuBackground": "#252525",
+  "menuBackground": "#E6252525",
   "menuBorder": "#4E4E4E",
   "menuHover": "#3A3A3A",
   "menuSelected": "#304B66",
@@ -10,7 +10,7 @@
   "panel": "#202020",
   "accent": "#3B82D0",
   "fontFamily": "Segoe UI",
-  "fontSize": 14,
+  "fontSize": 13,
   "menuPadding": 2,
   "rowPaddingX": 10,
   "rowPaddingY": 2,
