@@ -2,10 +2,7 @@
                 <Grid.RowDefinitions><RowDefinition Height="52" /><RowDefinition Height="46" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                 <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <ui:BrandIcon Width="28" Height="28" HorizontalAlignment="Left" Margin="14,0,0,0" />
-                    <StackPanel Orientation="Horizontal" Margin="51,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="Notarium" Foreground="{StaticResource Text}" FontSize="14" FontWeight="SemiBold" />
-                        <TextBlock Text="Notatnik" Foreground="{StaticResource Text}" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12" />
-                    </StackPanel>
+                    <TextBlock Text="Notarium Notatnik" Foreground="{StaticResource Text}" Margin="51,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" />
                 </Grid>
 
                 <Grid Grid.Row="1" Margin="10,3,10,7">
