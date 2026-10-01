@@ -738,8 +738,8 @@ try {
     const grip = await boxes.first().locator('.container-type-label').boundingBox(), target = await boxes.nth(1).boundingBox();
     await page.mouse.move(grip.x + 12, grip.y + 12); await page.mouse.down();
     await page.mouse.move(target.x + target.width - 3, target.y + 55, { steps: 8 });
-    assert.equal(await boxes.first().evaluate(el => getComputedStyle(el).backdropFilter), 'blur(2px)');
-    assert.equal(await boxes.first().evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(30, 30, 30, 0.72)');
+    assert.equal(await boxes.first().evaluate(el => getComputedStyle(el, '::before').backdropFilter), 'blur(2px)');
+    assert.equal(await boxes.first().evaluate(el => getComputedStyle(el, '::before').backgroundColor), 'rgba(30, 30, 30, 0.72)');
     if (process.env.NOTARIUM_TEST_OUTPUT) await page.screenshot({ path: resolve(reportDirectory, 'dragged-container-blur.png') });
     await page.mouse.up();
     assert.equal((await json()).content[0].type, 'layoutRow');
@@ -784,12 +784,16 @@ try {
     await page.mouse.move(target.x + target.width / 2, target.y + 10, { steps: 8 });
     await page.waitForTimeout(120);
     assert.equal(await source.evaluate(el => el.classList.contains('container-lifted')), true);
-    assert.equal(await source.evaluate(el => getComputedStyle(el).backdropFilter), 'blur(2px)');
+    assert.equal(await source.evaluate(el => getComputedStyle(el, '::before').backdropFilter), 'blur(2px)');
+    const typePanel = source.locator(':scope > .container-type-tools');
+    assert.equal(await typePanel.isVisible(), true);
+    assert.equal(await typePanel.evaluate(el => getComputedStyle(el).backdropFilter), 'blur(2px)');
     if (process.env.NOTARIUM_TEST_OUTPUT) await page.screenshot({ path: resolve(reportDirectory, 'dragged-over-text-blur.png') });
     await page.keyboard.press('Escape');
     await page.mouse.up();
     assert.equal(await source.evaluate(el => el.classList.contains('container-lifted')), false);
     assert.equal(await source.evaluate(el => getComputedStyle(el).backdropFilter), 'none');
+    assert.equal(await typePanel.evaluate(el => getComputedStyle(el).backdropFilter), 'blur(1px)');
   });
   await check('Right and bottom edges resize independently; corner double click resets layout with undo', async () => {
     await open('edge-resize', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [

@@ -120,6 +120,7 @@ Text, Empty, nagłówki, cytaty, listy, kod, obraz, matematyka, tabela i grupa m
 Przy zmianie szerokości kontenera: adapter rozpoznaje gest → logika oblicza dozwoloną geometrię według typu → warstwa wizualna pokazuje podgląd → zatwierdzenie zmienia dokument i historię → most przekazuje dokument → biblioteka aktualizuje notatkę → autosave planuje zapis.
 
 Podczas przeciągania kontener z klasą `container-lifted` ma tymczasowe półprzezroczyste tło i rozmycie zawartości pod spodem. Po puszczeniu lub anulowaniu gestu stan wizualny jest usuwany; zapisany wygląd kontenera pozostaje bez zmian.
+Rozmycie głównej powierzchni jest na pseudoelementcie, nie na rodzicu panelu „Type”. Dzięki temu wysunięty poza lewą krawędź panel ma osobny filtr i rozmywa tekst pod sobą również podczas przeciągania.
 
 Podgląd wizualny, transakcja dokumentu i zapis na dysku mają osobne odpowiedzialności. Zmiana wyglądu nie powinna zmieniać reguł kopiowania, przesuwania ani przechowywania.
 
