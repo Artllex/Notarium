@@ -121,6 +121,7 @@ Przy zmianie szerokości kontenera: adapter rozpoznaje gest → logika oblicza d
 
 Podczas przeciągania kontener z klasą `container-lifted` ma tymczasowe półprzezroczyste tło i rozmycie zawartości pod spodem. Po puszczeniu lub anulowaniu gestu stan wizualny jest usuwany; zapisany wygląd kontenera pozostaje bez zmian.
 Rozmycie głównej powierzchni jest na pseudoelementcie, nie na rodzicu panelu „Type”. Dzięki temu wysunięty poza lewą krawędź panel ma osobny filtr i rozmywa tekst pod sobą również podczas przeciągania.
+Pseudoelement jest rozszerzony o 4 px z każdej strony, ponieważ ramka kontenera ma `outline-offset: 3px` i szerokość 1 px; rozmycie dochodzi więc do samej ramki bez nieostrej szczeliny.
 
 Podgląd wizualny, transakcja dokumentu i zapis na dysku mają osobne odpowiedzialności. Zmiana wyglądu nie powinna zmieniać reguł kopiowania, przesuwania ani przechowywania.
 

@@ -785,6 +785,7 @@ try {
     await page.waitForTimeout(120);
     assert.equal(await source.evaluate(el => el.classList.contains('container-lifted')), true);
     assert.equal(await source.evaluate(el => getComputedStyle(el, '::before').backdropFilter), 'blur(2px)');
+    assert.equal(await source.evaluate(el => getComputedStyle(el, '::before').inset), '-4px');
     const typePanel = source.locator(':scope > .container-type-tools');
     assert.equal(await typePanel.isVisible(), true);
     assert.equal(await typePanel.evaluate(el => getComputedStyle(el).backdropFilter), 'blur(2px)');

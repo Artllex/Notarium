@@ -104,7 +104,7 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 @keyframes drag-outline-appear{from{outline-color:#4440}to{outline-color:#444}}
 @keyframes drag-outline-disappear{from{outline-color:#444}to{outline-color:#4440}}
 .object-container.container-lifted{z-index:80;transform:translate(var(--drag-x,0px),calc(var(--drag-y,0px) - 6px)) scale(1.01);box-shadow:0 14px 28px #0009;transition:transform 80ms linear,box-shadow 160ms ease;pointer-events:none}
-.object-container.container-lifted::before{content:'';position:absolute;inset:0;z-index:-1;background:rgba(30,30,30,.72);backdrop-filter:blur(2px);pointer-events:none}
+.object-container.container-lifted::before{content:'';position:absolute;inset:-4px;z-index:-1;background:rgba(30,30,30,.72);backdrop-filter:blur(2px);pointer-events:none}
 .object-container.container-lifted>.container-type-tools{display:flex;backdrop-filter:blur(2px)}
 .container-title,.container-caption{white-space:pre-wrap;text-align:center;overflow-wrap:anywhere}
 .container-title{font-weight:600;padding-bottom:8px}.container-caption{font-size:.85em;color:#aaa;padding-top:8px}
