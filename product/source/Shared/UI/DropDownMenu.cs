@@ -30,7 +30,18 @@ public sealed class DropDownMenu
         _centerItems = centerItems;
         // Custom placement is immune to the system's right-aligned menu policy.
         // A button menu always starts at the button's left, not at its right.
-        _popup = new Popup { PlacementTarget = target, Placement = target is null ? PlacementMode.MousePoint : PlacementMode.Custom, StaysOpen = submenu, AllowsTransparency = true, PopupAnimation = SystemParameters.MenuAnimation ? PopupAnimation.Fade : PopupAnimation.None };
+        var submenuOrigin = submenu && target is FrameworkElement row && parentSurface is not null
+            ? row.TranslatePoint(new Point(), parentSurface)
+            : new Point();
+        _popup = new Popup
+        {
+            PlacementTarget = submenu ? parentSurface ?? target : target,
+            Placement = submenu ? PlacementMode.Right : target is null ? PlacementMode.MousePoint : PlacementMode.Custom,
+            VerticalOffset = submenu ? submenuOrigin.Y : 0,
+            StaysOpen = submenu,
+            AllowsTransparency = true,
+            PopupAnimation = SystemParameters.MenuAnimation ? PopupAnimation.Fade : PopupAnimation.None
+        };
         _popup.CustomPopupPlacementCallback = (popupSize, targetSize, _) =>
         {
             if (!submenu)
@@ -46,13 +57,7 @@ public sealed class DropDownMenu
                 }
                 return new[] { new CustomPopupPlacement(new Point(0, targetSize.Height), PopupPrimaryAxis.Vertical) };
             }
-            var origin = target is FrameworkElement anchor && parentSurface is not null ? anchor.TranslatePoint(new Point(), parentSurface) : new Point();
-            var parentWidth = parentSurface?.ActualWidth ?? targetSize.Width;
-            return new[]
-            {
-                new CustomPopupPlacement(new Point(parentWidth - origin.X + 2, 0), PopupPrimaryAxis.Horizontal),
-                new CustomPopupPlacement(new Point(-origin.X - popupSize.Width - 2, 0), PopupPrimaryAxis.Horizontal)
-            };
+            return Array.Empty<CustomPopupPlacement>();
         };
         _popup.Opened += (_, _) => MenuBackdrop.Apply((FrameworkElement)_popup.Child);
         _popup.Closed += (_, _) => _childMenu?.Close();
