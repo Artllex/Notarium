@@ -361,7 +361,7 @@ export class ContainerView {
     if (this.inner.update && !this.inner.update(node, ...args)) return false;
     this.node = node; this.paint(); return true;
   }
-  stopEvent(event) { return !!event.target.closest('.container-tools,.container-add-tools,.container-title,.container-caption,.container-resize,.container-resize-edge,.container-select-edge,.container-pair-resize,.container-gap-boundary') || !!this.inner.stopEvent?.(event); }
+  stopEvent(event) { return !!event.target.closest('.container-type-tools,.container-tools,.container-add-tools,.container-title,.container-caption,.container-resize,.container-resize-edge,.container-select-edge,.container-pair-resize,.container-gap-boundary') || !!this.inner.stopEvent?.(event); }
   ignoreMutation(mutation) {
     const target = mutation.target.nodeType === 1 ? mutation.target : mutation.target.parentElement;
     if (target?.closest('.rich-label')) return true;
@@ -682,7 +682,7 @@ export function setupContainers(editor, options) {
     setRowHover(candidates[0]?.dom || null);
   }, true);
   const selectGap = event => {
-    if (event.button !== 0 || event.target.closest?.('.container-pair-resize,.container-gap-boundary,.container-tools,.container-resize,.container-resize-edge,.container-add-tools')) return;
+    if (event.button !== 0 || event.target.closest?.('.container-pair-resize,.container-gap-boundary,.container-type-tools,.container-tools,.container-resize,.container-resize-edge,.container-add-tools')) return;
     const horizontal = rowBoundaryAtPoint(event.clientX, event.clientY);
     const empty = event.target.closest?.('.object-container.container-empty');
     const row = empty?.parentElement;

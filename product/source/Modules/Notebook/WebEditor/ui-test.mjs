@@ -31,8 +31,8 @@ try {
   });
   assert.equal(closeIcon.buttonWidth, 18);
   assert.equal(closeIcon.buttonHeight, 23);
-  assert.equal(closeIcon.firstWidth, '12px');
-  assert.equal(closeIcon.secondWidth, '12px');
+  assert.equal(closeIcon.firstWidth, '10px');
+  assert.equal(closeIcon.secondWidth, '10px');
   assert.equal(closeIcon.firstHeight, '1.5px');
   assert.equal(closeIcon.secondHeight, '1.5px');
   assert.notEqual(closeIcon.firstTransform, closeIcon.secondTransform);

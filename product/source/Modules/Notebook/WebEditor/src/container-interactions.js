@@ -3,7 +3,7 @@ import { getContainerType } from './container-types.js';
 import { ContainerVisual } from './container-visual.js';
 
 export class ContainerInteractions {
-  static isControl(target) { return Boolean(target.closest?.('button,input,select,.ui-dropdown,.container-tools,.container-add-tools,.container-pair-resize,.container-gap-boundary,.container-resize,.container-resize-edge')); }
+  static isControl(target) { return Boolean(target.closest?.('button,input,select,.ui-dropdown,.container-type-tools,.container-tools,.container-add-tools,.container-pair-resize,.container-gap-boundary,.container-resize,.container-resize-edge')); }
   constructor(view, props, options) {
     const typeLabel = view.typeLabel;
     view.selectTop.title = 'Zaznacz kontener';

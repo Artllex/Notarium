@@ -26,13 +26,13 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
-  await check('Empty has centered controls without settings and a translucent selected fill', async () => {
+  await check('Empty has centered Type, separate close control, and a translucent selected fill', async () => {
     await open('empty-panel', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [{ type: 'paragraph', attrs: { boxEmpty: true } }] } }));
     const empty = page.locator('.container-empty');
     await empty.hover();
     assert.equal(await empty.locator('.container-tools > button:not([hidden])').count(), 1);
     const centers = await empty.evaluate(el => {
-      const a = el.getBoundingClientRect(), b = el.querySelector('.container-tools').getBoundingClientRect();
+      const a = el.getBoundingClientRect(), b = el.querySelector('.container-type-tools').getBoundingClientRect();
       return [a.left + a.width / 2, b.left + b.width / 2];
     });
     assert.ok(Math.abs(centers[0] - centers[1]) < 1);
@@ -968,7 +968,7 @@ try {
       assert.match(await page.locator('.cm-content').textContent(), /print\(123\)/);
     }
   });
-  await check('Container type badges and controls occupy the upper left corner', async () => {
+  await check('Container Type stays left while close and settings stay right', async () => {
     const nodes = [{ type: 'paragraph', content: [{ type: 'text', text: 'Text example' }] },
       { type: 'blockMath', attrs: { latex: 'x=1' } }, { type: 'codeCell' },
       { type: 'image', attrs: { src: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80"><rect width="200" height="80" fill="teal"/></svg>') } },
@@ -977,19 +977,24 @@ try {
     for (const [type, label] of [['paragraph','Text'], ['blockMath','Math'], ['codeCell','Code'], ['image','Picture'], ['table','Table']]) {
       const container = page.locator(`[data-container-type="${type}"]`).first();
       await container.hover();
-      const bar = container.locator(':scope > .container-tools');
-      await bar.waitFor({ state: 'visible' });
-      assert.equal(await bar.locator('.container-type-label').getAttribute('data-label'), label);
-      const box = await container.boundingBox(), tools = await bar.boundingBox();
-      assert.ok(Math.abs(tools.x + tools.width - (box.x - 4)) <= 1);
-      assert.ok(Math.abs(tools.y - (box.y - 4)) <= 1);
-      const badge = await bar.locator('.container-type-label').boundingBox();
-      assert.equal(await bar.locator('.container-grip').count(), 0);
-      assert.equal(await bar.locator('.container-type-label').evaluate(element => getComputedStyle(element).cursor), 'grab');
+      const left = container.locator(':scope > .container-type-tools');
+      const right = container.locator(':scope > .container-tools');
+      await left.waitFor({ state: 'visible' });
+      await right.waitFor({ state: 'visible' });
+      assert.equal(await left.locator('.container-type-label').getAttribute('data-label'), label);
+      assert.deepEqual(await right.locator('button').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label') || button.title)),
+        ['Usuń kontener', 'Tytuł, stopka i wymiary']);
+      const box = await container.boundingBox(), leftBox = await left.boundingBox(), rightBox = await right.boundingBox();
+      assert.ok(Math.abs(leftBox.x + leftBox.width - (box.x - 4)) <= 1);
+      assert.ok(Math.abs(rightBox.x - (box.x + box.width + 4)) <= 1);
+      assert.ok(Math.abs(leftBox.y - (box.y - 4)) <= 1 && Math.abs(rightBox.y - (box.y - 4)) <= 1);
+      assert.equal(await left.locator('.container-grip').count(), 0);
+      assert.equal(await left.locator('.container-type-label').evaluate(element => getComputedStyle(element).cursor), 'grab');
     }
     const first = page.locator('[data-container-type=paragraph]').first();
     await first.hover();
-      const settings = first.locator(':scope > .container-tools button[title="Tytuł, stopka i wymiary"]'), settingsBox = await settings.boundingBox();
+    if (process.env.NOTARIUM_TEST_OUTPUT) await page.screenshot({ path: resolve(reportDirectory, 'container-three-panels.png') });
+    const settings = first.locator(':scope > .container-tools button[title="Tytuł, stopka i wymiary"]'), settingsBox = await settings.boundingBox();
     await page.mouse.move(settingsBox.x + settingsBox.width / 2, settingsBox.y + settingsBox.height / 2);
     assert.equal(await first.locator(':scope > .container-tools').isVisible(), true);
     const add = first.locator(':scope > .container-add-tools');

@@ -4,7 +4,7 @@ body.persistent-container-highlights .object-container{outline-color:#444}
 body.persistent-container-highlights .object-container.container-selected{outline-color:#82b8f8}
 body .object-container.container-empty{outline-color:transparent!important;min-width:0}
 body .object-container.container-empty.container-selected{outline-color:#82b8f8!important;background-color:rgba(130,184,248,.18)!important}
-.object-container.container-empty>.container-tools{left:50%;right:auto;top:50%;transform:translate(-50%,-50%);border-radius:4px}
+.object-container.container-empty>.container-type-tools{left:50%;right:auto;top:50%;transform:translate(-50%,-50%);border-radius:4px}
 .container-tools>button[hidden]{display:none!important}
 body .object-container.container-empty,body .object-container.container-empty *{cursor:default}
 .container-boundary-focus{position:fixed;width:1px;height:1px;left:-10px;top:-10px;opacity:0;outline:none}
@@ -20,16 +20,23 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 .block-group-content{padding:26px 16px 16px;min-height:90px;border:1px solid #454545;border-radius:4px}
 .block-group-content>.object-container{margin-bottom:18px}
 .block-group-content>.object-container:last-child{margin-bottom:0}
-.object-container:has(.object-container:hover)>.container-tools,.object-container:has(.object-container:hover)>.container-add-tools{display:none}
+.object-container:has(.object-container:hover)>.container-type-tools,.object-container:has(.object-container:hover)>.container-tools,.object-container:has(.object-container:hover)>.container-add-tools{display:none}
 .block-drop-marker[data-inside=true]{background:#60a5fa22;border:2px solid #60a5fa;border-radius:4px}
 .block-drop-marker[data-gap=true]{height:auto;background:#60a5fa55;border:2px solid #60a5fa;border-radius:4px}
-.container-tools{position:absolute;right:calc(100% + 4px);left:auto;top:-4px;height:23px;display:none;z-index:24;pointer-events:auto;background:#303030;border-radius:4px 0 0 4px;color:#bbb;align-items:center;width:max-content;white-space:nowrap}
-.container-tools:after{content:'';position:absolute;left:-3px;top:0;width:3px;height:23px;pointer-events:auto}
+.container-type-tools,.container-tools{position:absolute;top:-4px;height:23px;display:none;z-index:24;pointer-events:auto;background:#303030;color:#bbb;align-items:center;width:max-content;white-space:nowrap}
+.container-type-tools{right:calc(100% + 4px);border-radius:4px 0 0 4px}
+.container-tools{left:calc(100% + 4px);border-radius:0 4px 4px 0}
+.container-type-tools::after,.container-tools::after{content:'';position:absolute;top:0;width:4px;height:23px;pointer-events:auto}
+.container-type-tools::after{right:-4px}
+.container-tools::after{left:-4px}
+.layout-row>.object-container>.container-type-tools,.layout-row>.object-container>.container-tools{top:-27px}
+.block-group-content .object-container>.container-type-tools{left:0;right:auto;top:-27px;border-radius:4px}
+.block-group-content .object-container>.container-tools{right:0;left:auto;top:-27px;border-radius:4px}
 .container-type-label{font:600 11px/23px 'Segoe UI',sans-serif;padding:0 5px;color:#ccc;user-select:none;cursor:grab}
 .container-type-label:before{content:attr(data-label)}
-.object-container:hover>.container-tools,.container-row-hover>.container-tools,.container-selected>.container-tools,.object-container:hover>.container-add-tools,.container-row-hover>.container-add-tools,.container-selected>.container-add-tools{display:flex}
-.object-container:has(>.container-tools:hover)>.container-tools{display:flex}
-.object-container:has(>.container-tools:hover){z-index:40}
+.object-container:hover>.container-type-tools,.container-row-hover>.container-type-tools,.container-selected>.container-type-tools,.object-container:hover>.container-tools,.container-row-hover>.container-tools,.container-selected>.container-tools,.object-container:hover>.container-add-tools,.container-row-hover>.container-add-tools,.container-selected>.container-add-tools{display:flex}
+.object-container:has(>.container-type-tools:hover)>.container-type-tools,.object-container:has(>.container-tools:hover)>.container-tools{display:flex}
+.object-container:has(>.container-type-tools:hover,>.container-tools:hover){z-index:40}
 .container-add-tools{position:absolute;left:50%;top:calc(100% + 3px);transform:translate(-50%,-50%);height:21px;display:none;z-index:24;align-items:center;background:#303030;border:1px solid #444;border-radius:4px;padding:0;white-space:nowrap;max-width:calc(100% - 28px);overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
 .container-add-tools::-webkit-scrollbar{display:none}
 .container-add-tools button{height:23px;padding:1px 9px;border:0;border-left:1px solid #555;background:transparent;color:#bbb;font:11px 'Segoe UI',sans-serif;cursor:pointer;border-radius:0;display:block;flex:0 0 auto;white-space:nowrap;line-height:20px}
@@ -37,12 +44,12 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 .container-add-tools button:first-child{border-left:0;border-radius:3px 0 0 3px}.container-add-tools button:last-child{border-radius:0 3px 3px 0}
 .container-add-tools button:before{content:attr(data-label)}
 .container-add-tools button:hover{background:#444;color:#fff}
-.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-tools,.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-add-tools,.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-resize{animation:container-chrome-appear 180ms ease-out both}
+.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-type-tools,.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-tools,.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-add-tools,.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-resize{animation:container-chrome-appear 180ms ease-out both}
 .object-container:not(.container-selected):is(:hover,.container-row-hover){animation:container-outline-appear 180ms ease-out both}
-.object-container.container-selected>.container-tools,.object-container.container-selected>.container-add-tools,.object-container.container-selected>.container-resize{opacity:1;animation:none}
+.object-container.container-selected>.container-type-tools,.object-container.container-selected>.container-tools,.object-container.container-selected>.container-add-tools,.object-container.container-selected>.container-resize{opacity:1;animation:none}
 @keyframes container-chrome-appear{from{opacity:.5}to{opacity:1}}
 @keyframes container-outline-appear{from{outline-color:#4448}to{outline-color:#444}}
-@media(prefers-reduced-motion:reduce){.object-container,.object-container>.container-tools,.object-container>.container-add-tools,.object-container>.container-resize{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.object-container,.object-container>.container-type-tools,.object-container>.container-tools,.object-container>.container-add-tools,.object-container>.container-resize{animation:none!important}}
 #container-dialog .background-options{display:flex;align-items:center;gap:12px}
 #container-dialog input[type=color]{width:54px;height:34px;padding:3px;cursor:pointer}
 #container-dialog .background-options label{display:flex;align-items:center;gap:6px}
@@ -50,7 +57,7 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 .container-tools button{background:none;border:0;color:inherit;padding:2px 4px;cursor:pointer}
 .container-tools button:before{content:'⚙'}
 .container-tools .container-delete-button{position:relative;box-sizing:border-box;width:18px;height:23px;padding:0;flex:0 0 18px}
-.container-tools .container-delete-button:before,.container-tools .container-delete-button:after{content:'';position:absolute;left:50%;top:50%;width:12px;height:1.5px;background:currentColor;border-radius:1px}
+.container-tools .container-delete-button:before,.container-tools .container-delete-button:after{content:'';position:absolute;left:50%;top:50%;width:10px;height:1.5px;background:currentColor;border-radius:1px}
 .container-tools .container-delete-button:before{transform:translate(-50%,-50%) rotate(45deg)}
 .container-tools .container-delete-button:after{transform:translate(-50%,-50%) rotate(-45deg)}
 .container-resize{position:absolute;width:11px;height:11px;background:#60a5fa;border:2px solid #1e1e1e;cursor:nwse-resize;display:none;z-index:26}

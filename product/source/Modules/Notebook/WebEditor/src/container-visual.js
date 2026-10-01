@@ -61,8 +61,9 @@ export class ContainerVisual {
     view.contentDOM = inner.contentDOM;
     view.header = ToolPanel.create(); view.header.className = 'container-title';
     view.footer = ToolPanel.create(); view.footer.className = 'container-caption';
+    view.typeTools = ToolPanel.create(); view.typeTools.className = 'container-type-tools';
     view.tools = ToolPanel.create(); view.tools.className = 'container-tools';
-    view.tools.contentEditable = view.header.contentEditable = view.footer.contentEditable = 'false';
+    view.typeTools.contentEditable = view.tools.contentEditable = view.header.contentEditable = view.footer.contentEditable = 'false';
     const settings = ActionButton.create(); view.settingsButton = settings; settings.type = 'button'; settings.title = 'Tytuł, stopka i wymiary';
     const remove = ActionButton.create(); remove.type = 'button'; remove.className = 'container-delete-button';
     remove.title = 'Usuń kontener'; remove.setAttribute('aria-label', 'Usuń kontener');
@@ -70,7 +71,8 @@ export class ContainerVisual {
     typeLabel.dataset.label = getContainerType(view.node).label;
     typeLabel.setAttribute('aria-label', typeLabel.dataset.label);
     typeLabel.title = 'Przeciągnij kontener';
-    view.tools.append(remove, settings, typeLabel);
+    view.typeTools.append(typeLabel);
+    view.tools.append(remove, settings);
     view.addTools = ToolPanel.create(); view.addTools.className = 'container-add-tools'; view.addTools.contentEditable = 'false';
     for (const [label, title, type] of [
       ['+ text', 'Add text container', 'paragraph'],
@@ -93,7 +95,7 @@ export class ContainerVisual {
     view.resizeBottomLeft = Handle.create('container-resize container-resize-corner container-resize-bottom-left'); view.resizeBottomLeft.className = 'container-resize container-resize-corner container-resize-bottom-left';
     view.resizeRight.contentEditable = view.resizeLeft.contentEditable = view.resizeBottom.contentEditable = view.resizeBottomLeft.contentEditable = view.selectTop.contentEditable = view.pairResize.contentEditable = view.gapBoundary.contentEditable = 'false';
     view.resizeRight.title = view.resizeLeft.title = 'Zmień szerokość'; view.resizeBottom.title = view.resizeBottomLeft.title = 'Zmień wysokość i szerokość';
-    view.dom.append(view.tools, view.header, inner.dom, view.footer, view.addTools, view.resize);
+    view.dom.append(view.typeTools, view.tools, view.header, inner.dom, view.footer, view.addTools, view.resize);
     view.dom.append(view.resizeRight, view.resizeLeft, view.resizeBottom, view.resizeBottomLeft, view.selectTop, view.pairResize, view.gapBoundary);
   }
   static paint(view) {
