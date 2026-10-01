@@ -88,7 +88,7 @@ public sealed class ApplicationFrame : Grid
         var navigationRow = 1;
         if (hasHeading)
         {
-            var label = new TextBlock { Text = heading, Foreground = UiPolicy.Current.TextBrush, FontSize = 10, Margin = new Thickness(17, 10, 0, 0) };
+            var label = new TextBlock { Text = heading, Foreground = UiPolicy.Current.TextBrush, FontSize = 10, Margin = new Thickness(17, 10, 8, 0), TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap };
             SetRow(label, 1);
             grid.Children.Add(label);
             navigationRow = 2;
