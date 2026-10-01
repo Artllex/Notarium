@@ -17,6 +17,7 @@ public sealed class ApplicationFrame : Grid
     private readonly Border _separatorLine;
     private readonly GridSplitter _sidebarSplitter;
     private readonly ActionButton _sidebarToggle;
+    private readonly BrandIcon _titleBrandIcon;
     private double _lastSidebarWidth = 250;
     private double _dragStartSidebarWidth = 250;
 
@@ -32,6 +33,8 @@ public sealed class ApplicationFrame : Grid
         _separatorLine.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         _sidebarSplitter.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         _sidebarToggle.ToolTip = show ? "Ukryj panel boczny" : "Pokaż panel boczny";
+        _titleBrandIcon.Width = _titleBrandIcon.Height = show ? 16 : 28;
+        _sidebarToggle.Width = _sidebarToggle.Height = show ? 20 : 28;
     }
 
     public ApplicationFrame(Window owner)
@@ -55,7 +58,8 @@ public sealed class ApplicationFrame : Grid
             button.Click += (_, _) => action(); WindowChrome.SetIsHitTestVisibleInChrome(button, true); DockPanel.SetDock(button, Dock.Right); title.Children.Add(button);
         }
         var windowBrand = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-        _sidebarToggle = new ActionButton { Content = new BrandIcon { Width = 16, Height = 16 }, Width = 20, Height = 20, Padding = new Thickness(0), Margin = new Thickness(0, 0, 3, 0), ToolTip = "Ukryj panel boczny" };
+        _titleBrandIcon = new BrandIcon { Width = 16, Height = 16 };
+        _sidebarToggle = new ActionButton { Content = _titleBrandIcon, Width = 20, Height = 20, Padding = new Thickness(0), Margin = new Thickness(0, 0, 3, 0), ToolTip = "Ukryj panel boczny" };
         System.Windows.Automation.AutomationProperties.SetName(_sidebarToggle, "Pokaż lub ukryj panel boczny");
         _sidebarToggle.Click += (_, _) => ToggleSidebar();
         WindowChrome.SetIsHitTestVisibleInChrome(_sidebarToggle, true);

@@ -18,7 +18,7 @@ panel boczny o początkowej szerokości 250 px (regulowany uchwytem 110–450 px
 DEV i Notatnik. Rama nie ładuje modułów ani danych: otrzymuje zawartość obszarów.
 DEV wypełnia obszar roboczy kartami „Elementy Windows” i „Elementy Web”, bez
 uruchamiania Notatnika. Panel boczny służy do przełączania galerii.
-Duża ikona Notarium w panelu go ukrywa, a mała ikona na pasku tytułu przywraca.
+Duża ikona Notarium w panelu go ukrywa. Po zwinięciu panelu ikona na pasku tytułu ma ten sam rozmiar (28 px) i przywraca panel.
 Przeciągnięcie separatora do minimalnej szerokości ukrywa panel po puszczeniu uchwytu;
 ponowne otwarcie przywraca szerokość sprzed tego przeciągnięcia.
 Nagłówki i etykiety w zwężonym panelu używają wielokropka przy tej samej czcionce.

@@ -2,7 +2,7 @@
                 <Grid.RowDefinitions><RowDefinition Height="52" /><RowDefinition Height="46" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                 <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <ui:ActionButton Width="28" Height="28" HorizontalAlignment="Left" Margin="10,0,0,0" Padding="0" ToolTip="Ukryj panel boczny" Click="SidebarIcon_Click" AutomationProperties.Name="Ukryj panel boczny"><ui:BrandIcon Width="28" Height="28" /></ui:ActionButton>
-                    <TextBlock Text="Notarium Notatnik" Foreground="{StaticResource Text}" Margin="47,0,6,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                    <TextBlock Text="Notatnik" Foreground="{StaticResource Text}" Margin="47,0,6,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
                 </Grid>
 
                 <Grid Grid.Row="1" Margin="6,3,6,7">
