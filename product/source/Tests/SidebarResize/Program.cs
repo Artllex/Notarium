@@ -29,9 +29,20 @@ internal static class Program
         window.UpdateLayout();
 
         var column = frame.ColumnDefinitions[0];
+        var separatorColumn = frame.ColumnDefinitions[1];
+        var separator = frame.Children.OfType<Border>().Single();
         var splitter = frame.Children.OfType<GridSplitter>().Single();
         var originalWidth = column.ActualWidth;
         Check(column.MinWidth == 0 && frame.Sidebar.ClipToBounds, "sidebar can shrink to the edge without leaking content");
+        var sidebarRight = frame.Sidebar.TransformToAncestor(frame).Transform(new Point(frame.Sidebar.ActualWidth, 0)).X;
+        var separatorLeft = separator.TransformToAncestor(frame).Transform(new Point(0, 0)).X;
+        var workspaceLeft = frame.Workspace.TransformToAncestor(frame).Transform(new Point(0, 0)).X;
+        Check(Math.Abs(separatorColumn.ActualWidth - 1) < 0.1 && Math.Abs(separatorLeft - sidebarRight) < 0.1 &&
+              Math.Abs(workspaceLeft - separatorLeft - 1) < 0.1 && separator.Margin == new Thickness(0) &&
+              Math.Abs(separator.ActualHeight - frame.Sidebar.ActualHeight) < 0.1,
+            "separator has no side or vertical margins");
+        Check(Math.Abs(splitter.ActualWidth - 6) < 0.1 && splitter.Background is not null,
+            "narrow separator retains a six-unit drag target");
 
         splitter.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
         splitter.RaiseEvent(new DragDeltaEventArgs(45 - originalWidth, 0) { RoutedEvent = Thumb.DragDeltaEvent });

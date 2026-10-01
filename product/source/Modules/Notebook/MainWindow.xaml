@@ -22,7 +22,7 @@
             <!-- Lewy panel w stylu RemNote -->
             <local:NotebookLibraryPanel x:Name="LibraryView" Grid.Row="2" Grid.Column="0" />
 
-            <Border Grid.Row="2" Grid.Column="1" Background="{StaticResource Line}" Margin="0,34,0,0" />
+            <Border Grid.Row="2" Grid.Column="1" Background="{StaticResource Line}" />
 
             <!-- Główna część: lekkie karty i edytor -->
             <Grid Grid.Row="2" Grid.Column="2" Background="{StaticResource Editor}">
