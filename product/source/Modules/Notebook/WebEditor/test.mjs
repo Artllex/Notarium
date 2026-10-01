@@ -1011,6 +1011,9 @@ try {
     assert.equal(await controls.locator('.container-type-label').isVisible(), false);
     assert.equal(await controls.locator('.container-tools').isVisible(), true);
     for (const button of await controls.locator('.container-tools button:not([hidden])').all()) {
+      const bounds = await button.boundingBox();
+      assert.equal(bounds.width, 23);
+      assert.equal(bounds.height, 23);
       assert.equal(await button.evaluate(element => getComputedStyle(element).transitionDuration), '0.12s, 0.12s');
       await button.hover();
       await page.waitForFunction(element => getComputedStyle(element).backgroundColor === 'rgb(68, 68, 68)' &&

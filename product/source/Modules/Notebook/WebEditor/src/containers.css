@@ -51,10 +51,10 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 #container-dialog input[type=color]{width:54px;height:34px;padding:3px;cursor:pointer}
 #container-dialog .background-options label{display:flex;align-items:center;gap:6px}
 #container-dialog .background-options input[type=checkbox]{width:auto}
-.container-tools button{background:none;border:0;border-radius:4px;color:inherit;padding:2px 4px;cursor:pointer;transition:background-color 120ms ease-out,color 120ms ease-out}
+.container-tools button{box-sizing:border-box;display:grid;place-items:center;width:23px;height:23px;flex:0 0 23px;background:none;border:0;border-radius:4px;color:inherit;padding:0;cursor:pointer;transition:background-color 120ms ease-out,color 120ms ease-out}
 .container-tools button:hover,.container-tools button:focus-visible{background:#444;color:#fff}
 .container-tools button:before{content:'⚙'}
-.container-tools .container-delete-button{position:relative;box-sizing:border-box;width:18px;height:23px;padding:0;flex:0 0 18px}
+.container-tools .container-delete-button{position:relative}
 .container-tools .container-delete-button:before,.container-tools .container-delete-button:after{content:'';position:absolute;left:50%;top:calc(50% + 1px);width:10px;height:1px;background:currentColor;border-radius:1px}
 .container-tools .container-delete-button:before{transform:translate(-50%,-50%) rotate(45deg)}
 .container-tools .container-delete-button:after{transform:translate(-50%,-50%) rotate(-45deg)}
