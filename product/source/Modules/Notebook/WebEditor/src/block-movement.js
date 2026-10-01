@@ -75,11 +75,15 @@ export function setupBlockMovement(editor, noteId) {
       releaseTimer = setTimeout(() => document.body.classList.remove('moving-block-releasing'), 720);
     }
     if (commit && allowed && !moving.active) {
-      const selection = moving.dom.classList.contains('container-empty')
-        ? TextSelection.near(editor.state.doc.resolve(moving.pos + 1))
-        : NodeSelection.create(editor.state.doc, moving.pos);
-      editor.view.dispatch(editor.state.tr.setSelection(selection));
-      if (moving.dom.classList.contains('container-empty')) editor.view.focus();
+      const empty = moving.dom.classList.contains('container-empty');
+      const alreadySelected = empty && editor.state.selection instanceof NodeSelection && editor.state.selection.from === moving.pos;
+      if (!alreadySelected) {
+        const selection = empty
+          ? TextSelection.near(editor.state.doc.resolve(moving.pos + 1))
+          : NodeSelection.create(editor.state.doc, moving.pos);
+        editor.view.dispatch(editor.state.tr.setSelection(selection));
+        if (empty) editor.view.focus();
+      }
     }
     if (commit && allowed && moving.active) {
       if (moving.inside) moveInto(editor, moving.pos, moving.targetPos);

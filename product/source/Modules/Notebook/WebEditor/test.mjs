@@ -89,6 +89,10 @@ try {
     assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), false);
     await page.mouse.dblclick(middle.x + middle.width / 2, middle.y + middle.height / 2);
     assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
+    await page.waitForTimeout(250);
+    assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
+    await page.mouse.click(middle.x + middle.width / 2, middle.y + middle.height / 2);
+    assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
     assert.equal(await empty.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(130, 184, 248, 0.18)');
     assert.match(await empty.evaluate(el => getComputedStyle(el).boxShadow), /rgba\(130, 184, 248, 0\.18\) 0px 0px 0px 4px/);
     for (const side of ['left', 'right']) {
@@ -97,6 +101,8 @@ try {
       await page.mouse.click(side === 'left' ? box.x + 12 : box.x + box.width - 12, box.y + box.height / 2);
       assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), false);
       await page.mouse.dblclick(side === 'left' ? box.x + 12 : box.x + box.width - 12, box.y + box.height / 2);
+      assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
+      await page.waitForTimeout(250);
       assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
     }
   });
@@ -120,6 +126,26 @@ try {
     assert.equal((await json()).content[1].attrs.boxEmpty, true);
     await command('undo');
     assert.equal((await json()).content[0].attrs.boxEmpty, true);
+  });
+  await check('Empty between neighboring containers keeps double-click selection after a caret click', async () => {
+    await open('empty-middle-doubleclick', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'layoutRow', content: [
+        { type: 'paragraph', attrs: { boxWidth: 160 }, content: [{ type: 'text', text: 'Left' }] },
+        { type: 'paragraph', attrs: { boxWidth: 300, boxEmpty: true, boxHeight: 100 } },
+        { type: 'paragraph', attrs: { boxWidth: 160 }, content: [{ type: 'text', text: 'Right' }] }
+      ] }
+    ] } }));
+    const empty = page.locator('.layout-row > .container-empty');
+    const box = await empty.boundingBox(), x = box.x + 30, y = box.y + box.height / 2;
+    await page.mouse.click(x, y);
+    assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), false);
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.type.name), 'paragraph');
+    await page.mouse.dblclick(x, y);
+    assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
+    await page.waitForTimeout(250);
+    assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
+    await page.mouse.click(x, y);
+    assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
   });
   await check('Double click below a row does not select the whole row and automatic trailing text is Empty', async () => {
     await open('rows-and-empty', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
