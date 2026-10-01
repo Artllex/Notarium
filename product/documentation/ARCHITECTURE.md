@@ -67,6 +67,8 @@ WPF i WebView mają różne środowiska wykonania. Nie współdzielą jednej kla
 
 Shared/UI zawiera ActionButton, MenuBar, DropDownMenu, ToolPanel, TabCard, CompositePanel, DialogService i Theme.xaml. Dropdown obsługuje pasek File/Edit/View/Help, formatowanie, zoom i menu kart. MenuItem pozostaje definicją akcji, nie osobnym rendererem. Pozycja menu jest zakotwiczona do lewego dołu przycisku niezależnie od systemowej polityki wyrównywania.
 
+ApplicationFrame umieszcza pasek stanu w osobnym dolnym wierszu rozciągniętym na wszystkie kolumny okna. Panel boczny, separator i workspace zajmują tylko wiersz nad nim; dlatego pasek stanu pozostaje pełnej szerokości także na ekranie startowym.
+
 Shared/Web/UI zawiera przyciski, panele, pola, przełączniki, etykiety, uchwyty i dialogi. DropDownMenu obsługuje akcje, wybory formularzy, PPM i sugestie. Native select przechowuje wartość, ale nie renderuje własnej listy. VisualRegistry obejmuje również elementy dodawane dynamicznie.
 
 Obie implementacje menu czytają Shared/UI/ui-policy.json: kolory, minimalną wysokość pozycji i maksymalną wysokość listy. DialogService jest wspólnym wejściem do natywnych okien wyboru pliku, koloru i komunikatów.

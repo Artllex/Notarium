@@ -36,8 +36,9 @@ internal static class Program
         Check(Math.Abs(frame.RowDefinitions[1].ActualHeight - frame.RowDefinitions[3].ActualHeight) < 0.1 &&
               Math.Abs(frame.Status.ActualHeight - 25) < 0.1 &&
               frame.Status.Content is Border && frame.Status.Visibility == Visibility.Visible &&
-              Grid.GetRow(frame.Status) == 3 && Grid.GetColumn(frame.Status) == 2,
-            "startup frame has a status bar matching the menu height");
+              Grid.GetRow(frame.Status) == 3 && Grid.GetColumn(frame.Status) == 0 &&
+              Grid.GetColumnSpan(frame.Status) == 3 && Math.Abs(frame.Status.ActualWidth - frame.ActualWidth) < 0.1,
+            "startup frame has a full-width status bar matching the menu height");
         Check(column.MinWidth == 0 && frame.Sidebar.ClipToBounds, "sidebar can shrink to the edge without leaking content");
         var sidebarRight = frame.Sidebar.TransformToAncestor(frame).Transform(new Point(frame.Sidebar.ActualWidth, 0)).X;
         var separatorLeft = separator.TransformToAncestor(frame).Transform(new Point(0, 0)).X;
