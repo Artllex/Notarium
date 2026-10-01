@@ -16,7 +16,7 @@ odpowiadają mu h1/h2 w ui-surface. Treść dokumentów nie dziedziczy tego styl
 `Shared/UI/ApplicationFrame.cs` definiuje pasek tytułu, kontrolki okna, miejsce menu,
 panel boczny o początkowej szerokości 250 px (regulowany uchwytem 110–450 px), separator i obszar roboczy. Korzystają z niego ekran główny,
 DEV i Notatnik. Rama nie ładuje modułów ani danych: otrzymuje zawartość obszarów.
-Przyciski okna używają systemowych symboli ChromeMinimize, ChromeMaximize/ChromeRestore i ChromeClose. Ikona maksymalizacji zmienia się wraz ze stanem okna; zamknięcie ma czerwoną powierzchnię po najechaniu.
+Przyciski okna używają symboli ChromeMinimize, ChromeMaximize/ChromeRestore i ChromeClose z czcionki Segoe Fluent Icons, o zaokrąglonym rysunku. Ikona maksymalizacji zmienia się wraz ze stanem okna; zamknięcie ma czerwoną powierzchnię po najechaniu.
 DEV wypełnia obszar roboczy kartami „Elementy Windows” i „Elementy Web”, bez
 uruchamiania Notatnika. Panel boczny służy do przełączania galerii.
 Duża ikona Notarium w panelu go ukrywa. W Notatniku po zwinięciu panelu taka sama ikona (28 px) pojawia się w lewym górnym rogu obszaru edycji i przywraca panel; przycisk na pasku tytułu jest wtedy ukryty. W pozostałych oknach panel przywraca ikona paska tytułu.
