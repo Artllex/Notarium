@@ -878,6 +878,7 @@ try {
     await box.hover();
     const frames = await box.locator('.container-type-tools').evaluate(el => el.getAnimations()[0]?.effect.getKeyframes().map(f => f.opacity));
     assert.deepEqual(frames, ['0.5', '1']);
+    assert.equal(await box.locator('.container-type-tools').evaluate(el => getComputedStyle(el).animationDuration), '0.28s');
     const animationBox = await box.boundingBox();
     await page.mouse.move(animationBox.x + animationBox.width - 5, animationBox.y + animationBox.height - 5);
     assert.deepEqual(await box.locator('.container-resize-bottom-right').evaluate(el => el.getAnimations()[0]?.effect.getKeyframes().map(f => f.opacity)), ['0.5', '1']);
@@ -989,6 +990,8 @@ try {
       assert.equal(await container.locator(':scope > .container-tools').count(), 0);
       assert.equal(await left.locator('.container-type-label').getAttribute('data-label'), label);
       assert.ok((await left.boundingBox()).width >= 64);
+      assert.equal(await left.evaluate(element => getComputedStyle(element).backgroundColor), 'rgba(24, 24, 24, 0.72)');
+      assert.equal(await left.evaluate(element => getComputedStyle(element).backdropFilter), 'blur(4px)');
       assert.equal(await left.locator('.container-type-label').isVisible(), true);
       assert.equal(await left.locator('.container-tools').isVisible(), false);
       assert.deepEqual(await left.locator('.container-tools button').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label') || button.title)),

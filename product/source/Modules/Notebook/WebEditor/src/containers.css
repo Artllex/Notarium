@@ -23,7 +23,7 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 .object-container:has(.object-container:hover)>.container-type-tools,.object-container:has(.object-container:hover)>.container-add-tools{display:none}
 .block-drop-marker[data-inside=true]{background:#60a5fa22;border:2px solid #60a5fa;border-radius:4px}
 .block-drop-marker[data-gap=true]{height:auto;background:#60a5fa55;border:2px solid #60a5fa;border-radius:4px}
-.container-type-tools{position:absolute;right:calc(100% + 4px);top:-4px;bottom:-4px;min-width:64px;display:none;z-index:24;pointer-events:auto;background:#303030;border-radius:4px 0 0 4px;color:#bbb;align-items:center;justify-content:center;white-space:nowrap}
+.container-type-tools{position:absolute;right:calc(100% + 4px);top:-4px;bottom:-4px;min-width:64px;display:none;z-index:24;pointer-events:auto;background:rgba(24,24,24,.72);backdrop-filter:blur(4px);border-radius:4px 0 0 4px;color:#bbb;align-items:center;justify-content:center;white-space:nowrap}
 .container-tools{display:none;align-items:center;justify-content:center;color:inherit}
 .container-type-tools::after{content:'';position:absolute;top:0;bottom:0;width:4px;pointer-events:auto}
 .container-type-tools::after{right:-4px}
@@ -42,6 +42,7 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 .container-add-tools button:before{content:attr(data-label)}
 .container-add-tools button:hover{background:#444;color:#fff}
 .object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-type-tools,.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-add-tools,.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-resize{animation:container-chrome-appear 180ms ease-out both}
+.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-type-tools{animation-duration:280ms}
 .object-container:not(.container-selected):is(:hover,.container-row-hover){animation:container-outline-appear 180ms ease-out both}
 .object-container.container-selected>.container-type-tools,.object-container.container-selected>.container-add-tools,.object-container.container-selected>.container-resize{opacity:1;animation:none}
 @keyframes container-chrome-appear{from{opacity:.5}to{opacity:1}}
