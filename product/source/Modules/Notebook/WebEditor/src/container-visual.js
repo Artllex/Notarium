@@ -71,8 +71,8 @@ export class ContainerVisual {
     typeLabel.dataset.label = getContainerType(view.node).label;
     typeLabel.setAttribute('aria-label', typeLabel.dataset.label);
     typeLabel.title = 'Przeciągnij kontener';
-    view.typeTools.append(typeLabel);
     view.tools.append(remove, settings);
+    view.typeTools.append(typeLabel, view.tools);
     view.addTools = ToolPanel.create(); view.addTools.className = 'container-add-tools'; view.addTools.contentEditable = 'false';
     for (const [label, title, type] of [
       ['+ text', 'Add text container', 'paragraph'],
@@ -95,7 +95,7 @@ export class ContainerVisual {
     view.resizeBottomLeft = Handle.create('container-resize container-resize-corner container-resize-bottom-left'); view.resizeBottomLeft.className = 'container-resize container-resize-corner container-resize-bottom-left';
     view.resizeRight.contentEditable = view.resizeLeft.contentEditable = view.resizeBottom.contentEditable = view.resizeBottomLeft.contentEditable = view.selectTop.contentEditable = view.pairResize.contentEditable = view.gapBoundary.contentEditable = 'false';
     view.resizeRight.title = view.resizeLeft.title = 'Zmień szerokość'; view.resizeBottom.title = view.resizeBottomLeft.title = 'Zmień wysokość i szerokość';
-    view.dom.append(view.typeTools, view.tools, view.header, inner.dom, view.footer, view.addTools, view.resize);
+    view.dom.append(view.typeTools, view.header, inner.dom, view.footer, view.addTools, view.resize);
     view.dom.append(view.resizeRight, view.resizeLeft, view.resizeBottom, view.resizeBottomLeft, view.selectTop, view.pairResize, view.gapBoundary);
   }
   static paint(view) {

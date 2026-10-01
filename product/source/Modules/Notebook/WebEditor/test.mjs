@@ -26,11 +26,11 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
-  await check('Empty has centered Type, separate close control, and a translucent selected fill', async () => {
+  await check('Empty has centered Type, Ctrl close control, and a translucent selected fill', async () => {
     await open('empty-panel', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [{ type: 'paragraph', attrs: { boxEmpty: true } }] } }));
     const empty = page.locator('.container-empty');
     await empty.hover();
-    assert.equal(await empty.locator('.container-tools > button:not([hidden])').count(), 1);
+    assert.equal(await empty.locator('.container-type-tools .container-tools > button:not([hidden])').count(), 1);
     const centers = await empty.evaluate(el => {
       const a = el.getBoundingClientRect(), b = el.querySelector('.container-type-tools').getBoundingClientRect();
       return [a.left + a.width / 2, b.left + b.width / 2];
@@ -235,7 +235,10 @@ try {
     await page.keyboard.press('Control+z'); assert.doesNotMatch(JSON.stringify(await json()), /print\(42\)/);
     assert.equal(await page.locator('.code-cell .cm-gutters').evaluate(element => getComputedStyle(element).display), 'none');
     await page.keyboard.press('Control+y'); assert.match(JSON.stringify(await json()), /print\(42\)/);
+    await page.locator('.code-cell').hover();
+    await page.keyboard.down('Control');
     await page.getByRole('button', { name: 'Usuń kontener', exact: true }).click();
+    await page.keyboard.up('Control');
     assert.equal(await page.locator('.code-cell').count(), 0);
     await command('undo'); assert.match(await page.locator('.cm-content').textContent(), /print\(42\)/);
   });
@@ -321,7 +324,7 @@ try {
     assert.equal(await emptyLanguage.evaluate(element => getComputedStyle(element, ':after').content), 'none');
     await page.mouse.move(0, 0);
     assert.equal(await emptyLanguage.evaluate(element => getComputedStyle(element).visibility), 'hidden');
-    assert.equal(await block.locator(':scope > .container-tools [aria-label="Usuń kontener"]').count(), 1);
+    assert.equal(await block.locator(':scope > .container-type-tools .container-tools [aria-label="Usuń kontener"]').count(), 1);
     assert.equal(await page.locator('.container-add-tools [aria-label^="Przenieś kontener"]').count(), 0);
     assert.equal(await block.locator('.cm-gutters').count(), 0);
     assert.equal(await block.getByRole('button', { name: 'Wykonywanie kodu nie jest jeszcze dostępne' }).count(), 0);
@@ -873,7 +876,7 @@ try {
     assert.equal(await box.locator('[data-type=block-math]').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
     await page.locator('[data-container-type=paragraph] p').click();
     await box.hover();
-    const frames = await box.locator('.container-tools').evaluate(el => el.getAnimations()[0]?.effect.getKeyframes().map(f => f.opacity));
+    const frames = await box.locator('.container-type-tools').evaluate(el => el.getAnimations()[0]?.effect.getKeyframes().map(f => f.opacity));
     assert.deepEqual(frames, ['0.5', '1']);
     const animationBox = await box.boundingBox();
     await page.mouse.move(animationBox.x + animationBox.width - 5, animationBox.y + animationBox.height - 5);
@@ -881,9 +884,11 @@ try {
     assert.ok((await box.evaluate(el => el.getAnimations().length)) > 0);
     await box.locator('.container-type-label').click();
     await page.mouse.move(1000, 600); await box.hover();
-    assert.equal(await box.locator('.container-tools').evaluate(el => el.getAnimations().length), 0);
-    assert.equal(await box.locator('.container-tools').evaluate(el => getComputedStyle(el).opacity), '1');
+    assert.equal(await box.locator('.container-type-tools').evaluate(el => el.getAnimations().length), 0);
+    assert.equal(await box.locator('.container-type-tools').evaluate(el => getComputedStyle(el).opacity), '1');
+    await page.keyboard.down('Control');
     await box.locator('.container-tools button[title="Tytuł, stopka i wymiary"]').click();
+    await page.keyboard.up('Control');
     assert.equal(await page.locator('[name=noBackground]').isChecked(), true);
     await page.locator('[name=background]').fill('#354657');
     assert.equal(await page.locator('[name=noBackground]').isChecked(), false);
@@ -895,12 +900,14 @@ try {
     for (const format of ['json', 'md']) {
       await open('backgrounds-' + format, format === 'md' ? saved.markdown : '', format === 'json' ? saved.documentJson : null);
       assert.equal(await box.evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(53, 70, 87)');
-      await box.hover(); await box.locator('.container-tools button[title="Tytuł, stopka i wymiary"]').click();
+      await box.hover(); await page.keyboard.down('Control');
+      await box.locator('.container-tools button[title="Tytuł, stopka i wymiary"]').click();
+      await page.keyboard.up('Control');
       await page.locator('[name=noBackground]').check(); await page.locator('#container-dialog button[value=save]').click();
       assert.equal(await box.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
     }
     await page.emulateMedia({ reducedMotion: 'reduce' }); await box.hover();
-    assert.equal(await box.locator('.container-tools').evaluate(el => getComputedStyle(el).animationName), 'none');
+    assert.equal(await box.locator('.container-type-tools').evaluate(el => getComputedStyle(el).animationName), 'none');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
   });
   await check('Pointer-only double tap resets the right edge without a native dblclick', async () => {
@@ -968,7 +975,7 @@ try {
       assert.match(await page.locator('.cm-content').textContent(), /print\(123\)/);
     }
   });
-  await check('Container Type stays left while close and settings stay right', async () => {
+  await check('Wider Type switches to close and settings while Ctrl is held', async () => {
     const nodes = [{ type: 'paragraph', content: [{ type: 'text', text: 'Text example' }] },
       { type: 'blockMath', attrs: { latex: 'x=1' } }, { type: 'codeCell' },
       { type: 'image', attrs: { src: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80"><rect width="200" height="80" fill="teal"/></svg>') } },
@@ -978,25 +985,37 @@ try {
       const container = page.locator(`[data-container-type="${type}"]`).first();
       await container.hover();
       const left = container.locator(':scope > .container-type-tools');
-      const right = container.locator(':scope > .container-tools');
       await left.waitFor({ state: 'visible' });
-      await right.waitFor({ state: 'visible' });
+      assert.equal(await container.locator(':scope > .container-tools').count(), 0);
       assert.equal(await left.locator('.container-type-label').getAttribute('data-label'), label);
-      assert.deepEqual(await right.locator('button').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label') || button.title)),
+      assert.ok((await left.boundingBox()).width >= 64);
+      assert.equal(await left.locator('.container-type-label').isVisible(), true);
+      assert.equal(await left.locator('.container-tools').isVisible(), false);
+      assert.deepEqual(await left.locator('.container-tools button').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label') || button.title)),
         ['Usuń kontener', 'Tytuł, stopka i wymiary']);
-      const box = await container.boundingBox(), leftBox = await left.boundingBox(), rightBox = await right.boundingBox();
+      const box = await container.boundingBox(), leftBox = await left.boundingBox();
       assert.ok(Math.abs(leftBox.x + leftBox.width - (box.x - 4)) <= 1);
-      assert.ok(Math.abs(rightBox.x - (box.x + box.width + 4)) <= 1);
-      assert.ok(Math.abs(leftBox.y - (box.y - 4)) <= 1 && Math.abs(rightBox.y - (box.y - 4)) <= 1);
+      assert.ok(Math.abs(leftBox.y - (box.y - 4)) <= 1);
       assert.equal(await left.locator('.container-grip').count(), 0);
       assert.equal(await left.locator('.container-type-label').evaluate(element => getComputedStyle(element).cursor), 'grab');
     }
     const first = page.locator('[data-container-type=paragraph]').first();
     await first.hover();
-    if (process.env.NOTARIUM_TEST_OUTPUT) await page.screenshot({ path: resolve(reportDirectory, 'container-three-panels.png') });
-    const settings = first.locator(':scope > .container-tools button[title="Tytuł, stopka i wymiary"]'), settingsBox = await settings.boundingBox();
+    await page.keyboard.down('Control');
+    const controls = first.locator(':scope > .container-type-tools');
+    assert.equal(await controls.locator('.container-type-label').isVisible(), false);
+    assert.equal(await controls.locator('.container-tools').isVisible(), true);
+    if (process.env.NOTARIUM_TEST_OUTPUT) await page.screenshot({ path: resolve(reportDirectory, 'container-ctrl-actions.png') });
+    const settings = controls.locator('button[title="Tytuł, stopka i wymiary"]'), settingsBox = await settings.boundingBox();
     await page.mouse.move(settingsBox.x + settingsBox.width / 2, settingsBox.y + settingsBox.height / 2);
-    assert.equal(await first.locator(':scope > .container-tools').isVisible(), true);
+    assert.equal(await controls.isVisible(), true);
+    await page.keyboard.up('Control');
+    assert.equal(await controls.locator('.container-type-label').isVisible(), true);
+    assert.equal(await controls.locator('.container-tools').isVisible(), false);
+    await page.keyboard.down('Control');
+    await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+    assert.equal(await controls.locator('.container-type-label').isVisible(), true);
+    await page.keyboard.up('Control');
     const add = first.locator(':scope > .container-add-tools');
     await add.waitFor({ state: 'visible' });
     assert.deepEqual(await add.locator('button').evaluateAll(buttons => buttons.map(button => button.dataset.label)),
@@ -1010,7 +1029,7 @@ try {
     const editorBox = await page.locator('#editor').boundingBox();
     await page.mouse.move(editorBox.x + editorBox.width - 8, pictureBox.y + pictureBox.height / 2);
     assert.equal(await picture.evaluate(element => element.classList.contains('container-row-hover')), true);
-    assert.equal(await picture.locator(':scope > .container-tools').isVisible(), true);
+    assert.equal(await picture.locator(':scope > .container-type-tools').isVisible(), true);
     await first.hover();
     let actionBox = await add.locator('[data-action=paragraph]').boundingBox();
     await page.mouse.click(actionBox.x + actionBox.width / 2, actionBox.y + actionBox.height / 2);

@@ -21,7 +21,8 @@ try {
 
   await open([{ type: 'codeCell', attrs: { language: 'python' }, content: [{ type: 'text', text: 'print(1)' }] }]);
   await page.locator('.object-container').hover();
-  const closeButton = page.locator('.object-container > .container-tools .container-delete-button').first();
+  await page.keyboard.down('Control');
+  const closeButton = page.locator('.object-container > .container-type-tools .container-delete-button').first();
   const closeIcon = await closeButton.evaluate(button => {
     const box = button.getBoundingClientRect();
     const first = getComputedStyle(button, '::before');
@@ -39,7 +40,8 @@ try {
   assert.equal(closeIcon.firstTop, '12.5px');
   assert.equal(closeIcon.secondTop, '12.5px');
   assert.notEqual(closeIcon.firstTransform, closeIcon.secondTransform);
-  if (process.env.NOTARIUM_TEST_OUTPUT) await page.locator('.object-container > .container-tools').first().screenshot({ path: resolve(process.env.NOTARIUM_TEST_OUTPUT, 'container-tools.png') });
+  if (process.env.NOTARIUM_TEST_OUTPUT) await page.locator('.object-container > .container-type-tools').first().screenshot({ path: resolve(process.env.NOTARIUM_TEST_OUTPUT, 'container-tools.png') });
+  await page.keyboard.up('Control');
   console.log('PASS container close icon uses centered drawn strokes in the existing hit target');
   await page.locator('.cell-tools .language').click();
   const input = page.locator('.cell-language-input');

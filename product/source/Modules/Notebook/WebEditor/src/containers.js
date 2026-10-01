@@ -380,6 +380,13 @@ export class ContainerView {
 }
 
 export function setupContainers(editor, options) {
+  const showCtrlActions = enabled => editor.view.dom.classList.toggle('container-ctrl-actions', enabled);
+  const onCtrlKey = event => showCtrlActions(event.ctrlKey);
+  const clearCtrlActions = () => showCtrlActions(false);
+  document.addEventListener('keydown', onCtrlKey, true);
+  document.addEventListener('keyup', onCtrlKey, true);
+  window.addEventListener('blur', clearCtrlActions);
+  document.addEventListener('visibilitychange', clearCtrlActions);
   let boundaryTarget = null;
   const boundaryFocus = document.createElement('span');
   boundaryFocus.tabIndex = -1;
@@ -716,6 +723,10 @@ export function setupContainers(editor, options) {
   };
   editor.view.dom.parentElement.addEventListener('dblclick', preventRowDoubleClick, true);
   editor.on('destroy', () => {
+    document.removeEventListener('keydown', onCtrlKey, true);
+    document.removeEventListener('keyup', onCtrlKey, true);
+    window.removeEventListener('blur', clearCtrlActions);
+    document.removeEventListener('visibilitychange', clearCtrlActions);
     endCaret.remove();
     boundaryFocus.remove();
     document.removeEventListener('pointerdown', clearBoundaryOnOtherClick, true);
