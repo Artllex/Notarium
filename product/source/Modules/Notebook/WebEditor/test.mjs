@@ -52,6 +52,25 @@ try {
     await page.mouse.move(0, 0);
     assert.equal(await panel.isVisible(), false);
   });
+  await check('Open Type panel stays above neighboring container text so backdrop blur applies', async () => {
+    await open('left-panel-stacking', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'layoutRow', content: [
+        { type: 'paragraph', content: [{ type: 'text', text: 'Tekst pod panelem, który ma być rozmyty i nadal można go rozpoznać pod półprzezroczystą kartą' }] },
+        { type: 'paragraph', content: [{ type: 'text', text: 'Drugi kontener' }] }
+      ] }
+    ] } }));
+    await page.locator('.layout-row > .object-container').first().locator('p').evaluate(el => { el.style.whiteSpace = 'nowrap'; });
+    const right = page.locator('.layout-row > .object-container').last();
+    await revealTypeTools(right);
+    const panel = right.locator(':scope > .container-type-tools');
+    assert.equal(await right.evaluate(el => getComputedStyle(el).zIndex), '40');
+    assert.equal(await panel.evaluate(el => getComputedStyle(el).backdropFilter), 'blur(1px)');
+    const bounds = await panel.boundingBox();
+    const topElement = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.closest('.container-type-tools')?.className,
+      { x: bounds.x + 8, y: bounds.y + bounds.height / 2 });
+    assert.equal(topElement, 'container-type-tools');
+    if (process.env.NOTARIUM_TEST_OUTPUT) await page.screenshot({ path: resolve(reportDirectory, 'left-panel-blur.png') });
+  });
   await check('Empty has centered Type, Ctrl close control, and a translucent selected fill', async () => {
     await open('empty-panel', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [{ type: 'paragraph', attrs: { boxEmpty: true } }] } }));
     const empty = page.locator('.container-empty');

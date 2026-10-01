@@ -33,7 +33,7 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 .container-type-label:before{content:attr(data-label)}
 .object-container:not(.container-empty).container-left-exited>.container-type-tools,.object-container.container-empty:is(:hover,.container-row-hover,.container-selected)>.container-type-tools,.object-container:hover>.container-add-tools,.container-row-hover>.container-add-tools,.container-selected>.container-add-tools{display:flex}
 .object-container:has(>.container-type-tools:hover)>.container-type-tools{display:flex}
-.object-container:has(>.container-type-tools:hover){z-index:40}
+.object-container.container-left-exited,.object-container:has(>.container-type-tools:hover){z-index:40}
 .container-add-tools{position:absolute;left:50%;top:calc(100% + 3px);transform:translate(-50%,-50%);height:21px;display:none;z-index:24;align-items:center;background:#303030;border:1px solid #444;border-radius:4px;padding:0;white-space:nowrap;max-width:calc(100% - 28px);overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
 .container-add-tools::-webkit-scrollbar{display:none}
 .container-add-tools button{height:23px;padding:1px 9px;border:0;border-left:1px solid #555;background:transparent;color:#bbb;font:11px 'Segoe UI',sans-serif;cursor:pointer;border-radius:0;display:block;flex:0 0 auto;white-space:nowrap;line-height:20px}

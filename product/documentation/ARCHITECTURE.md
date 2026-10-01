@@ -108,6 +108,7 @@ Tiptap/ProseMirror obsługuje dokument i transakcje. CodeMirror obsługuje kod; 
 | containers.css | Wygląd kontenerów i uchwytów |
 
 Lewy panel typu zwykłego kontenera nie pojawia się od samego hoveru ani zaznaczenia. Adapter interakcji pokazuje go dopiero po wyjechaniu wskaźnikiem przez lewą krawędź; powrót do treści albo opuszczenie obszaru panelu go ukrywa. Pusty kontener zachowuje centralnie umieszczony panel dostępny przy hoverze.
+Otwarty lewy panel podnosi warstwę swojego kontenera ponad sąsiadów, dzięki czemu półprzezroczyste tło z delikatnym rozmyciem obejmuje tekst pod spodem zamiast pozwalać mu rysować się na wierzchu.
 | container-keyboard.js | Operacje klawiatury |
 | block-movement.js | Przenoszenie elementów |
 | storage.js | Import, eksport i struktura dokumentu |
