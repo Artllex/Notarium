@@ -651,6 +651,14 @@ export function setupContainers(editor, options) {
     window.chrome?.webview?.postMessage({ type: 'containerHover', label });
   };
   document.addEventListener('pointermove', event => {
+    for (const active of editor.view.dom.querySelectorAll('.container-left-exited')) {
+      const container = active.getBoundingClientRect(), panel = active.querySelector(':scope > .container-type-tools')?.getBoundingClientRect();
+      if (!panel || event.clientX < panel.left || event.clientX >= container.left ||
+          event.clientY < panel.top || event.clientY > panel.bottom) {
+        active.classList.remove('container-left-exited');
+        if (active.containerView) active.containerView.pointerWasInside = false;
+      }
+    }
     const pairLine = event.target.closest?.('.container-pair-resize');
     if (pairLine) {
       const left = pairLine.parentElement;

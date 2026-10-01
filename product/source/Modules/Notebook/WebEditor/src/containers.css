@@ -31,7 +31,7 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 .container-ctrl-actions .container-type-tools>.container-tools{display:flex}
 .container-type-label{align-self:stretch;display:flex;align-items:center;justify-content:center;min-width:100%;font:600 11px/23px 'Segoe UI',sans-serif;padding:0 5px;box-sizing:border-box;color:#ccc;user-select:none;cursor:grab}
 .container-type-label:before{content:attr(data-label)}
-.object-container:hover>.container-type-tools,.container-row-hover>.container-type-tools,.container-selected>.container-type-tools,.object-container:hover>.container-add-tools,.container-row-hover>.container-add-tools,.container-selected>.container-add-tools{display:flex}
+.object-container:not(.container-empty).container-left-exited>.container-type-tools,.object-container.container-empty:is(:hover,.container-row-hover,.container-selected)>.container-type-tools,.object-container:hover>.container-add-tools,.container-row-hover>.container-add-tools,.container-selected>.container-add-tools{display:flex}
 .object-container:has(>.container-type-tools:hover)>.container-type-tools{display:flex}
 .object-container:has(>.container-type-tools:hover){z-index:40}
 .container-add-tools{position:absolute;left:50%;top:calc(100% + 3px);transform:translate(-50%,-50%);height:21px;display:none;z-index:24;align-items:center;background:#303030;border:1px solid #444;border-radius:4px;padding:0;white-space:nowrap;max-width:calc(100% - 28px);overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
@@ -41,7 +41,7 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 .container-add-tools button:first-child{border-left:0;border-radius:3px 0 0 3px}.container-add-tools button:last-child{border-radius:0 3px 3px 0}
 .container-add-tools button:before{content:attr(data-label)}
 .container-add-tools button:hover{background:#444;color:#fff}
-.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-type-tools,.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-add-tools,.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-resize{animation:container-chrome-appear 180ms ease-out both}
+.object-container:not(.container-selected).container-left-exited>.container-type-tools,.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-add-tools,.object-container:not(.container-selected):is(:hover,.container-row-hover)>.container-resize{animation:container-chrome-appear 180ms ease-out both}
 .object-container:not(.container-selected):is(:hover,.container-row-hover){animation:container-outline-appear 180ms ease-out both}
 .object-container.container-selected>.container-type-tools,.object-container.container-selected>.container-add-tools,.object-container.container-selected>.container-resize{opacity:1;animation:none}
 @keyframes container-chrome-appear{from{opacity:.5}to{opacity:1}}

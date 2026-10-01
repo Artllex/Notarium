@@ -21,6 +21,9 @@ try {
 
   await open([{ type: 'codeCell', attrs: { language: 'python' }, content: [{ type: 'text', text: 'print(1)' }] }]);
   await page.locator('.object-container').hover();
+  const containerBox = await page.locator('.object-container').first().boundingBox();
+  await page.mouse.move(containerBox.x + 8, containerBox.y + containerBox.height / 2);
+  await page.mouse.move(containerBox.x - 6, containerBox.y + containerBox.height / 2);
   await page.keyboard.down('Control');
   const closeButton = page.locator('.object-container > .container-type-tools .container-delete-button').first();
   const closeIcon = await closeButton.evaluate(button => {

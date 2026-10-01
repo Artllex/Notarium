@@ -40,8 +40,25 @@ export class ContainerInteractions {
       new RichLabelView(view.footer, props.editor, props.getPos, 'boxCaption', 'Stopka kontenera')];
     for (const [handle, axis] of [[view.resize, 'both'], [view.resizeRight, 'width'], [view.resizeLeft, 'width'], [view.resizeBottom, 'height'], [view.resizeBottomLeft, 'both']])
       handle.addEventListener('pointerdown', event => view.resizeEdge(event, handle, axis));
-    view.onPointerMove = event => ContainerVisual.corner(view, event);
-    view.onPointerLeave = () => ContainerVisual.clearCorner(view);
+    view.onPointerMove = event => {
+      ContainerVisual.corner(view, event);
+      const rect = view.dom.getBoundingClientRect();
+      if (event.clientX >= rect.left && event.clientX <= rect.right &&
+          event.clientY >= rect.top && event.clientY <= rect.bottom) {
+        view.pointerWasInside = true;
+        ContainerVisual.state(view.dom, 'container-left-exited', false);
+      } else if (view.pointerWasInside && event.clientX < rect.left && event.clientX >= rect.left - 72 &&
+          event.clientY >= rect.top - 4 && event.clientY <= rect.bottom + 4)
+        ContainerVisual.state(view.dom, 'container-left-exited', true);
+    };
+    view.onPointerLeave = event => {
+      ContainerVisual.clearCorner(view);
+      const rect = view.dom.getBoundingClientRect();
+      const crossedLeft = event.clientX < rect.left && event.clientX >= rect.left - 72 &&
+        event.clientY >= rect.top - 4 && event.clientY <= rect.bottom + 4;
+      ContainerVisual.state(view.dom, 'container-left-exited', view.pointerWasInside && crossedLeft);
+      if (!crossedLeft) view.pointerWasInside = false;
+    };
     view.dom.addEventListener('pointermove', view.onPointerMove);
     view.dom.addEventListener('pointerleave', view.onPointerLeave);
     view.settingsButton.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); options.editContainer(view); });
