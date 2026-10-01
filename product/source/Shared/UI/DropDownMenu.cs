@@ -21,7 +21,7 @@ public sealed class DropDownMenu
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<MenuItem, UIElement> Headers = new();
     public Collection<object> Items { get; } = new();
 
-    public DropDownMenu(UIElement? target, double? itemWidth = null, bool submenu = false, Action? onLeafClick = null, FrameworkElement? parentSurface = null, bool aboveTarget = false, bool centerItems = false)
+    public DropDownMenu(UIElement? target, double? itemWidth = null, bool submenu = false, Action? onLeafClick = null, FrameworkElement? parentSurface = null, bool aboveTarget = false, bool centerItems = false, bool menuBarPopup = false)
     {
         _itemWidth = itemWidth;
         _target = target;
@@ -38,7 +38,9 @@ public sealed class DropDownMenu
             PlacementTarget = submenu ? parentSurface ?? target : target,
             Placement = submenu ? PlacementMode.Right : target is null ? PlacementMode.MousePoint : PlacementMode.Custom,
             VerticalOffset = submenu ? submenuOrigin.Y : 0,
-            StaysOpen = submenu,
+            // Menu-bar popups stay active while the pointer crosses to another
+            // top-level button. Outside clicks and window deactivation still close them.
+            StaysOpen = submenu || menuBarPopup,
             AllowsTransparency = true,
             PopupAnimation = SystemParameters.MenuAnimation ? PopupAnimation.Fade : PopupAnimation.None
         };

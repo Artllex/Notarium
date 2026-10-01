@@ -38,7 +38,7 @@ public sealed class MenuBar : ItemsControl
             void Open()
             {
                 _open?.Close();
-                var popup = new DropDownMenu(button);
+                var popup = new DropDownMenu(button, menuBarPopup: true);
                 foreach (var item in definition.Items) popup.Items.Add(item);
                 _open = popup; popup.IsOpen = true;
             }
