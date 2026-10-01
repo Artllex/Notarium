@@ -7,6 +7,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.Windows.Data;
+using System.Windows.Documents;
 using Microsoft.Win32;
 using System.IO;
 using Notarium.UI;
@@ -123,9 +124,7 @@ public partial class MainWindow
     private void InlineTitle_LostFocus(object sender, RoutedEventArgs e)
     {
         if (sender is not TextBox editor || NoteForEditor(editor) is not Note note || !note.IsRenaming) return;
-        editor.Text = note.Title;
-        note.IsRenamingInSidebar = false;
-        note.IsRenamingInTab = false;
+        CommitInlineRename(editor, note);
     }
 
     private Note? NoteForEditor(TextBox editor)
@@ -137,7 +136,12 @@ public partial class MainWindow
 
     private void CommitInlineRename(TextBox editor, Note note)
     {
-        _library.Rename(note, editor.Text);
+        if (!note.IsRenaming) return;
+        var title = editor is Emoji.Wpf.TextBox emojiEditor &&
+            FindDescendant<Emoji.Wpf.RichTextBox>(emojiEditor, _ => true) is { } richEditor
+            ? new TextRange(richEditor.Document.ContentStart, richEditor.Document.ContentEnd).Text
+            : editor.Text;
+        _library.Rename(note, title);
         OpenNotes.FirstOrDefault(open => open.Note == note)?.RefreshTitle();
         SaveNotes();
     }
