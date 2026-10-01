@@ -27,14 +27,17 @@ try {
     const first = getComputedStyle(button, '::before');
     const second = getComputedStyle(button, '::after');
     return { buttonWidth: box.width, buttonHeight: box.height, firstWidth: first.width, secondWidth: second.width,
-      firstHeight: first.height, secondHeight: second.height, firstTransform: first.transform, secondTransform: second.transform };
+      firstHeight: first.height, secondHeight: second.height, firstTop: first.top, secondTop: second.top,
+      firstTransform: first.transform, secondTransform: second.transform };
   });
   assert.equal(closeIcon.buttonWidth, 18);
   assert.equal(closeIcon.buttonHeight, 23);
   assert.equal(closeIcon.firstWidth, '10px');
   assert.equal(closeIcon.secondWidth, '10px');
-  assert.equal(closeIcon.firstHeight, '1.5px');
-  assert.equal(closeIcon.secondHeight, '1.5px');
+  assert.equal(closeIcon.firstHeight, '1px');
+  assert.equal(closeIcon.secondHeight, '1px');
+  assert.equal(closeIcon.firstTop, '12.5px');
+  assert.equal(closeIcon.secondTop, '12.5px');
   assert.notEqual(closeIcon.firstTransform, closeIcon.secondTransform);
   if (process.env.NOTARIUM_TEST_OUTPUT) await page.locator('.object-container > .container-tools').first().screenshot({ path: resolve(process.env.NOTARIUM_TEST_OUTPUT, 'container-tools.png') });
   console.log('PASS container close icon uses centered drawn strokes in the existing hit target');
