@@ -70,7 +70,7 @@ export class ContainerVisual {
     typeLabel.dataset.label = getContainerType(view.node).label;
     typeLabel.setAttribute('aria-label', typeLabel.dataset.label);
     typeLabel.title = 'Przeciągnij kontener';
-    view.tools.append(remove, typeLabel, settings);
+    view.tools.append(remove, settings, typeLabel);
     view.addTools = ToolPanel.create(); view.addTools.className = 'container-add-tools'; view.addTools.contentEditable = 'false';
     for (const [label, title, type] of [
       ['+ text', 'Add text container', 'paragraph'],
