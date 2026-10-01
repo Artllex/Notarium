@@ -5,6 +5,9 @@ using Notarium.UI;
 namespace Notatnik;
 public partial class NotebookTabsPanel : CompositePanel {
     public NotebookTabsPanel() => InitializeComponent();
+    public event System.EventHandler? SidebarRestoreRequested;
+    public void SetSidebarCollapsed(bool collapsed) => RestoreSidebarButton.Visibility = collapsed ? Visibility.Visible : Visibility.Collapsed;
+    private void RestoreSidebar_Click(object sender, RoutedEventArgs e) => SidebarRestoreRequested?.Invoke(this, System.EventArgs.Empty);
     private void CloseTab_Click(object sender, RoutedEventArgs e) => Emit("CloseTab_Click", sender, e);
     private void InlineTitle_LostFocus(object sender, RoutedEventArgs e) => Emit("InlineTitle_LostFocus", sender, e);
     private void TabsHost_SizeChanged(object sender, SizeChangedEventArgs e) => Emit("TabsHost_SizeChanged", sender, e);

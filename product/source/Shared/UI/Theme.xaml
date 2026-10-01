@@ -5,7 +5,7 @@
         <SolidColorBrush x:Key="Text" Color="{Binding MenuText, Source={x:Static ui:UiPolicy.Current}}"/><SolidColorBrush x:Key="Muted" Color="#A0A0A0"/>
         <Style x:Key="SectionHeading" TargetType="TextBlock"><Setter Property="Foreground" Value="{Binding AccentBrush, Source={x:Static ui:UiPolicy.Current}}"/></Style>
         <SolidColorBrush x:Key="Accent" Color="{Binding Accent, Source={x:Static ui:UiPolicy.Current}}"/>
-        <Geometry x:Key="WorkspaceTabShape">M 14,36 L 0,36 L 8,6 Q 9,0 15,0 L 185,0 Q 191,0 192,5 L 200,36 L 186,36 Z</Geometry>
+        <Geometry x:Key="WorkspaceTabShape">M 0,36 L 0,7 Q 0,0 7,0 L 193,0 Q 200,0 200,7 L 200,36 Z</Geometry>
         <SolidColorBrush x:Key="WorkspaceTabActive" Color="#333333"/>
         <Style TargetType="TabControl">
             <Setter Property="Background" Value="{StaticResource Editor}"/><Setter Property="Foreground" Value="{StaticResource Text}"/>

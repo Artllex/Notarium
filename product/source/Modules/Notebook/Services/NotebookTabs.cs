@@ -21,9 +21,9 @@ public sealed class NotebookTabs
     {
         const double minimum = 96, maximum = 205;
         var widthWithoutArrows = Math.Max(100, Math.Max(200, totalWidth) - 46);
-        var allFit = Open.Count == 0 || Open.Count * (minimum - 7) <= widthWithoutArrows;
+        var allFit = Open.Count == 0 || Open.Count * minimum <= widthWithoutArrows;
         var available = Math.Max(96, widthWithoutArrows - (allFit ? 0 : 72));
-        PageSize = allFit ? Math.Max(1, Open.Count) : Math.Max(1, (int)Math.Floor(available / (minimum - 7)));
+        PageSize = allFit ? Math.Max(1, Open.Count) : Math.Max(1, (int)Math.Floor(available / minimum));
         if (ensureVisible is not null)
         {
             var index = Open.IndexOf(ensureVisible);
@@ -32,7 +32,7 @@ public sealed class NotebookTabs
         }
         PageStart = Math.Clamp(PageStart, 0, Math.Max(0, Open.Count - PageSize));
         var count = Math.Min(PageSize, Math.Max(0, Open.Count - PageStart));
-        Width = count == 0 ? maximum : Math.Clamp(available / count + 7, minimum, maximum);
+        Width = count == 0 ? maximum : Math.Clamp(available / count, minimum, maximum);
         Visible.Clear(); foreach (var tab in Open.Skip(PageStart).Take(PageSize)) Visible.Add(tab);
     }
     public void Previous() => PageStart = Math.Max(0, PageStart - PageSize);

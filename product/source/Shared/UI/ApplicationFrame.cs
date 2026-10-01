@@ -20,6 +20,8 @@ public sealed class ApplicationFrame : Grid
     private readonly BrandIcon _titleBrandIcon;
     private double _lastSidebarWidth = 250;
     private double _dragStartSidebarWidth = 250;
+    public bool RestoreSidebarFromWorkspace { get; set; }
+    public event Action<bool>? SidebarVisibilityChanged;
 
     public void ToggleSidebar() => SetSidebarVisible(Sidebar.Visibility != Visibility.Visible, true);
 
@@ -35,6 +37,8 @@ public sealed class ApplicationFrame : Grid
         _sidebarToggle.ToolTip = show ? "Ukryj panel boczny" : "Pokaż panel boczny";
         _titleBrandIcon.Width = _titleBrandIcon.Height = show ? 16 : 28;
         _sidebarToggle.Width = _sidebarToggle.Height = show ? 20 : 28;
+        _sidebarToggle.Visibility = !show && RestoreSidebarFromWorkspace ? Visibility.Collapsed : Visibility.Visible;
+        SidebarVisibilityChanged?.Invoke(show);
     }
 
     public ApplicationFrame(Window owner)
@@ -52,9 +56,10 @@ public sealed class ApplicationFrame : Grid
         ColumnDefinitions.Add(_separatorColumn);
         ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         var title = new DockPanel { Background = UiPolicy.Current.PanelBrush };
-        foreach (var (label, action) in new (string, Action)[] { ("×", () => owner.Close()), ("□", () => owner.WindowState = owner.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized), ("—", () => owner.WindowState = WindowState.Minimized) })
+        foreach (var (label, glyph, action) in new (string, string, Action)[] { ("Zamknij", "\uE8BB", () => owner.Close()), ("Maksymalizuj lub przywróć", "\uE922", () => owner.WindowState = owner.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized), ("Minimalizuj", "\uE921", () => owner.WindowState = WindowState.Minimized) })
         {
-            var button = new ActionButton { Content = label, Width = 40, Padding = new Thickness(4), FontSize = 13 };
+            var button = new ActionButton { Content = new TextBlock { Text = glyph, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 11, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center }, Width = 40, Height = 30, Padding = new Thickness(0), HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, ToolTip = label };
+            System.Windows.Automation.AutomationProperties.SetName(button, label);
             button.Click += (_, _) => action(); WindowChrome.SetIsHitTestVisibleInChrome(button, true); DockPanel.SetDock(button, Dock.Right); title.Children.Add(button);
         }
         var windowBrand = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };

@@ -106,7 +106,7 @@ public partial class MainWindow
     private void RefreshVisibleTabs(OpenNote? ensureVisible = null)
     {
         if (!IsLoaded && TabsHost.ActualWidth <= 0) return;
-        _tabs.Refresh(TabsHost.ActualWidth, ensureVisible);
+        _tabs.Refresh(TabsHost.ActualWidth - (TabsView.RestoreSidebarButton.Visibility == Visibility.Visible ? 42 : 0), ensureVisible);
         OnPropertyChanged(nameof(TabWidth));
         LeftTabsButton.Visibility = _tabs.CanGoBack ? Visibility.Visible : Visibility.Collapsed;
         RightTabsButton.Visibility = _tabs.CanGoNext ? Visibility.Visible : Visibility.Collapsed;

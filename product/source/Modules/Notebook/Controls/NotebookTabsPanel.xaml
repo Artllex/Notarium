@@ -1,10 +1,11 @@
 <ui:CompositePanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ui="clr-namespace:Notarium.UI;assembly=Notarium.UI" xmlns:local="clr-namespace:Notatnik" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework" xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf" x:Class="Notatnik.NotebookTabsPanel"><Grid x:Name="TabsHost" SizeChanged="TabsHost_SizeChanged">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                        <ui:ActionButton Grid.Column="0" x:Name="LeftTabsButton" Content="‹" Width="30" Margin="2,3,0,2" FontSize="19" Visibility="Collapsed" Click="PreviousTabs_Click" shell:WindowChrome.IsHitTestVisibleInChrome="True" />
-                        <ItemsControl Grid.Column="1" ItemsSource="{Binding VisibleTabs}" ClipToBounds="True">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <ui:ActionButton Grid.Column="0" x:Name="RestoreSidebarButton" Width="28" Height="28" Margin="8,2,6,2" Padding="0" Visibility="Collapsed" ToolTip="Pokaż panel boczny" Click="RestoreSidebar_Click" shell:WindowChrome.IsHitTestVisibleInChrome="True" AutomationProperties.Name="Pokaż panel boczny"><ui:BrandIcon Width="28" Height="28" /></ui:ActionButton>
+                        <ui:ActionButton Grid.Column="1" x:Name="LeftTabsButton" Content="‹" Width="30" Margin="2,3,0,2" FontSize="19" Visibility="Collapsed" Click="PreviousTabs_Click" shell:WindowChrome.IsHitTestVisibleInChrome="True" />
+                        <ItemsControl Grid.Column="2" ItemsSource="{Binding VisibleTabs}" ClipToBounds="True">
                             <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate><DataTemplate>
-                                <ui:TabCard Width="{Binding DataContext.TabWidth, RelativeSource={RelativeSource AncestorType=Window}}" Height="34" Margin="-7,2,0,0" MouseLeftButtonDown="Tab_MouseLeftButtonDown" shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                                <ui:TabCard Width="{Binding DataContext.TabWidth, RelativeSource={RelativeSource AncestorType=Window}}" Height="34" Margin="0,2,0,0" MouseLeftButtonDown="Tab_MouseLeftButtonDown" shell:WindowChrome.IsHitTestVisibleInChrome="True">
                                     <Path x:Name="TabBase" Stretch="Fill" Fill="Transparent" Data="{StaticResource WorkspaceTabShape}" />
                                     <Path x:Name="HoverShape" Stretch="Fill" Fill="#505050" Opacity="0" IsHitTestVisible="False" Data="{StaticResource WorkspaceTabShape}">
                                         <Path.Triggers>
@@ -20,6 +21,6 @@
                                 <DataTemplate.Triggers><DataTrigger Binding="{Binding IsActive}" Value="True"><Setter TargetName="TabBase" Property="Fill" Value="{StaticResource WorkspaceTabActive}" /></DataTrigger><DataTrigger Binding="{Binding Note.IsRenamingInTab}" Value="True"><Setter TargetName="TabTitle" Property="Visibility" Value="Collapsed" /><Setter TargetName="TabTitleEditor" Property="Visibility" Value="Visible" /></DataTrigger></DataTemplate.Triggers>
                             </DataTemplate></ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <ui:ActionButton Grid.Column="2" x:Name="RightTabsButton" Content="›" Width="30" Margin="2,3,2,2" FontSize="19" Visibility="Collapsed" Click="NextTabs_Click" shell:WindowChrome.IsHitTestVisibleInChrome="True" />
-                        <ui:ActionButton Grid.Column="3" Content="＋" ToolTip="Nowa notatka" Foreground="{StaticResource Muted}" Width="36" Margin="1,1" FontSize="18" Click="NewNote_Click" shell:WindowChrome.IsHitTestVisibleInChrome="True" />
+                        <ui:ActionButton Grid.Column="3" x:Name="RightTabsButton" Content="›" Width="30" Margin="2,3,2,2" FontSize="19" Visibility="Collapsed" Click="NextTabs_Click" shell:WindowChrome.IsHitTestVisibleInChrome="True" />
+                        <ui:ActionButton Grid.Column="4" ToolTip="Nowa notatka" Width="36" Height="32" Margin="1,1" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="NewNote_Click" shell:WindowChrome.IsHitTestVisibleInChrome="True" AutomationProperties.Name="Nowa notatka"><Path Data="M 8,0 L 8,16 M 0,8 L 16,8" Width="16" Height="16" Stroke="{StaticResource Muted}" StrokeThickness="1.5" Stretch="Fill" /></ui:ActionButton>
                     </Grid></ui:CompositePanel>

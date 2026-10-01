@@ -53,6 +53,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged, Notarium.Contr
         var workspace = (Grid)((Grid)TabsView.Parent).Parent;
         original.Children.Remove(LibraryView); original.Children.Remove(MainMenu); original.Children.Remove(workspace);
         var frame = new ApplicationFrame(this);
+        frame.RestoreSidebarFromWorkspace = true;
+        frame.SidebarVisibilityChanged += show => { TabsView.SetSidebarCollapsed(!show); Dispatcher.BeginInvoke(new Action(() => RefreshVisibleTabs())); };
+        TabsView.SidebarRestoreRequested += (_, _) => frame.ToggleSidebar();
         frame.Sidebar.Content = LibraryView; frame.Menu.Content = MainMenu; frame.Workspace.Content = workspace;
         LibraryView.SidebarToggleRequested += (_, _) => frame.ToggleSidebar();
         Content = frame;

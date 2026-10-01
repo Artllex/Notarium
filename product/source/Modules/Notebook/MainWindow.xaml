@@ -83,8 +83,8 @@
                     <Grid>
                     <TextBlock Text="{Binding ElementName=Editor, Path=HoveredContainerStatus}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0" Foreground="{StaticResource Muted}" FontSize="10" />
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,110,0">
-                        <TextBlock Text="{Binding ActiveNote.CreatedAtText}" Foreground="{StaticResource Muted}" FontSize="10" />
                         <TextBlock Text="{Binding ActiveNote.SavedAtText}" ToolTip="{Binding ActiveNote.SavedAtText}" TextTrimming="CharacterEllipsis" Margin="18,0,0,0" Foreground="{StaticResource Muted}" FontSize="10" />
+                        <TextBlock Text="{Binding ActiveNote.CreatedAtText}" Foreground="{StaticResource Muted}" FontSize="10" Margin="18,0,0,0" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0">
                         <ui:ActionButton Content="−" ToolTip="Pomniejsz tekst" Width="25" Height="24" Padding="0" FontSize="15" Foreground="{StaticResource Accent}" Click="ZoomOut_Click" />
