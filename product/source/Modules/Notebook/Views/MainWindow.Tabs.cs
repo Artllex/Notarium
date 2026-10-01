@@ -23,7 +23,10 @@ public partial class MainWindow
     private void ZoomMenu_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button source) return;
-        var menu = CreatePopupMenu(source, itemWidth: 58);
+        var widestValue = new TextBlock { Text = "200%", FontFamily = new System.Windows.Media.FontFamily(UiPolicy.Current.FontFamily), FontSize = 11 };
+        widestValue.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var itemWidth = Math.Ceiling(widestValue.DesiredSize.Width + 36 + 8 + 2 * UiPolicy.Current.RowMarginX + 4);
+        var menu = new DropDownMenu(source, itemWidth: itemWidth, aboveTarget: true, centerItems: true);
         for (var percent = 100; percent <= 200; percent += 10)
         {
             var value = percent;

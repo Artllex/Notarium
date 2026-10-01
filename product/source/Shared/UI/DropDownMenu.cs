@@ -15,21 +15,37 @@ public sealed class DropDownMenu
     private readonly double? _itemWidth;
     private readonly UIElement? _target;
     private readonly Action? _onLeafClick;
+    private readonly bool _aboveTarget;
+    private readonly bool _centerItems;
     private DropDownMenu? _childMenu;
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<MenuItem, UIElement> Headers = new();
     public Collection<object> Items { get; } = new();
 
-    public DropDownMenu(UIElement? target, double? itemWidth = null, bool submenu = false, Action? onLeafClick = null, FrameworkElement? parentSurface = null)
+    public DropDownMenu(UIElement? target, double? itemWidth = null, bool submenu = false, Action? onLeafClick = null, FrameworkElement? parentSurface = null, bool aboveTarget = false, bool centerItems = false)
     {
         _itemWidth = itemWidth;
         _target = target;
         _onLeafClick = onLeafClick;
+        _aboveTarget = aboveTarget;
+        _centerItems = centerItems;
         // Custom placement is immune to the system's right-aligned menu policy.
         // A button menu always starts at the button's left, not at its right.
         _popup = new Popup { PlacementTarget = target, Placement = target is null ? PlacementMode.MousePoint : PlacementMode.Custom, StaysOpen = submenu, AllowsTransparency = true, PopupAnimation = SystemParameters.MenuAnimation ? PopupAnimation.Fade : PopupAnimation.None };
         _popup.CustomPopupPlacementCallback = (popupSize, targetSize, _) =>
         {
-            if (!submenu) return new[] { new CustomPopupPlacement(new Point(0, targetSize.Height), PopupPrimaryAxis.Vertical) };
+            if (!submenu)
+            {
+                if (_aboveTarget)
+                {
+                    var rightAligned = targetSize.Width - popupSize.Width;
+                    return new[]
+                    {
+                        new CustomPopupPlacement(new Point(rightAligned, -popupSize.Height), PopupPrimaryAxis.Vertical),
+                        new CustomPopupPlacement(new Point(rightAligned, targetSize.Height), PopupPrimaryAxis.Vertical)
+                    };
+                }
+                return new[] { new CustomPopupPlacement(new Point(0, targetSize.Height), PopupPrimaryAxis.Vertical) };
+            }
             var origin = target is FrameworkElement anchor && parentSurface is not null ? anchor.TranslatePoint(new Point(), parentSurface) : new Point();
             var parentWidth = parentSurface?.ActualWidth ?? targetSize.Width;
             return new[]
@@ -84,11 +100,11 @@ public sealed class DropDownMenu
             if (entry is not MenuItem item) continue;
 
             var row = new Grid();
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = _centerItems ? new GridLength(18) : GridLength.Auto });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = _centerItems ? new GridLength(18) : GridLength.Auto });
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            if (item.IsCheckable) row.Children.Add(new TextBlock { Text = item.IsChecked ? "✓" : "", Width = 18, Margin = new Thickness(0, 0, 5, 0) });
+            if (item.IsCheckable) row.Children.Add(new TextBlock { Text = item.IsChecked ? "✓" : "", Width = 18, Margin = _centerItems ? new Thickness(0) : new Thickness(0, 0, 5, 0) });
             var header = item.Header as UIElement ?? (Headers.TryGetValue(item, out var cached) ? cached : new TextBlock { Text = (item.Header?.ToString() ?? string.Empty).Replace("_", ""), FontSize = 11 });
             if (item.Header is UIElement && !Headers.TryGetValue(item, out _)) Headers.Add(item, header);
             if (VisualTreeHelper.GetParent(header) is Panel parent) parent.Children.Remove(header);
@@ -96,6 +112,7 @@ public sealed class DropDownMenu
             // ownership before attaching the same visual to the popup row.
             if (item.Header is UIElement) item.Header = null;
             header.SetValue(System.Windows.Documents.TextElement.ForegroundProperty, item.IsEnabled ? UiPolicy.Current.TextBrush : new SolidColorBrush(Color.FromRgb(125, 125, 125)));
+            if (_centerItems && header is FrameworkElement centeredHeader) centeredHeader.HorizontalAlignment = HorizontalAlignment.Center;
             Grid.SetColumn(header, 1); row.Children.Add(header);
             if (!string.IsNullOrWhiteSpace(item.InputGestureText))
             {
@@ -116,7 +133,7 @@ public sealed class DropDownMenu
                 MinWidth = _itemWidth ?? 150,
                 Width = _itemWidth ?? double.NaN,
                 MinHeight = UiPolicy.Current.ItemMinHeight,
-                Padding = new Thickness(UiPolicy.Current.RowPaddingX, UiPolicy.Current.RowPaddingY, UiPolicy.Current.RowPaddingX, UiPolicy.Current.RowPaddingY),
+                Padding = new Thickness(_centerItems ? 4 : UiPolicy.Current.RowPaddingX, UiPolicy.Current.RowPaddingY, _centerItems ? 4 : UiPolicy.Current.RowPaddingX, UiPolicy.Current.RowPaddingY),
                 Margin = new Thickness(UiPolicy.Current.RowMarginX, 0, UiPolicy.Current.RowMarginX, 0),
                 FontFamily = new FontFamily(UiPolicy.Current.FontFamily),
                 FontSize = 11,
