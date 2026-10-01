@@ -19,6 +19,8 @@ DEV i Notatnik. Rama nie ładuje modułów ani danych: otrzymuje zawartość obs
 DEV wypełnia obszar roboczy kartami „Elementy Windows” i „Elementy Web”, bez
 uruchamiania Notatnika. Panel boczny służy do przełączania galerii.
 Duża ikona Notarium w panelu go ukrywa, a mała ikona na pasku tytułu przywraca.
+Przeciągnięcie separatora do minimalnej szerokości ukrywa panel po puszczeniu uchwytu;
+ponowne otwarcie przywraca szerokość sprzed tego przeciągnięcia.
 Nagłówki i etykiety w zwężonym panelu używają wielokropka przy tej samej czcionce.
 Karty DEV korzystają ze wspólnego szablonu TabControl/TabItem; karty dokumentów
 Notatnika zachowują edycję tytułów, zamykanie i paginację, ale używają tych samych
