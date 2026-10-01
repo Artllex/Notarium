@@ -81,14 +81,14 @@
                 </Border>
                 <Border Grid.Row="4" Background="#262626" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
                     <Grid>
-                    <TextBlock Text="{Binding ElementName=Editor, Path=HoveredContainerStatus}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0" Foreground="{StaticResource Muted}" FontSize="10" />
+                    <TextBlock Text="{Binding ElementName=Editor, Path=HoveredContainerStatus}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0" Foreground="{StaticResource Muted}" FontSize="10"><TextBlock.RenderTransform><TranslateTransform Y="-0.4" /></TextBlock.RenderTransform></TextBlock>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,110,0">
-                        <TextBlock Text="{Binding ActiveNote.SavedAtText}" ToolTip="{Binding ActiveNote.SavedAtText}" TextTrimming="CharacterEllipsis" Margin="18,0,0,0" Foreground="{StaticResource Muted}" FontSize="10" />
-                        <TextBlock Text="{Binding ActiveNote.CreatedAtText}" Foreground="{StaticResource Muted}" FontSize="10" Margin="18,0,0,0" />
+                        <TextBlock Text="{Binding ActiveNote.SavedAtText}" ToolTip="{Binding ActiveNote.SavedAtText}" TextTrimming="CharacterEllipsis" Margin="18,0,0,0" Foreground="{StaticResource Muted}" FontSize="10"><TextBlock.RenderTransform><TranslateTransform Y="-0.4" /></TextBlock.RenderTransform></TextBlock>
+                        <TextBlock Text="{Binding ActiveNote.CreatedAtText}" Foreground="{StaticResource Muted}" FontSize="10" Margin="18,0,0,0"><TextBlock.RenderTransform><TranslateTransform Y="-0.4" /></TextBlock.RenderTransform></TextBlock>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0">
                         <ui:ActionButton ToolTip="Pomniejsz tekst" Width="25" Height="24" Padding="0" FontSize="15" Foreground="{StaticResource Accent}" Click="ZoomOut_Click"><TextBlock Text="−"><TextBlock.RenderTransform><TranslateTransform Y="-1.2" /></TextBlock.RenderTransform></TextBlock></ui:ActionButton>
-                        <ui:ActionButton x:Name="ZoomButton" Content="100%" ToolTip="Wybierz powiększenie" Width="46" Height="24" Padding="1,0" Foreground="{StaticResource Muted}" FontSize="10" Click="ZoomMenu_Click" />
+                        <ui:ActionButton x:Name="ZoomButton" Content="100%" ToolTip="Wybierz powiększenie" Width="46" Height="24" Padding="1,0,1,0.8" Foreground="{StaticResource Muted}" FontSize="10" Click="ZoomMenu_Click" />
                         <ui:ActionButton ToolTip="Powiększ tekst" Width="25" Height="24" Padding="0" FontSize="15" Foreground="{StaticResource Accent}" Click="ZoomIn_Click"><TextBlock Text="+"><TextBlock.RenderTransform><TranslateTransform Y="-1.2" /></TextBlock.RenderTransform></TextBlock></ui:ActionButton>
                     </StackPanel>
                     </Grid>
