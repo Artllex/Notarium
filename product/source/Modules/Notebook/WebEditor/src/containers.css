@@ -49,7 +49,10 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 #container-dialog .background-options input[type=checkbox]{width:auto}
 .container-tools button{background:none;border:0;color:inherit;padding:2px 4px;cursor:pointer}
 .container-tools button:before{content:'⚙'}
-.container-tools .container-delete-button:before{content:'×'}
+.container-tools .container-delete-button{position:relative;box-sizing:border-box;width:18px;height:23px;padding:0;flex:0 0 18px}
+.container-tools .container-delete-button:before,.container-tools .container-delete-button:after{content:'';position:absolute;left:50%;top:50%;width:12px;height:1.5px;background:currentColor;border-radius:1px}
+.container-tools .container-delete-button:before{transform:translate(-50%,-50%) rotate(45deg)}
+.container-tools .container-delete-button:after{transform:translate(-50%,-50%) rotate(-45deg)}
 .container-resize{position:absolute;width:11px;height:11px;background:#60a5fa;border:2px solid #1e1e1e;cursor:nwse-resize;display:none;z-index:26}
 .container-resize-bottom-right{right:-6px;bottom:-6px}.container-resize-bottom-left{left:-6px;bottom:-6px;cursor:nesw-resize}
 .object-container.corner-near-right>.container-resize-bottom-right,.object-container.corner-near-left>.container-resize-bottom-left{display:block}

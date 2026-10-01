@@ -21,6 +21,23 @@ try {
 
   await open([{ type: 'codeCell', attrs: { language: 'python' }, content: [{ type: 'text', text: 'print(1)' }] }]);
   await page.locator('.object-container').hover();
+  const closeButton = page.locator('.object-container > .container-tools .container-delete-button').first();
+  const closeIcon = await closeButton.evaluate(button => {
+    const box = button.getBoundingClientRect();
+    const first = getComputedStyle(button, '::before');
+    const second = getComputedStyle(button, '::after');
+    return { buttonWidth: box.width, buttonHeight: box.height, firstWidth: first.width, secondWidth: second.width,
+      firstHeight: first.height, secondHeight: second.height, firstTransform: first.transform, secondTransform: second.transform };
+  });
+  assert.equal(closeIcon.buttonWidth, 18);
+  assert.equal(closeIcon.buttonHeight, 23);
+  assert.equal(closeIcon.firstWidth, '12px');
+  assert.equal(closeIcon.secondWidth, '12px');
+  assert.equal(closeIcon.firstHeight, '1.5px');
+  assert.equal(closeIcon.secondHeight, '1.5px');
+  assert.notEqual(closeIcon.firstTransform, closeIcon.secondTransform);
+  if (process.env.NOTARIUM_TEST_OUTPUT) await page.locator('.object-container > .container-tools').first().screenshot({ path: resolve(process.env.NOTARIUM_TEST_OUTPUT, 'container-tools.png') });
+  console.log('PASS container close icon uses centered drawn strokes in the existing hit target');
   await page.locator('.cell-tools .language').click();
   const input = page.locator('.cell-language-input');
   await input.fill('JavaScript');
