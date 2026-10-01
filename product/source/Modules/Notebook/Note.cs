@@ -17,6 +17,7 @@ public sealed class Note : INotifyPropertyChanged
     public Guid Id { get; set; } = Guid.NewGuid();
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime? LastOpenedAtUtc { get; set; }
     private DateTime? _savedAtUtc;
     public DateTime? SavedAtUtc { get => _savedAtUtc; set { _savedAtUtc = value; OnPropertyChanged(nameof(SavedAtText)); } }
     [JsonIgnore] public string SavedAtText => SavedAtUtc is DateTime saved ? $"Ostatni zapis: {saved.ToLocalTime():dd.MM.yyyy, HH:mm:ss}" : "Ostatni zapis: —";

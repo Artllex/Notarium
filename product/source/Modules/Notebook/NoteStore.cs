@@ -25,7 +25,8 @@ public sealed class NoteStore
             IsFavorite = item.IsFavorite,
             CreatedAtUtc = item.CreatedAtUtc,
             SavedAtUtc = item.SavedAtUtc,
-            UpdatedAtUtc = item.UpdatedAtUtc
+            UpdatedAtUtc = item.UpdatedAtUtc,
+            LastOpenedAtUtc = item.LastOpenedAtUtc
         }).ToList();
     }
 
@@ -51,7 +52,8 @@ public sealed class NoteStore
                     IsFavorite = note.IsFavorite,
                     CreatedAtUtc = note.CreatedAtUtc,
                     SavedAtUtc = savedAt,
-                    UpdatedAtUtc = note.UpdatedAtUtc
+                    UpdatedAtUtc = note.UpdatedAtUtc,
+                    LastOpenedAtUtc = note.LastOpenedAtUtc
                 }));
                 stream.Flush(flushToDisk: true);
             }
@@ -76,5 +78,6 @@ public sealed class NoteStore
         public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
         public DateTime? SavedAtUtc { get; set; }
+        public DateTime? LastOpenedAtUtc { get; set; }
     }
 }

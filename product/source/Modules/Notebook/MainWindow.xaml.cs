@@ -17,6 +17,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged, Notarium.Contr
 {
     public void CreateNewItem() => NewNote_Click(this, new RoutedEventArgs());
     private readonly NotebookLibrary _library;
+    private readonly RecentFilesStore _recentFiles;
     private readonly NotebookTabs _tabs = new();
     private readonly NotebookAutosave _saveTimer;
     private readonly NotebookFormatting _formatting;
@@ -44,9 +45,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged, Notarium.Contr
 
     public MainWindow() : this(new NoteStore(), true) { }
 
-    public MainWindow(NoteStore store, bool openExample = false)
+    public MainWindow(NoteStore store, bool openExample = false, RecentFilesStore? recentFiles = null)
     {
         _library = new NotebookLibrary(store);
+        _recentFiles = recentFiles ?? new RecentFilesStore();
         InitializeComponent();
         // Preserve notebook-specific views and behavior, share the application frame.
         var original = (Grid)((Border)Content).Child;
@@ -104,7 +106,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged, Notarium.Contr
         }
         if (Notes.Count == 0) Notes.Add(new Note());
 
-        OpenNote(example ?? Notes[0]);
+        OpenNote(example ?? Notes[0], false);
         Editor.Focus();
     }
 

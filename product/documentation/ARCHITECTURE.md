@@ -59,6 +59,8 @@ ModuleCatalog wykrywa implementacje w Modules/*/Notarium.*.dll. ModuleEntry oddz
 
 Shared/Contracts/INotariumModule wymaga identyfikatora, nazwy i funkcji CreateWindow. To kontrakt uruchamiania interfejsu, nie wspólna struktura danych.
 
+Opcjonalny IRecentDocumentsModule udostępnia powłoce ostatnio używane pozycje i pozwala otworzyć wybraną pozycję w oknie modułu. Powłoka nie odczytuje formatu biblioteki Notatnika ani nie importuje plików samodzielnie. Ekran startowy sortuje wspólną listę „Proponowane” według czasu ostatniego użycia i odświeża ją po powrocie z modułu.
+
 ## 5. Wspólny interfejs
 
 WPF i WebView mają różne środowiska wykonania. Nie współdzielą jednej klasy uruchamianej w C# i JavaScript, ale mają wspólne zasady i parametry.
@@ -86,6 +88,8 @@ Controls/NotebookLibraryPanel i NotebookTabsPanel są własnymi widokami bibliot
 | NotebookRuntime | Adapter wspólnej inicjalizacji WebView2 |
 
 Note i OpenNote są modelami notatki i karty. NoteStore zapisuje bibliotekę. Core zawiera pomocnicze mechanizmy i konwersje dokumentów; jest częścią Notatnika, nie przyszłym backendem całego Notarium. Legacy to stary edytor wyłączony z aplikacji.
+
+Notatnik zapisuje w notes.json także czas ostatniego otwarcia notatki. RecentFilesStore przechowuje osobno historię ścieżek plików `.md`/`.txt` i identyfikator powiązanej notatki; ta historia nie zawiera treści plików. Ponowne otwarcie znanego pliku aktywuje powiązaną notatkę zamiast tworzyć jej duplikat. Niedostępne już pliki nie są proponowane.
 
 ## 7. Edytor i kontenery
 

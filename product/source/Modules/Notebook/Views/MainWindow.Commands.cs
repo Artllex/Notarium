@@ -16,8 +16,9 @@ namespace Notatnik;
 // Window event adapters only; state and policies live in Services.
 public partial class MainWindow
 {
-    private void OpenNote(Note note)
+    private void OpenNote(Note note, bool trackRecent = true)
     {
+        if (trackRecent) { note.LastOpenedAtUtc = DateTime.UtcNow; ScheduleSave(); }
         if (ActiveNote == note) { Editor.Focus(); return; }
         var tab = _tabs.Activate(note);
         RefreshVisibleTabs(tab);
@@ -26,6 +27,26 @@ public partial class MainWindow
 
         Editor.OpenNote(note.Id, note.Content, note.DocumentJson);
         Editor.Focus();
+    }
+
+    public bool OpenRecentNote(Guid id)
+    {
+        var note = Notes.FirstOrDefault(item => item.Id == id);
+        if (note is null) return false;
+        OpenNote(note);
+        return true;
+    }
+
+    public bool OpenRecentFile(string path)
+    {
+        if (!File.Exists(path)) return false;
+        var entry = _recentFiles.Load().FirstOrDefault(item => string.Equals(item.Path, path, StringComparison.OrdinalIgnoreCase));
+        var note = entry is null ? null : Notes.FirstOrDefault(item => item.Id == entry.NoteId);
+        note ??= _library.Import(File.ReadAllText(path));
+        OpenNote(note);
+        if (!SaveNotes()) return false;
+        _recentFiles.Record(path, note.Id);
+        return true;
     }
 
     private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -44,9 +65,7 @@ public partial class MainWindow
 
         try
         {
-            var note = _library.Import(File.ReadAllText(dialog.FileName));
-            OpenNote(note);
-            SaveNotes();
+            OpenRecentFile(dialog.FileName);
         }
         catch (Exception exception)
         {
@@ -69,6 +88,7 @@ public partial class MainWindow
         try
         {
             File.WriteAllText(dialog.FileName, ActiveNote.Content, new System.Text.UTF8Encoding(false));
+            _recentFiles.Record(dialog.FileName, ActiveNote.Id);
         }
         catch (Exception exception)
         {

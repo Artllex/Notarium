@@ -38,6 +38,16 @@ internal static class Program
         library.ToggleFavorite(first); library.Save();
         var reopened = new NotebookLibrary(new NoteStore(Path.Combine(fixture, "notes.json"))); reopened.Load();
         Check(reopened.Notes.Count == 1 && reopened.Notes[0].IsFavorite && reopened.Notes[0].Content == "text", "storage compatibility after extraction");
+        first.LastOpenedAtUtc = DateTime.UtcNow;
+        library.Save();
+        reopened.Load();
+        Check(reopened.Notes[0].LastOpenedAtUtc == first.LastOpenedAtUtc, "recent note activity persists without changing its content");
+        var recentFiles = new RecentFilesStore(Path.Combine(fixture, "recent-files.json"));
+        var sampleFile = Path.Combine(fixture, "sample.md");
+        File.WriteAllText(sampleFile, "external note");
+        recentFiles.Record(sampleFile, first.Id);
+        recentFiles.Record(sampleFile, first.Id);
+        Check(recentFiles.Load().Count == 1 && recentFiles.Load()[0].NoteId == first.Id, "recent file history deduplicates paths and persists note links");
         library.Remove(first); Check(library.Notes.Count == 1, "deleting last note retains established library behavior");
         var tabs = new NotebookTabs();
         for (var i = 0; i < 12; i++) tabs.Activate(new Note());
@@ -45,7 +55,8 @@ internal static class Program
         tabs.Next(); tabs.Refresh(500); Check(tabs.CanGoBack, "next tab page");
         tabs.Refresh(500, tabs.Open[0]); Check(tabs.PageStart == 0, "activation scrolls back to first tab");
         var count = tabs.Open.Count; tabs.Activate(tabs.Open[0].Note); Check(tabs.Open.Count == count, "activation does not duplicate a tab");
-        var window = new MainWindow(new NoteStore(Path.Combine(fixture, "window-notes.json")), false);
+        var window = new MainWindow(new NoteStore(Path.Combine(fixture, "window-notes.json")), false,
+            new RecentFilesStore(Path.Combine(fixture, "window-recent-files.json")));
         Check(window.FindName("LibraryView") is NotebookLibraryPanel && window.FindName("TabsView") is NotebookTabsPanel, "notebook composes independent library and tab views");
         Check(window.FindName("MainMenu") is MenuBar, "menu bar uses shared menu component");
         var notebookFrame = window.Content as ApplicationFrame;
@@ -53,6 +64,8 @@ internal static class Program
               notebookFrame.Workspace.Content is Grid notebookWorkspace && notebookWorkspace.RowDefinitions.Count == 4,
             "notebook status content uses the shared frame without a duplicate workspace row");
         Check(window.Notes.Count == 1 && window.OpenNotes.Count == 1, "notebook composition preserves startup state");
+        Check(window.OpenRecentFile(sampleFile) && window.OpenRecentFile(sampleFile) && window.Notes.Count == 2 &&
+              window.ActiveNote?.Content == "external note", "reopening a recent file selects its existing note instead of importing a duplicate");
         NotebookRuntime.Configure(); NotebookRuntime.Configure();
         Check(File.Exists(Path.Combine(NotebookRuntime.LoaderFolder, "WebView2Loader.dll")), "native runtime resolves from module and supports repeated opening");
         (window.FindName("Editor") as WebEditorControl)?.Dispose();
