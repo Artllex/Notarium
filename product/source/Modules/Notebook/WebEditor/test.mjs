@@ -737,7 +737,11 @@ try {
     await revealTypeTools(boxes.first());
     const grip = await boxes.first().locator('.container-type-label').boundingBox(), target = await boxes.nth(1).boundingBox();
     await page.mouse.move(grip.x + 12, grip.y + 12); await page.mouse.down();
-    await page.mouse.move(target.x + target.width - 3, target.y + 55, { steps: 8 }); await page.mouse.up();
+    await page.mouse.move(target.x + target.width - 3, target.y + 55, { steps: 8 });
+    assert.equal(await boxes.first().evaluate(el => getComputedStyle(el).backdropFilter), 'blur(2px)');
+    assert.equal(await boxes.first().evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(30, 30, 30, 0.72)');
+    if (process.env.NOTARIUM_TEST_OUTPUT) await page.screenshot({ path: resolve(reportDirectory, 'dragged-container-blur.png') });
+    await page.mouse.up();
     assert.equal((await json()).content[0].type, 'layoutRow');
     assert.equal((await json()).content[0].content[1].content[0].text, 'A');
     const rowBoxes = page.locator('.layout-row>.object-container');
@@ -764,6 +768,28 @@ try {
     assert.ok((await json()).content[0].attrs.boxHeight > 120);
     await command('undo'); assert.equal((await json()).content[0].attrs.boxHeight, 120);
     await page.screenshot({ path: resolve(reportDirectory, 'containers.png') });
+  });
+  await check('Lifted text container blurs the text it crosses while dragging', async () => {
+    await open('drag-blur-overlap', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'paragraph', content: [{ type: 'text', text: 'Moc i energia opisują dwa różne aspekty tego samego procesu. To jest tekst pod przeciąganą kartą.' }] },
+      { type: 'paragraph', content: [{ type: 'text', text: 'Zobaczyć cały proces' }] }
+    ] } }));
+    const source = page.locator('.tiptap > .object-container').last();
+    const beneath = page.locator('.tiptap > .object-container').first();
+    await revealTypeTools(source);
+    const handle = await source.locator('.container-type-label').boundingBox();
+    const target = await beneath.boundingBox();
+    await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(target.x + target.width / 2, target.y + 10, { steps: 8 });
+    await page.waitForTimeout(120);
+    assert.equal(await source.evaluate(el => el.classList.contains('container-lifted')), true);
+    assert.equal(await source.evaluate(el => getComputedStyle(el).backdropFilter), 'blur(2px)');
+    if (process.env.NOTARIUM_TEST_OUTPUT) await page.screenshot({ path: resolve(reportDirectory, 'dragged-over-text-blur.png') });
+    await page.keyboard.press('Escape');
+    await page.mouse.up();
+    assert.equal(await source.evaluate(el => el.classList.contains('container-lifted')), false);
+    assert.equal(await source.evaluate(el => getComputedStyle(el).backdropFilter), 'none');
   });
   await check('Right and bottom edges resize independently; corner double click resets layout with undo', async () => {
     await open('edge-resize', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
