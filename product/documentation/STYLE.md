@@ -14,8 +14,9 @@ odpowiadają mu h1/h2 w ui-surface. Treść dokumentów nie dziedziczy tego styl
 ## Wspólna rama aplikacji
 
 `Shared/UI/ApplicationFrame.cs` definiuje pasek tytułu, kontrolki okna, miejsce menu,
-panel boczny o początkowej szerokości 250 px (regulowany uchwytem 110–450 px), separator i obszar roboczy. Korzystają z niego ekran główny,
+panel boczny o początkowej szerokości 250 px (regulowany uchwytem do krawędzi lub 450 px), separator, obszar roboczy i pasek stanu. Korzystają z niego ekran główny,
 DEV i Notatnik. Rama nie ładuje modułów ani danych: otrzymuje zawartość obszarów.
+Bench i pasek stanu mają tę samą wysokość 25 px. Pusty pasek stanu jest widoczny już na ekranie startowym; Notatnik wypełnia go informacjami o dokumencie i sterowaniem powiększeniem, bez dodawania drugiego paska w obszarze roboczym.
 Przyciski okna używają symboli ChromeMinimize, ChromeMaximize/ChromeRestore i ChromeClose z czcionki Segoe Fluent Icons, o zaokrąglonym rysunku. Ikona maksymalizacji zmienia się wraz ze stanem okna; zamknięcie ma czerwoną powierzchnię po najechaniu.
 DEV wypełnia obszar roboczy kartami „Elementy Windows” i „Elementy Web”, bez
 uruchamiania Notatnika. Panel boczny służy do przełączania galerii.

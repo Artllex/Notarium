@@ -12,6 +12,7 @@ public sealed class ApplicationFrame : Grid
     public ContentControl Sidebar { get; } = new();
     public ContentControl Workspace { get; } = new();
     public ContentControl Menu { get; } = new();
+    public ContentControl Status { get; } = new();
     private readonly ColumnDefinition _sidebarColumn = new() { Width = new GridLength(250), MinWidth = 0, MaxWidth = 450 };
     private readonly ColumnDefinition _separatorColumn = new() { Width = new GridLength(1) };
     private readonly Border _separatorLine;
@@ -51,6 +52,7 @@ public sealed class ApplicationFrame : Grid
         RowDefinitions.Add(new RowDefinition { Height = new GridLength(30) });
         RowDefinitions.Add(new RowDefinition { Height = new GridLength(25) });
         RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        RowDefinitions.Add(new RowDefinition { Height = new GridLength(25) });
         ColumnDefinitions.Add(_sidebarColumn);
         ColumnDefinitions.Add(_separatorColumn);
         ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -86,9 +88,9 @@ public sealed class ApplicationFrame : Grid
         title.MouseLeftButtonDown += (_, e) => { if (e.ClickCount == 2) owner.WindowState = owner.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized; else if (e.ButtonState == MouseButtonState.Pressed) owner.DragMove(); };
         SetColumnSpan(title, 3); Children.Add(title);
         SetRow(Menu, 1); SetColumnSpan(Menu, 3); Menu.Background = UiPolicy.Current.PanelBrush; Children.Add(Menu);
-        SetRow(Sidebar, 2); Sidebar.Background = UiPolicy.Current.PanelBrush; Sidebar.ClipToBounds = true; Children.Add(Sidebar);
+        SetRow(Sidebar, 2); SetRowSpan(Sidebar, 2); Sidebar.Background = UiPolicy.Current.PanelBrush; Sidebar.ClipToBounds = true; Children.Add(Sidebar);
         _separatorLine = new Border { Background = (Brush)owner.FindResource("Line"), Width = 1, IsHitTestVisible = false };
-        SetRow(_separatorLine, 2); SetColumn(_separatorLine, 1); Children.Add(_separatorLine);
+        SetRow(_separatorLine, 2); SetRowSpan(_separatorLine, 2); SetColumn(_separatorLine, 1); Children.Add(_separatorLine);
         _sidebarSplitter = new GridSplitter { Width = 6, Background = Brushes.Transparent, Cursor = Cursors.SizeWE, ResizeDirection = GridResizeDirection.Columns, ResizeBehavior = GridResizeBehavior.PreviousAndNext, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Stretch, ToolTip = "Przeciągnij, aby zmienić szerokość panelu bocznego" };
         _sidebarSplitter.DragStarted += (_, _) => _dragStartSidebarWidth = _sidebarColumn.ActualWidth;
         _sidebarSplitter.DragCompleted += (_, e) =>
@@ -100,8 +102,10 @@ public sealed class ApplicationFrame : Grid
                 _lastSidebarWidth = Math.Clamp(_dragStartSidebarWidth, 110, 450);
             SetSidebarVisible(false, false);
         };
-        SetRow(_sidebarSplitter, 2); SetColumn(_sidebarSplitter, 1); Children.Add(_sidebarSplitter);
+        SetRow(_sidebarSplitter, 2); SetRowSpan(_sidebarSplitter, 2); SetColumn(_sidebarSplitter, 1); Children.Add(_sidebarSplitter);
         SetRow(Workspace, 2); SetColumn(Workspace, 2); Children.Add(Workspace);
+        Status.Content = new Border { Background = UiPolicy.Brush("#262626"), BorderBrush = (Brush)owner.FindResource("Line"), BorderThickness = new Thickness(0, 1, 0, 0) };
+        SetRow(Status, 3); SetColumn(Status, 2); Children.Add(Status);
     }
     public static Grid SidebarLayout(UIElement navigation, string? heading, Action? toggleSidebar = null)
     {

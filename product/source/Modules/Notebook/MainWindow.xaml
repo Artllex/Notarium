@@ -26,7 +26,7 @@
 
             <!-- Główna część: lekkie karty i edytor -->
             <Grid Grid.Row="2" Grid.Column="2" Background="{StaticResource Editor}">
-                <Grid.RowDefinitions><RowDefinition Height="34" /><RowDefinition Height="Auto" MinHeight="30" /><RowDefinition Height="1" /><RowDefinition Height="*" /><RowDefinition Height="26" /></Grid.RowDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="34" /><RowDefinition Height="Auto" MinHeight="30" /><RowDefinition Height="1" /><RowDefinition Height="*" /><RowDefinition Height="25" /></Grid.RowDefinitions>
                 <Grid Grid.Row="0" Background="{StaticResource Editor}" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <local:NotebookTabsPanel x:Name="TabsView" />
                 </Grid>
@@ -79,7 +79,7 @@
                     </ScrollViewer>
                     </Grid>
                 </Border>
-                <Border Grid.Row="4" Background="#262626" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
+                <Border x:Name="NotebookStatusBar" Grid.Row="4" Background="#262626" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
                     <Grid>
                     <TextBlock Text="{Binding ElementName=Editor, Path=HoveredContainerStatus}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0" Foreground="{StaticResource Muted}" FontSize="10"><TextBlock.RenderTransform><TranslateTransform Y="-0.4" /></TextBlock.RenderTransform></TextBlock>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,110,0">

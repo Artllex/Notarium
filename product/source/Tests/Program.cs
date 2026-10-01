@@ -48,6 +48,10 @@ internal static class Program
         var window = new MainWindow(new NoteStore(Path.Combine(fixture, "window-notes.json")), false);
         Check(window.FindName("LibraryView") is NotebookLibraryPanel && window.FindName("TabsView") is NotebookTabsPanel, "notebook composes independent library and tab views");
         Check(window.FindName("MainMenu") is MenuBar, "menu bar uses shared menu component");
+        var notebookFrame = window.Content as ApplicationFrame;
+        Check(notebookFrame?.Status.Content == window.FindName("NotebookStatusBar") &&
+              notebookFrame.Workspace.Content is Grid notebookWorkspace && notebookWorkspace.RowDefinitions.Count == 4,
+            "notebook status content uses the shared frame without a duplicate workspace row");
         Check(window.Notes.Count == 1 && window.OpenNotes.Count == 1, "notebook composition preserves startup state");
         NotebookRuntime.Configure(); NotebookRuntime.Configure();
         Check(File.Exists(Path.Combine(NotebookRuntime.LoaderFolder, "WebView2Loader.dll")), "native runtime resolves from module and supports repeated opening");

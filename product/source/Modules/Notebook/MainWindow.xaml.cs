@@ -52,11 +52,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged, Notarium.Contr
         var original = (Grid)((Border)Content).Child;
         var workspace = (Grid)((Grid)TabsView.Parent).Parent;
         original.Children.Remove(LibraryView); original.Children.Remove(MainMenu); original.Children.Remove(workspace);
+        workspace.Children.Remove(NotebookStatusBar);
+        workspace.RowDefinitions.RemoveAt(4);
         var frame = new ApplicationFrame(this);
         frame.RestoreSidebarFromWorkspace = true;
         frame.SidebarVisibilityChanged += show => { TabsView.SetSidebarCollapsed(!show); Dispatcher.BeginInvoke(new Action(() => RefreshVisibleTabs())); };
         TabsView.SidebarRestoreRequested += (_, _) => frame.ToggleSidebar();
-        frame.Sidebar.Content = LibraryView; frame.Menu.Content = MainMenu; frame.Workspace.Content = workspace;
+        frame.Sidebar.Content = LibraryView; frame.Menu.Content = MainMenu; frame.Workspace.Content = workspace; frame.Status.Content = NotebookStatusBar;
         LibraryView.SidebarToggleRequested += (_, _) => frame.ToggleSidebar();
         Content = frame;
         _formatting = new NotebookFormatting(Editor, () => ActiveNote,
