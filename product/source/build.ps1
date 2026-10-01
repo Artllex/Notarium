@@ -13,6 +13,8 @@ $env:NOTARIUM_TEST_OUTPUT = Join-Path $sessionRoot 'screenshots'
 $env:NOTARIUM_TEST_ROOT = Join-Path $sessionRoot 'fixtures'
 New-Item -ItemType Directory -Path $env:NOTARIUM_TEST_ROOT | Out-Null
 try {
+    dotnet run --project (Join-Path $PSScriptRoot 'Tests/SidebarResize/Notarium.SidebarResizeTests.csproj') -c Release
+    if ($LASTEXITCODE) { throw 'Test zwężania panelu bocznego nie przeszedł.' }
     if (Test-Path (Join-Path $PSScriptRoot 'Modules/Dev/Notarium.Dev.csproj')) {
         Push-Location (Join-Path $PSScriptRoot 'Modules/Dev/WebGallery')
         try {
