@@ -81,9 +81,18 @@ try {
       return [a.left + a.width / 2, b.left + b.width / 2];
     });
     assert.ok(Math.abs(centers[0] - centers[1]) < 1);
+    assert.equal(await empty.locator('.container-type-tools').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
+    assert.equal(await empty.locator('.container-type-tools').evaluate(el => getComputedStyle(el).backdropFilter), 'none');
     await empty.locator('.container-type-label').click();
     assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
     assert.equal(await empty.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(130, 184, 248, 0.18)');
+    assert.match(await empty.evaluate(el => getComputedStyle(el).boxShadow), /rgba\(130, 184, 248, 0\.18\) 0px 0px 0px 4px/);
+    for (const side of ['left', 'right']) {
+      await open(`empty-panel-${side}`, '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [{ type: 'paragraph', attrs: { boxEmpty: true } }] } }));
+      const box = await empty.boundingBox();
+      await page.mouse.click(side === 'left' ? box.x + 12 : box.x + box.width - 12, box.y + box.height / 2);
+      assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
+    }
   });
   await check('Double click below a row does not select the whole row and automatic trailing text is Empty', async () => {
     await open('rows-and-empty', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [

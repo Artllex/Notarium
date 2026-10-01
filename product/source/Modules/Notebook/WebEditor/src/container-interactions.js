@@ -23,6 +23,9 @@ export class ContainerInteractions {
       view.resetDimensions(axis, handle);
     });
     view.dom.addEventListener('mousedown', event => {
+      if (getContainerType(view.node).isEmpty && event.button === 0 && !ContainerInteractions.isControl(event.target)) {
+        event.preventDefault(); event.stopPropagation(); view.select(); return;
+      }
       if (event.target === view.dom || event.target === typeLabel) view.select();
     });
     view.dom.addEventListener('dblclick', event => {

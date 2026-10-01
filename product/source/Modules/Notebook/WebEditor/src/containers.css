@@ -3,8 +3,8 @@
 body.persistent-container-highlights .object-container{outline-color:#444}
 body.persistent-container-highlights .object-container.container-selected{outline-color:#82b8f8}
 body .object-container.container-empty{outline-color:transparent!important;min-width:0}
-body .object-container.container-empty.container-selected{outline-color:#82b8f8!important;background-color:rgba(130,184,248,.18)!important}
-.object-container.container-empty>.container-type-tools{left:50%;right:auto;transform:translateX(-50%);border-radius:4px}
+body .object-container.container-empty.container-selected{outline-color:#82b8f8!important;background-color:rgba(130,184,248,.18)!important;box-shadow:0 0 0 4px rgba(130,184,248,.18)}
+.object-container.container-empty>.container-type-tools{left:50%;right:auto;transform:translateX(-50%);border-radius:4px;background:transparent;backdrop-filter:none}
 .container-tools>button[hidden]{display:none!important}
 body .object-container.container-empty,body .object-container.container-empty *{cursor:default}
 .container-boundary-focus{position:fixed;width:1px;height:1px;left:-10px;top:-10px;opacity:0;outline:none}
