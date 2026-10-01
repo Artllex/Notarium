@@ -58,7 +58,7 @@ public sealed class ApplicationFrame : Grid
         var title = new DockPanel { Background = UiPolicy.Current.PanelBrush };
         ActionButton AddCaptionButton(string label, string glyph, Action action, bool close = false)
         {
-            var button = new ActionButton { Content = new TextBlock { Text = glyph, FontFamily = new FontFamily("Segoe Fluent Icons"), FontSize = 11 }, Style = (Style)owner.FindResource(close ? "WindowCaptionCloseButton" : "WindowCaptionButton"), ToolTip = label };
+            var button = new ActionButton { Content = new TextBlock { Text = glyph, FontFamily = new FontFamily("Segoe Fluent Icons"), FontSize = 10 }, Style = (Style)owner.FindResource(close ? "WindowCaptionCloseButton" : "WindowCaptionButton"), ToolTip = label };
             System.Windows.Automation.AutomationProperties.SetName(button, label);
             button.Click += (_, _) => action(); WindowChrome.SetIsHitTestVisibleInChrome(button, true); DockPanel.SetDock(button, Dock.Right); title.Children.Add(button);
             return button;
