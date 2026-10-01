@@ -56,12 +56,25 @@ public sealed class ApplicationFrame : Grid
         ColumnDefinitions.Add(_separatorColumn);
         ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         var title = new DockPanel { Background = UiPolicy.Current.PanelBrush };
-        foreach (var (label, glyph, action) in new (string, string, Action)[] { ("Zamknij", "\uE8BB", () => owner.Close()), ("Maksymalizuj lub przywróć", "\uE922", () => owner.WindowState = owner.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized), ("Minimalizuj", "\uE921", () => owner.WindowState = WindowState.Minimized) })
+        ActionButton AddCaptionButton(string label, string glyph, Action action, bool close = false)
         {
-            var button = new ActionButton { Content = new TextBlock { Text = glyph, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 11, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center }, Width = 40, Height = 30, Padding = new Thickness(0), HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, ToolTip = label };
+            var button = new ActionButton { Content = new TextBlock { Text = glyph, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 11 }, Style = (Style)owner.FindResource(close ? "WindowCaptionCloseButton" : "WindowCaptionButton"), ToolTip = label };
             System.Windows.Automation.AutomationProperties.SetName(button, label);
             button.Click += (_, _) => action(); WindowChrome.SetIsHitTestVisibleInChrome(button, true); DockPanel.SetDock(button, Dock.Right); title.Children.Add(button);
+            return button;
         }
+        AddCaptionButton("Zamknij", "\uE8BB", () => owner.Close(), close: true);
+        var maximizeButton = AddCaptionButton("Maksymalizuj", "\uE922", () => owner.WindowState = owner.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized);
+        AddCaptionButton("Minimalizuj", "\uE921", () => owner.WindowState = WindowState.Minimized);
+        void UpdateMaximizeButton()
+        {
+            var maximized = owner.WindowState == WindowState.Maximized;
+            ((TextBlock)maximizeButton.Content).Text = maximized ? "\uE923" : "\uE922";
+            maximizeButton.ToolTip = maximized ? "Przywróć" : "Maksymalizuj";
+            System.Windows.Automation.AutomationProperties.SetName(maximizeButton, (string)maximizeButton.ToolTip);
+        }
+        owner.StateChanged += (_, _) => UpdateMaximizeButton();
+        owner.Loaded += (_, _) => UpdateMaximizeButton();
         var windowBrand = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
         _titleBrandIcon = new BrandIcon { Width = 16, Height = 16 };
         _sidebarToggle = new ActionButton { Content = _titleBrandIcon, Width = 20, Height = 20, Padding = new Thickness(0), Margin = new Thickness(0, 0, 3, 0), ToolTip = "Ukryj panel boczny" };

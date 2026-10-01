@@ -36,5 +36,24 @@
                 <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="B" Property="Background" Value="#353535"/></Trigger><Trigger Property="IsPressed" Value="True"><Setter TargetName="B" Property="Background" Value="#454545"/></Trigger><Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="{Binding DisabledOpacity, Source={x:Static ui:UiPolicy.Current}}"/></Trigger></ControlTemplate.Triggers>
             </ControlTemplate></Setter.Value></Setter>
         </Style>
+        <Style x:Key="WindowCaptionButton" TargetType="{x:Type ui:ActionButton}">
+            <Setter Property="Width" Value="46"/><Setter Property="Height" Value="30"/><Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/><Setter Property="Foreground" Value="#D7D7DC"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="{x:Type ui:ActionButton}">
+                <Border Background="{TemplateBinding Background}"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+            </ControlTemplate></Setter.Value></Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#383838"/></Trigger>
+                <Trigger Property="IsPressed" Value="True"><Setter Property="Background" Value="#505050"/></Trigger>
+                <DataTrigger Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType=Window}}" Value="False"><Setter Property="Foreground" Value="#99999E"/></DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="WindowCaptionCloseButton" TargetType="{x:Type ui:ActionButton}" BasedOn="{StaticResource WindowCaptionButton}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#C42B1C"/><Setter Property="Foreground" Value="White"/></Trigger>
+                <Trigger Property="IsPressed" Value="True"><Setter Property="Background" Value="#A51F16"/></Trigger>
+            </Style.Triggers>
+        </Style>
         <Style x:Key="MenuButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="FontSize" Value="16"/><Setter Property="Padding" Value="12,7"/></Style>
 </ResourceDictionary>

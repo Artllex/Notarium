@@ -10,7 +10,7 @@
                     <TextBlock Text="⌕" FontSize="19" Foreground="{StaticResource Muted}" Margin="11,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
                     <TextBox x:Name="SearchBox" Margin="34,0,39,0" Background="Transparent" BorderThickness="0" Foreground="{StaticResource Text}" CaretBrush="White" FontSize="13" VerticalContentAlignment="Center" TextChanged="SearchBox_TextChanged" />
                     <TextBlock x:Name="SearchHint" Text="Szukaj" Margin="36,0,39,0" Foreground="{StaticResource Muted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" IsHitTestVisible="False" />
-                    <ui:ActionButton ToolTip="Utwórz nową notatkę" HorizontalAlignment="Right" Width="34" Height="32" Margin="0,0,2,0" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Background="#3B82D0" Click="NewNote_Click"><Path Data="M 8,0 L 8,16 M 0,8 L 16,8" Width="16" Height="16" Stroke="White" StrokeThickness="1.5" Stretch="Fill" /></ui:ActionButton>
+                    <ui:ActionButton Content="＋" ToolTip="Utwórz nową notatkę" HorizontalAlignment="Right" Width="34" Height="32" Margin="0,0,2,0" Padding="0" FontSize="18" Background="#3B82D0" Foreground="White" FontWeight="SemiBold" Click="NewNote_Click" />
                 </Grid>
 
 
