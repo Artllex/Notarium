@@ -1,8 +1,8 @@
 <ui:CompositePanel xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ui="clr-namespace:Notarium.UI;assembly=Notarium.UI" xmlns:local="clr-namespace:Notatnik" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework" xmlns:emoji="clr-namespace:Emoji.Wpf;assembly=Emoji.Wpf" x:Class="Notatnik.NotebookLibraryPanel"><Grid Background="{StaticResource Panel}">
                 <Grid.RowDefinitions><RowDefinition Height="52" /><RowDefinition Height="46" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                 <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-                    <ui:BrandIcon Width="28" Height="28" HorizontalAlignment="Left" Margin="10,0,0,0" />
-                    <TextBlock Text="Notarium Notatnik" Foreground="{StaticResource Text}" Margin="47,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" />
+                    <ui:ActionButton Width="28" Height="28" HorizontalAlignment="Left" Margin="10,0,0,0" Padding="0" ToolTip="Ukryj panel boczny" Click="SidebarIcon_Click" AutomationProperties.Name="Ukryj panel boczny"><ui:BrandIcon Width="28" Height="28" /></ui:ActionButton>
+                    <TextBlock Text="Notarium Notatnik" Foreground="{StaticResource Text}" Margin="47,0,6,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
                 </Grid>
 
                 <Grid Grid.Row="1" Margin="6,3,6,7">
@@ -21,11 +21,11 @@
 
                 <Border Grid.Row="3" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="6,10,6,20">
                     <StackPanel>
-                        <ui:ActionButton ToolTip="Konto — makieta" Height="32" Padding="9,2" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Foreground="{StaticResource Text}">
-                            <StackPanel Orientation="Horizontal"><TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="16" Width="28" Foreground="{StaticResource Accent}" VerticalAlignment="Center" /><TextBlock Text="Konto" FontSize="13" VerticalAlignment="Center" /></StackPanel>
+                        <ui:ActionButton ToolTip="Konto — makieta" Height="32" Padding="9,2" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" Foreground="{StaticResource Text}">
+                            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="{StaticResource Accent}" VerticalAlignment="Center" /><TextBlock Grid.Column="1" Text="Konto" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" /></Grid>
                         </ui:ActionButton>
-                        <ui:ActionButton ToolTip="Ustawienia — makieta" Height="32" Padding="9,2" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" Foreground="{StaticResource Text}">
-                            <StackPanel Orientation="Horizontal"><TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="16" Width="28" Foreground="{StaticResource Accent}" VerticalAlignment="Center" /><TextBlock Text="Ustawienia" FontSize="13" VerticalAlignment="Center" /></StackPanel>
+                        <ui:ActionButton ToolTip="Ustawienia — makieta" Height="32" Padding="9,2" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" Foreground="{StaticResource Text}">
+                            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="{StaticResource Accent}" VerticalAlignment="Center" /><TextBlock Grid.Column="1" Text="Ustawienia" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" /></Grid>
                         </ui:ActionButton>
                     </StackPanel>
                 </Border>

@@ -14,10 +14,12 @@ odpowiadają mu h1/h2 w ui-surface. Treść dokumentów nie dziedziczy tego styl
 ## Wspólna rama aplikacji
 
 `Shared/UI/ApplicationFrame.cs` definiuje pasek tytułu, kontrolki okna, miejsce menu,
-panel boczny 250 px, separator i obszar roboczy. Korzystają z niego ekran główny,
+panel boczny o początkowej szerokości 250 px (regulowany uchwytem 110–450 px), separator i obszar roboczy. Korzystają z niego ekran główny,
 DEV i Notatnik. Rama nie ładuje modułów ani danych: otrzymuje zawartość obszarów.
 DEV wypełnia obszar roboczy kartami „Elementy Windows” i „Elementy Web”, bez
 uruchamiania Notatnika. Panel boczny służy do przełączania galerii.
+Duża ikona Notarium w panelu go ukrywa, a mała ikona na pasku tytułu przywraca.
+Nagłówki i etykiety w zwężonym panelu używają wielokropka przy tej samej czcionce.
 Karty DEV korzystają ze wspólnego szablonu TabControl/TabItem; karty dokumentów
 Notatnika zachowują edycję tytułów, zamykanie i paginację, ale używają tych samych
 zasobów `WorkspaceTabShape` oraz `WorkspaceTabActive`. Zmiana sylwetki lub koloru

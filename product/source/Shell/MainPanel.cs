@@ -20,10 +20,13 @@ public sealed class MainPanel : Window
         var catalog = _catalog = new ModuleCatalog(Path.Combine(AppContext.BaseDirectory, "Modules"));
         foreach (var entry in catalog.Entries)
         {
-            var label = new StackPanel { Orientation = Orientation.Horizontal };
-            label.Children.Add(new ModuleIcon(entry.Id) { Margin = new Thickness(0, 0, 10, 0), VerticalAlignment = VerticalAlignment.Center });
-            label.Children.Add(new TextBlock { Text = entry.DisplayName, VerticalAlignment = VerticalAlignment.Center });
-            var button = new ActionButton { Content = label, HorizontalAlignment = HorizontalAlignment.Left, HorizontalContentAlignment = HorizontalAlignment.Left, MinWidth = 160, Margin = new Thickness(0, 4, 0, 4), ToolTip = entry.IsAvailable ? "Otwórz moduł" : "Moduł nie jest zainstalowany" };
+            var label = new Grid();
+            label.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
+            label.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            label.Children.Add(new ModuleIcon(entry.Id) { VerticalAlignment = VerticalAlignment.Center });
+            var moduleName = new TextBlock { Text = entry.DisplayName, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap };
+            Grid.SetColumn(moduleName, 1); label.Children.Add(moduleName);
+            var button = new ActionButton { Content = label, HorizontalContentAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(0, 4, 0, 4), ToolTip = entry.IsAvailable ? "Otwórz moduł" : "Moduł nie jest zainstalowany" };
             System.Windows.Automation.AutomationProperties.SetName(button, entry.DisplayName);
             button.Click += (_, _) =>
             {
@@ -34,7 +37,7 @@ public sealed class MainPanel : Window
         }
         if (catalog.Modules.Count == 0) panel.Children.Add(new TextBlock { Text = "Brak zainstalowanych modułów." });
         foreach (var error in catalog.Errors) panel.Children.Add(new TextBlock { Text = "Nie można załadować modułu: " + error, TextWrapping = TextWrapping.Wrap });
-        frame.Sidebar.Content = ApplicationFrame.SidebarLayout(panel, null);
+        frame.Sidebar.Content = ApplicationFrame.SidebarLayout(panel, null, frame.ToggleSidebar);
         frame.Workspace.Content = new TextBlock { Text = "Notarium", FontSize = 28, Margin = new Thickness(24) };
         var menu = new MenuBar { FontSize = 12 };
         var file = new MenuItem { Header = "_File" };

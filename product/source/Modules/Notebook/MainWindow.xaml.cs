@@ -54,6 +54,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged, Notarium.Contr
         original.Children.Remove(LibraryView); original.Children.Remove(MainMenu); original.Children.Remove(workspace);
         var frame = new ApplicationFrame(this);
         frame.Sidebar.Content = LibraryView; frame.Menu.Content = MainMenu; frame.Workspace.Content = workspace;
+        LibraryView.SidebarToggleRequested += (_, _) => frame.ToggleSidebar();
         Content = frame;
         _formatting = new NotebookFormatting(Editor, () => ActiveNote,
             label => FontFamilyButton.Content = label, label => LineSpacingButton.Content = label,

@@ -11,6 +11,26 @@ public sealed class ApplicationFrame : Grid
     public ContentControl Sidebar { get; } = new();
     public ContentControl Workspace { get; } = new();
     public ContentControl Menu { get; } = new();
+    private readonly ColumnDefinition _sidebarColumn = new() { Width = new GridLength(250), MinWidth = 110, MaxWidth = 450 };
+    private readonly ColumnDefinition _separatorColumn = new() { Width = new GridLength(6) };
+    private readonly Border _separatorLine;
+    private readonly GridSplitter _sidebarSplitter;
+    private readonly ActionButton _sidebarToggle;
+    private double _lastSidebarWidth = 250;
+
+    public void ToggleSidebar()
+    {
+        var show = Sidebar.Visibility != Visibility.Visible;
+        if (!show) _lastSidebarWidth = Math.Clamp(_sidebarColumn.ActualWidth, 110, 450);
+        _sidebarColumn.MinWidth = show ? 110 : 0;
+        _sidebarColumn.Width = new GridLength(show ? _lastSidebarWidth : 0);
+        _separatorColumn.Width = new GridLength(show ? 6 : 0);
+        Sidebar.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        _separatorLine.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        _sidebarSplitter.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        _sidebarToggle.ToolTip = show ? "Ukryj panel boczny" : "Pokaż panel boczny";
+    }
+
     public ApplicationFrame(Window owner)
     {
         Background = UiPolicy.Current.SurfaceBrush;
@@ -22,8 +42,8 @@ public sealed class ApplicationFrame : Grid
         RowDefinitions.Add(new RowDefinition { Height = new GridLength(30) });
         RowDefinitions.Add(new RowDefinition { Height = new GridLength(25) });
         RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-        ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(250) });
-        ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1) });
+        ColumnDefinitions.Add(_sidebarColumn);
+        ColumnDefinitions.Add(_separatorColumn);
         ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         var title = new DockPanel { Background = UiPolicy.Current.PanelBrush };
         foreach (var (label, action) in new (string, Action)[] { ("×", () => owner.Close()), ("□", () => owner.WindowState = owner.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized), ("—", () => owner.WindowState = WindowState.Minimized) })
@@ -32,26 +52,39 @@ public sealed class ApplicationFrame : Grid
             button.Click += (_, _) => action(); WindowChrome.SetIsHitTestVisibleInChrome(button, true); DockPanel.SetDock(button, Dock.Right); title.Children.Add(button);
         }
         var windowBrand = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-        windowBrand.Children.Add(new BrandIcon { Width = 16, Height = 16, Margin = new Thickness(0, 0, 7, 0) });
+        _sidebarToggle = new ActionButton { Content = new BrandIcon { Width = 16, Height = 16 }, Width = 20, Height = 20, Padding = new Thickness(0), Margin = new Thickness(0, 0, 3, 0), ToolTip = "Ukryj panel boczny" };
+        System.Windows.Automation.AutomationProperties.SetName(_sidebarToggle, "Pokaż lub ukryj panel boczny");
+        _sidebarToggle.Click += (_, _) => ToggleSidebar();
+        WindowChrome.SetIsHitTestVisibleInChrome(_sidebarToggle, true);
+        windowBrand.Children.Add(_sidebarToggle);
         windowBrand.Children.Add(new TextBlock { Text = "Notarium", VerticalAlignment = VerticalAlignment.Center, FontSize = 12 });
         title.Children.Add(windowBrand);
         title.MouseLeftButtonDown += (_, e) => { if (e.ClickCount == 2) owner.WindowState = owner.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized; else if (e.ButtonState == MouseButtonState.Pressed) owner.DragMove(); };
         SetColumnSpan(title, 3); Children.Add(title);
         SetRow(Menu, 1); SetColumnSpan(Menu, 3); Menu.Background = UiPolicy.Current.PanelBrush; Children.Add(Menu);
         SetRow(Sidebar, 2); Sidebar.Background = UiPolicy.Current.PanelBrush; Children.Add(Sidebar);
-        var line = new Border { Background = (Brush)owner.FindResource("Line") }; SetRow(line, 2); SetColumn(line, 1); Children.Add(line);
+        _separatorLine = new Border { Background = (Brush)owner.FindResource("Line"), Width = 1, Margin = new Thickness(0, 34, 0, 0), HorizontalAlignment = HorizontalAlignment.Center, IsHitTestVisible = false };
+        SetRow(_separatorLine, 2); SetColumn(_separatorLine, 1); Children.Add(_separatorLine);
+        _sidebarSplitter = new GridSplitter { Background = Brushes.Transparent, Cursor = Cursors.SizeWE, ResizeDirection = GridResizeDirection.Columns, ResizeBehavior = GridResizeBehavior.PreviousAndNext, HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch, ToolTip = "Przeciągnij, aby zmienić szerokość panelu bocznego" };
+        SetRow(_sidebarSplitter, 2); SetColumn(_sidebarSplitter, 1); Children.Add(_sidebarSplitter);
         SetRow(Workspace, 2); SetColumn(Workspace, 2); Children.Add(Workspace);
     }
-    public static Grid SidebarLayout(UIElement navigation, string? heading)
+    public static Grid SidebarLayout(UIElement navigation, string? heading, Action? toggleSidebar = null)
     {
         var grid = new Grid();
         var hasHeading = !string.IsNullOrWhiteSpace(heading);
         foreach (var height in hasHeading
             ? new[] { new GridLength(52), new GridLength(34), new GridLength(1, GridUnitType.Star), GridLength.Auto }
             : new[] { new GridLength(52), new GridLength(1, GridUnitType.Star), GridLength.Auto }) grid.RowDefinitions.Add(new RowDefinition { Height = height });
-        var brand = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(14, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-        brand.Children.Add(new BrandIcon { Width = 28, Height = 28 });
-        brand.Children.Add(new TextBlock { Text = "Notarium", Foreground = UiPolicy.Current.TextBrush, FontSize = 18, FontWeight = FontWeights.SemiBold, Margin = new Thickness(9, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center }); grid.Children.Add(brand);
+        var brand = new Grid { Margin = new Thickness(14, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
+        brand.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(28) });
+        brand.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        var brandButton = new ActionButton { Content = new BrandIcon { Width = 28, Height = 28 }, Width = 28, Height = 28, Padding = new Thickness(0), ToolTip = "Ukryj panel boczny" };
+        System.Windows.Automation.AutomationProperties.SetName(brandButton, "Ukryj panel boczny");
+        brandButton.Click += (_, _) => toggleSidebar?.Invoke();
+        brand.Children.Add(brandButton);
+        var brandText = new TextBlock { Text = "Notarium", Foreground = UiPolicy.Current.TextBrush, FontSize = 18, FontWeight = FontWeights.SemiBold, Margin = new Thickness(9, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap };
+        SetColumn(brandText, 1); brand.Children.Add(brandText); grid.Children.Add(brand);
         var navigationRow = 1;
         if (hasHeading)
         {
@@ -64,10 +97,13 @@ public sealed class ApplicationFrame : Grid
         var footer = new StackPanel { Margin = new Thickness(8, 10, 8, 20) };
         foreach (var (text, glyph) in new[] { ("Konto", "\uE77B"), ("Ustawienia", "\uE713") })
         {
-            var content = new StackPanel { Orientation = Orientation.Horizontal };
-            content.Children.Add(new TextBlock { Text = glyph, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 20, Width = 20, Margin = new Thickness(0, 0, 10, 0), Foreground = UiPolicy.Current.AccentBrush, VerticalAlignment = VerticalAlignment.Center });
-            content.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
-            var button = new ActionButton { Content = content, ToolTip = text + " — makieta", HorizontalAlignment = HorizontalAlignment.Left, HorizontalContentAlignment = HorizontalAlignment.Left, MinWidth = 160, Margin = new Thickness(0, 4, 0, 4), Foreground = UiPolicy.Current.TextBrush };
+            var content = new Grid();
+            content.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
+            content.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            content.Children.Add(new TextBlock { Text = glyph, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 20, Foreground = UiPolicy.Current.AccentBrush, VerticalAlignment = VerticalAlignment.Center });
+            var footerText = new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap };
+            SetColumn(footerText, 1); content.Children.Add(footerText);
+            var button = new ActionButton { Content = content, ToolTip = text + " — makieta", HorizontalContentAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(0, 4, 0, 4), Foreground = UiPolicy.Current.TextBrush };
             System.Windows.Automation.AutomationProperties.SetName(button, text);
             footer.Children.Add(button);
         }
