@@ -25,7 +25,7 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 .block-drop-marker[data-gap=true]{height:auto;background:#60a5fa55;border:2px solid #60a5fa;border-radius:4px}
 .container-tools{position:absolute;right:calc(100% + 4px);left:auto;top:-4px;height:23px;display:none;z-index:24;pointer-events:auto;background:#303030;border-radius:4px 0 0 4px;color:#bbb;align-items:center;width:max-content;white-space:nowrap}
 .container-tools:after{content:'';position:absolute;left:-3px;top:0;width:3px;height:23px;pointer-events:auto}
-.container-type-label{font:600 11px/23px 'Segoe UI',sans-serif;padding:0 8px;color:#ccc;user-select:none;cursor:grab}
+.container-type-label{font:600 11px/23px 'Segoe UI',sans-serif;padding:0 5px;color:#ccc;user-select:none;cursor:grab}
 .container-type-label:before{content:attr(data-label)}
 .object-container:hover>.container-tools,.container-row-hover>.container-tools,.container-selected>.container-tools,.object-container:hover>.container-add-tools,.container-row-hover>.container-add-tools,.container-selected>.container-add-tools{display:flex}
 .object-container:has(>.container-tools:hover)>.container-tools{display:flex}
@@ -47,7 +47,7 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 #container-dialog input[type=color]{width:54px;height:34px;padding:3px;cursor:pointer}
 #container-dialog .background-options label{display:flex;align-items:center;gap:6px}
 #container-dialog .background-options input[type=checkbox]{width:auto}
-.container-tools button{background:none;border:0;color:inherit;padding:2px 7px;cursor:pointer}
+.container-tools button{background:none;border:0;color:inherit;padding:2px 4px;cursor:pointer}
 .container-tools button:before{content:'⚙'}
 .container-tools .container-delete-button:before{content:'×'}
 .container-resize{position:absolute;width:11px;height:11px;background:#60a5fa;border:2px solid #1e1e1e;cursor:nwse-resize;display:none;z-index:26}
