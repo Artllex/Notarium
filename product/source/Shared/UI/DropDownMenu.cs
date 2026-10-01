@@ -36,8 +36,7 @@ public sealed class DropDownMenu
         _popup = new Popup
         {
             PlacementTarget = submenu ? parentSurface ?? target : target,
-            Placement = submenu ? PlacementMode.Right : target is null ? PlacementMode.MousePoint : PlacementMode.Custom,
-            VerticalOffset = submenu ? submenuOrigin.Y : 0,
+            Placement = submenu || target is not null ? PlacementMode.Custom : PlacementMode.MousePoint,
             // Menu-bar popups stay active while the pointer crosses to another
             // top-level button. Outside clicks and window deactivation still close them.
             StaysOpen = submenu || menuBarPopup,
@@ -46,6 +45,16 @@ public sealed class DropDownMenu
         };
         _popup.CustomPopupPlacementCallback = (popupSize, targetSize, _) =>
         {
+            if (submenu)
+            {
+                // Prefer the parent's right edge. WPF uses the left candidate
+                // only when the first one would not fit on the screen.
+                return new[]
+                {
+                    new CustomPopupPlacement(new Point(targetSize.Width, submenuOrigin.Y), PopupPrimaryAxis.Horizontal),
+                    new CustomPopupPlacement(new Point(-popupSize.Width, submenuOrigin.Y), PopupPrimaryAxis.Horizontal)
+                };
+            }
             if (!submenu)
             {
                 if (_aboveTarget)
