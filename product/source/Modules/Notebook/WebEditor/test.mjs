@@ -996,6 +996,8 @@ try {
       const box = await container.boundingBox(), leftBox = await left.boundingBox();
       assert.ok(Math.abs(leftBox.x + leftBox.width - (box.x - 4)) <= 1);
       assert.ok(Math.abs(leftBox.y - (box.y - 4)) <= 1);
+      assert.ok(Math.abs(leftBox.height - (box.height + 8)) <= 1);
+      assert.ok(Math.abs((await left.locator('.container-type-label').boundingBox()).height - leftBox.height) <= 1);
       assert.equal(await left.locator('.container-grip').count(), 0);
       assert.equal(await left.locator('.container-type-label').evaluate(element => getComputedStyle(element).cursor), 'grab');
     }
@@ -1005,6 +1007,12 @@ try {
     const controls = first.locator(':scope > .container-type-tools');
     assert.equal(await controls.locator('.container-type-label').isVisible(), false);
     assert.equal(await controls.locator('.container-tools').isVisible(), true);
+    for (const button of await controls.locator('.container-tools button:not([hidden])').all()) {
+      assert.equal(await button.evaluate(element => getComputedStyle(element).transitionDuration), '0.12s, 0.12s');
+      await button.hover();
+      await page.waitForFunction(element => getComputedStyle(element).backgroundColor === 'rgb(68, 68, 68)' &&
+        getComputedStyle(element).color === 'rgb(255, 255, 255)', await button.elementHandle());
+    }
     if (process.env.NOTARIUM_TEST_OUTPUT) await page.screenshot({ path: resolve(reportDirectory, 'container-ctrl-actions.png') });
     const settings = controls.locator('button[title="Tytuł, stopka i wymiary"]'), settingsBox = await settings.boundingBox();
     await page.mouse.move(settingsBox.x + settingsBox.width / 2, settingsBox.y + settingsBox.height / 2);
