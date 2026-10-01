@@ -71,7 +71,7 @@ try {
     assert.equal(topElement, 'container-type-tools');
     if (process.env.NOTARIUM_TEST_OUTPUT) await page.screenshot({ path: resolve(reportDirectory, 'left-panel-blur.png') });
   });
-  await check('Empty has centered Type, Ctrl close control, and a translucent selected fill', async () => {
+  await check('Empty has no visible label, Ctrl close control, and a translucent selected fill', async () => {
     await open('empty-panel', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [{ type: 'paragraph', attrs: { boxEmpty: true } }] } }));
     const empty = page.locator('.container-empty');
     await empty.hover();
@@ -83,7 +83,9 @@ try {
     assert.ok(Math.abs(centers[0] - centers[1]) < 1);
     assert.equal(await empty.locator('.container-type-tools').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
     assert.equal(await empty.locator('.container-type-tools').evaluate(el => getComputedStyle(el).backdropFilter), 'none');
-    await empty.locator('.container-type-label').click();
+    assert.equal(await empty.locator('.container-type-label').isVisible(), false);
+    const middle = await empty.boundingBox();
+    await page.mouse.click(middle.x + middle.width / 2, middle.y + middle.height / 2);
     assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
     assert.equal(await empty.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(130, 184, 248, 0.18)');
     assert.match(await empty.evaluate(el => getComputedStyle(el).boxShadow), /rgba\(130, 184, 248, 0\.18\) 0px 0px 0px 4px/);
