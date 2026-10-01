@@ -75,7 +75,11 @@ export function setupBlockMovement(editor, noteId) {
       releaseTimer = setTimeout(() => document.body.classList.remove('moving-block-releasing'), 720);
     }
     if (commit && allowed && !moving.active) {
-      editor.view.dispatch(editor.state.tr.setSelection(NodeSelection.create(editor.state.doc, moving.pos)));
+      const selection = moving.dom.classList.contains('container-empty')
+        ? TextSelection.near(editor.state.doc.resolve(moving.pos + 1))
+        : NodeSelection.create(editor.state.doc, moving.pos);
+      editor.view.dispatch(editor.state.tr.setSelection(selection));
+      if (moving.dom.classList.contains('container-empty')) editor.view.focus();
     }
     if (commit && allowed && moving.active) {
       if (moving.inside) moveInto(editor, moving.pos, moving.targetPos);

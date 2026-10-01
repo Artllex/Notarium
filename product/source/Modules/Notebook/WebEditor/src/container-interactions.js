@@ -7,9 +7,9 @@ export class ContainerInteractions {
   constructor(view, props, options) {
     const typeLabel = view.typeLabel;
     view.selectTop.title = 'Zaznacz kontener';
-    view.selectTop.addEventListener('pointerdown', event => { if (event.button === 0) { event.preventDefault(); event.stopPropagation(); view.select(); } });
-    view.selectTop.addEventListener('mousedown', event => { if (event.button === 0) { event.preventDefault(); event.stopPropagation(); view.select(); } });
-    view.selectTop.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); view.select(); });
+    view.selectTop.addEventListener('pointerdown', event => { if (event.button === 0) { event.preventDefault(); event.stopPropagation(); if (!getContainerType(view.node).isEmpty) view.select(); } });
+    view.selectTop.addEventListener('mousedown', event => { if (event.button === 0) { event.preventDefault(); event.stopPropagation(); if (!getContainerType(view.node).isEmpty) view.select(); } });
+    view.selectTop.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); if (!getContainerType(view.node).isEmpty) view.select(); });
     view.pairResize.title = 'Przeciągnij: zmień szerokości; kliknij: wyrównaj i wybierz miejsce wklejenia';
     view.pairResize.addEventListener('pointerdown', event => view.resizePair(event));
     view.gapBoundary.title = view.pairResize.title;
@@ -23,11 +23,12 @@ export class ContainerInteractions {
       view.resetDimensions(axis, handle);
     });
     view.dom.addEventListener('mousedown', event => {
-      if (event.target === view.dom || event.target === typeLabel) view.select();
+      if (!getContainerType(view.node).isEmpty && (event.target === view.dom || event.target === typeLabel)) view.select();
     });
     view.dom.addEventListener('dblclick', event => {
       if (event.target.closest('.object-container') !== view.dom) return;
       if (event.target.closest('input,button,.container-title,.container-caption,.image-title,figcaption,.cm-editor')) return;
+      if (getContainerType(view.node).isEmpty) { event.preventDefault(); event.stopPropagation(); view.select(); return; }
       const pos = view.props.getPos(); if (typeof pos !== 'number') return;
       if (view.node.type.name === 'image' && !options.imageDialogOpen()) { event.preventDefault(); options.editImage(view.node, pos); }
       else if (view.node.type.name === 'blockMath') { event.preventDefault(); options.openMath(view.node, pos); }

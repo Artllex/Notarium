@@ -86,6 +86,8 @@ try {
     assert.equal(await empty.locator('.container-type-label').isVisible(), false);
     const middle = await empty.boundingBox();
     await page.mouse.click(middle.x + middle.width / 2, middle.y + middle.height / 2);
+    assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), false);
+    await page.mouse.dblclick(middle.x + middle.width / 2, middle.y + middle.height / 2);
     assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
     assert.equal(await empty.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(130, 184, 248, 0.18)');
     assert.match(await empty.evaluate(el => getComputedStyle(el).boxShadow), /rgba\(130, 184, 248, 0\.18\) 0px 0px 0px 4px/);
@@ -93,10 +95,12 @@ try {
       await open(`empty-panel-${side}`, '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [{ type: 'paragraph', attrs: { boxEmpty: true } }] } }));
       const box = await empty.boundingBox();
       await page.mouse.click(side === 'left' ? box.x + 12 : box.x + box.width - 12, box.y + box.height / 2);
+      assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), false);
+      await page.mouse.dblclick(side === 'left' ? box.x + 12 : box.x + box.width - 12, box.y + box.height / 2);
       assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
     }
   });
-  await check('Entire Empty surface selects on click and lifts, moves, and drops on drag', async () => {
+  await check('Entire Empty surface ignores single click and lifts, moves, and drops on drag', async () => {
     const content = [{ type: 'paragraph', attrs: { boxEmpty: true, boxHeight: 90 } },
       { type: 'paragraph', content: [{ type: 'text', text: 'Target' }] }];
     await open('empty-surface-drag', '', JSON.stringify({ version: 1, doc: { type: 'doc', content } }));
@@ -104,7 +108,7 @@ try {
     const box = await empty.boundingBox();
     for (const [x, y] of [[.15, .25], [.5, .5], [.85, .75]]) {
       await page.mouse.click(box.x + box.width * x, box.y + box.height * y);
-      assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
+      assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), false);
     }
     const targetBox = await target.boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
