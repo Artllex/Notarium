@@ -9,7 +9,8 @@ body .object-container.container-empty.container-selected{outline-color:#82b8f8!
 .object-container.container-empty>.container-type-tools{pointer-events:none}
 .container-ctrl-actions .object-container.container-empty>.container-type-tools{pointer-events:auto}
 .container-tools>button[hidden]{display:none!important}
-body .object-container.container-empty,body .object-container.container-empty *{cursor:default}
+body .object-container.container-empty,body .object-container.container-empty *{cursor:grab}
+body .object-container.container-empty.container-lifted,body .object-container.container-empty.container-lifted *{cursor:grabbing}
 .container-boundary-focus{position:fixed;width:1px;height:1px;left:-10px;top:-10px;opacity:0;outline:none}
 body .object-container.container-empty>.container-add-tools{display:none!important}
 .tiptap.containers-all-selected .object-container{outline-color:#82b8f8}

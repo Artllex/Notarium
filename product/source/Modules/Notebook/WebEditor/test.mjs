@@ -96,6 +96,27 @@ try {
       assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
     }
   });
+  await check('Entire Empty surface selects on click and lifts, moves, and drops on drag', async () => {
+    const content = [{ type: 'paragraph', attrs: { boxEmpty: true, boxHeight: 90 } },
+      { type: 'paragraph', content: [{ type: 'text', text: 'Target' }] }];
+    await open('empty-surface-drag', '', JSON.stringify({ version: 1, doc: { type: 'doc', content } }));
+    const empty = page.locator('.container-empty'), target = page.locator('.object-container').last();
+    const box = await empty.boundingBox();
+    for (const [x, y] of [[.15, .25], [.5, .5], [.85, .75]]) {
+      await page.mouse.click(box.x + box.width * x, box.y + box.height * y);
+      assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
+    }
+    const targetBox = await target.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height + 12, { steps: 8 });
+    assert.equal(await empty.evaluate(el => el.classList.contains('container-lifted')), true);
+    await page.mouse.up();
+    assert.equal((await json()).content[0].content[0].text, 'Target');
+    assert.equal((await json()).content[1].attrs.boxEmpty, true);
+    await command('undo');
+    assert.equal((await json()).content[0].attrs.boxEmpty, true);
+  });
   await check('Double click below a row does not select the whole row and automatic trailing text is Empty', async () => {
     await open('rows-and-empty', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
       { type: 'layoutRow', content: ['A', 'X', 'B'].map(text => ({ type: 'paragraph', content: [{ type: 'text', text }] })) },
@@ -133,10 +154,12 @@ try {
       ] }
     ] } }));
     const empty = page.locator('.layout-row > .container-empty');
-    await empty.click({ position: { x: 10, y: 18 } });
+    const leftBox = await page.locator('.layout-row > .object-container').first().boundingBox();
+    const emptyBox = await empty.boundingBox();
+    await page.mouse.click((leftBox.x + leftBox.width + emptyBox.x) / 2, emptyBox.y + 18);
     assert.equal(await page.evaluate(() => document.activeElement?.classList.contains('container-boundary-focus')), true);
     assert.equal(await page.locator('.container-selected').count(), 0);
-    assert.equal(await page.evaluate(() => getComputedStyle(document.elementFromPoint(...(() => { const r = document.querySelector('.container-empty').getBoundingClientRect(); return [r.left + 90, r.top + 18]; })())).cursor), 'default');
+    assert.equal(await page.evaluate(() => getComputedStyle(document.elementFromPoint(...(() => { const r = document.querySelector('.container-empty').getBoundingClientRect(); return [r.left + 90, r.top + 18]; })())).cursor), 'grab');
     await page.evaluate(() => {
       const transfer = new DataTransfer();
       transfer.setData('application/x-notarium-container+json', JSON.stringify({ type: 'paragraph', attrs: { boxWidth: 90 }, content: [{ type: 'text', text: 'Wklejony' }] }));

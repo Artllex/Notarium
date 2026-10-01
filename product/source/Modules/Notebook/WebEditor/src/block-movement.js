@@ -171,8 +171,12 @@ export function setupBlockMovement(editor, noteId) {
     if (!block) return;
     const edge =
       (event.clientX < block.rect.left + 7 || event.clientX > block.rect.right - 7 || event.clientY < block.rect.top + 7 || event.clientY > block.rect.bottom - 7);
-    if (!edge && !event.target.closest('.image-drag,.image-viewport,.container-type-label,[data-type=block-math] .katex') && !event.target.matches('.cell-tools')) return;
-    event.preventDefault(); event.stopImmediatePropagation(); begin(block, event);
+    const emptySurface = block.dom.classList.contains('container-empty') && event.target.closest('.object-container') === block.dom;
+    if (!edge && !emptySurface && !event.target.closest('.image-drag,.image-viewport,.container-type-label,[data-type=block-math] .katex') && !event.target.matches('.cell-tools')) return;
+    event.preventDefault();
+    if (emptySurface) event.stopPropagation();
+    else event.stopImmediatePropagation();
+    begin(block, event);
   }
   document.addEventListener('pointerdown', pointerDown, true);
   document.addEventListener('pointermove', event => {

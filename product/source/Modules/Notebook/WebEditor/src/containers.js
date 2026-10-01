@@ -699,13 +699,10 @@ export function setupContainers(editor, options) {
   const selectGap = event => {
     if (event.button !== 0 || event.target.closest?.('.container-pair-resize,.container-gap-boundary,.container-type-tools,.container-tools,.container-resize,.container-resize-edge,.container-add-tools')) return;
     const horizontal = rowBoundaryAtPoint(event.clientX, event.clientY);
-    const empty = event.target.closest?.('.object-container.container-empty');
-    const row = empty?.parentElement;
-    const hasNeighbors = row?.matches('.layout-row') && empty.previousElementSibling?.matches('.object-container') && empty.nextElementSibling?.matches('.object-container');
-    if (event.target.closest?.('.object-container') && !hasNeighbors && !horizontal) return;
-    const gap = hasNeighbors || horizontal ? null : gapAtPoint(event.clientX, event.clientY);
+    if (event.target.closest?.('.object-container') && !horizontal) return;
+    const gap = horizontal ? null : gapAtPoint(event.clientX, event.clientY);
     const before = horizontal ? editor.view.posAtDOM(horizontal, 0) :
-      (hasNeighbors ? empty : gap?.right.dom)?.containerView?.props.getPos();
+      gap?.right.dom?.containerView?.props.getPos();
     if (typeof before !== 'number') return;
     editor.view.dispatch(editor.state.tr.setSelection(TextSelection.near(editor.state.doc.resolve(before), -1)));
     setBoundaryTarget({ kind: horizontal ? 'horizontal' : 'vertical', before });
