@@ -75,6 +75,7 @@ try {
     await open('empty-panel', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [{ type: 'paragraph', attrs: { boxEmpty: true } }] } }));
     const empty = page.locator('.container-empty');
     await empty.hover();
+    assert.equal(await page.evaluate(() => window.bridgeMessages.filter(message => message.type === 'containerHover').at(-1)?.label), 'Empty');
     assert.equal(await empty.locator('.container-type-tools .container-tools > button:not([hidden])').count(), 1);
     const centers = await empty.evaluate(el => {
       const a = el.getBoundingClientRect(), b = el.querySelector('.container-type-tools').getBoundingClientRect();

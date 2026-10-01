@@ -646,8 +646,9 @@ export function setupContainers(editor, options) {
     rowHover = items;
     ContainerVisual.hover(rowHover, true);
     const type = rowHover[0]?.dataset.containerType;
-    const label = ({ codeCell: 'Code Cell', codeBlock: 'Code Block', blockMath: 'Math', image: 'Picture', table: 'Table',
-      bulletList: 'List', orderedList: 'List', taskList: 'Task List', blockGroup: 'Container' })[type] || (type ? 'Text' : '');
+    const label = rowHover[0]?.classList.contains('container-empty') ? 'Empty' :
+      ({ codeCell: 'Code Cell', codeBlock: 'Code Block', blockMath: 'Math', image: 'Picture', table: 'Table',
+        bulletList: 'List', orderedList: 'List', taskList: 'Task List', blockGroup: 'Container' })[type] || (type ? 'Text' : '');
     window.chrome?.webview?.postMessage({ type: 'containerHover', label });
   };
   document.addEventListener('pointermove', event => {
