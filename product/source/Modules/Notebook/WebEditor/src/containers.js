@@ -645,12 +645,24 @@ export function setupContainers(editor, options) {
     ContainerVisual.hover(rowHover, false);
     rowHover = items;
     ContainerVisual.hover(rowHover, true);
+    publishHoveredType();
+  };
+  let lastHoverLabel = null;
+  const publishHoveredType = () => {
     const type = rowHover[0]?.dataset.containerType;
     const label = rowHover[0]?.classList.contains('container-empty') ? 'Empty' :
       ({ codeCell: 'Code Cell', codeBlock: 'Code Block', blockMath: 'Math', image: 'Picture', table: 'Table',
         bulletList: 'List', orderedList: 'List', taskList: 'Task List', blockGroup: 'Container' })[type] || (type ? 'Text' : '');
+    if (label === lastHoverLabel) return;
+    lastHoverLabel = label;
     window.chrome?.webview?.postMessage({ type: 'containerHover', label });
   };
+  let hoverRefreshFrame = 0;
+  const refreshHoveredType = () => {
+    cancelAnimationFrame(hoverRefreshFrame);
+    hoverRefreshFrame = requestAnimationFrame(publishHoveredType);
+  };
+  editor.on('update', refreshHoveredType);
   document.addEventListener('pointermove', event => {
     for (const active of editor.view.dom.querySelectorAll('.container-left-exited')) {
       const container = active.getBoundingClientRect(), panel = active.querySelector(':scope > .container-type-tools')?.getBoundingClientRect();
@@ -729,6 +741,8 @@ export function setupContainers(editor, options) {
   };
   editor.view.dom.parentElement.addEventListener('dblclick', preventRowDoubleClick, true);
   editor.on('destroy', () => {
+    editor.off('update', refreshHoveredType);
+    cancelAnimationFrame(hoverRefreshFrame);
     document.removeEventListener('keydown', onCtrlKey, true);
     document.removeEventListener('keyup', onCtrlKey, true);
     window.removeEventListener('blur', clearCtrlActions);

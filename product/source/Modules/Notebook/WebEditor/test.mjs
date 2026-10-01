@@ -107,6 +107,22 @@ try {
       assert.equal(await empty.evaluate(el => el.classList.contains('container-selected')), true);
     }
   });
+  await check('Hovered Empty changes its status to Text while typing and back on undo without mouse movement', async () => {
+    await open('empty-status-transition', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'paragraph', attrs: { boxEmpty: true, boxHeight: 90 } }
+    ] } }));
+    const empty = page.locator('.container-empty');
+    await empty.hover();
+    await page.waitForFunction(() => window.bridgeMessages.filter(message => message.type === 'containerHover').at(-1)?.label === 'Empty');
+    const box = await empty.boundingBox();
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await page.keyboard.type('Nowy tekst');
+    await page.waitForFunction(() => window.bridgeMessages.filter(message => message.type === 'containerHover').at(-1)?.label === 'Text');
+    assert.equal(await page.locator('.container-empty').count(), 0);
+    await command('undo');
+    await page.waitForFunction(() => window.bridgeMessages.filter(message => message.type === 'containerHover').at(-1)?.label === 'Empty');
+    assert.equal(await page.locator('.container-empty').count(), 1);
+  });
   await check('Entire Empty surface ignores single click and lifts, moves, and drops on drag', async () => {
     const content = [{ type: 'paragraph', attrs: { boxEmpty: true, boxHeight: 90 } },
       { type: 'paragraph', content: [{ type: 'text', text: 'Target' }] }];
