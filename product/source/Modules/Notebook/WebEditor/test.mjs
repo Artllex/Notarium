@@ -274,6 +274,19 @@ try {
     await page.keyboard.press('ArrowUp');
     assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'X');
   });
+  await check('ArrowUp from the insertion caret below the last container enters it', async () => {
+    await open('arrow-up-below-last', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'paragraph', content: [{ type: 'text', text: 'A' }] },
+      { type: 'paragraph', content: [{ type: 'text', text: 'B' }] },
+      { type: 'paragraph', content: [{ type: 'text', text: 'C' }] }
+    ] } }));
+    const last = await page.locator('.tiptap > .object-container').last().boundingBox();
+    await page.mouse.click(last.x + 10, last.y + last.height + 35);
+    assert.equal(await page.locator('.container-end-caret').isVisible(), true);
+    await page.keyboard.press('ArrowUp');
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'C');
+    assert.equal(await page.locator('.container-end-caret').isVisible(), false);
+  });
   await check('Container shortcuts preserve nesting, code newlines and undo', async () => {
     await open('keyboard-nested'); await command('container');
     await page.keyboard.type('alpha'); await page.keyboard.press('Enter'); await page.keyboard.type('beta');

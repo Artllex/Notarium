@@ -1,6 +1,6 @@
 import { Extension, Node } from '@tiptap/core';
 import { DOMSerializer } from '@tiptap/pm/model';
-import { NodeSelection, TextSelection } from '@tiptap/pm/state';
+import { NodeSelection, Selection, TextSelection } from '@tiptap/pm/state';
 import { closeHistory } from '@tiptap/pm/history';
 import { richAttribute } from './rich-label.js';
 import { ContainerInteractions } from './container-interactions.js';
@@ -504,6 +504,15 @@ export function setupContainers(editor, options) {
     return insertAtBoundary(target, editor.schema.nodes.paragraph.create(null, content), 1 + value.length);
   };
   const onBoundaryKeydown = event => {
+    if (activeBoundary()?.kind === 'end' && event.key === 'ArrowUp' &&
+        !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+      const before = boundaryTarget.before;
+      const previous = Selection.near(editor.state.doc.resolve(before - 1), -1);
+      boundaryTarget = null; hideEndCaret();
+      editor.view.dispatch(editor.state.tr.setSelection(previous).scrollIntoView());
+      editor.view.focus();
+      event.preventDefault(); event.stopImmediatePropagation(); return;
+    }
     if (activeBoundary()?.kind === 'end' && ['Backspace', 'Delete', 'Escape'].includes(event.key)) {
       if (event.key === 'Escape') { boundaryTarget = null; hideEndCaret(); }
       event.preventDefault(); event.stopImmediatePropagation(); return;
