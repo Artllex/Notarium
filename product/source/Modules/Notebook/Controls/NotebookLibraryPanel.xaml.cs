@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Data;
+using System.Globalization;
 using Notarium.UI;
 namespace Notatnik;
 public partial class NotebookLibraryPanel : CompositePanel {
@@ -16,4 +18,12 @@ public partial class NotebookLibraryPanel : CompositePanel {
     private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => Emit("SearchBox_TextChanged", sender, e);
     private void SidebarTitle_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => Emit("SidebarTitle_MouseLeftButtonDown", sender, e);
     private void DeleteNoteFromList_Click(object sender, RoutedEventArgs e) => Emit("DeleteNoteFromList_Click", sender, e);
+}
+
+public sealed class FavoriteButtonVisibilityConverter : IMultiValueConverter {
+    public object Convert(object[] values, System.Type targetType, object parameter, CultureInfo culture) =>
+        values.Length == 2 && (values[0] is true || values[1] is true) ? Visibility.Visible : Visibility.Collapsed;
+
+    public object[] ConvertBack(object value, System.Type[] targetTypes, object parameter, CultureInfo culture) =>
+        throw new System.NotSupportedException();
 }
