@@ -50,14 +50,20 @@ export class ContainerInteractions {
         ContainerVisual.state(view.dom, 'container-left-exited', false);
       } else if (view.pointerWasInside && event.clientX < rect.left && event.clientX >= rect.left - 72 &&
           event.clientY >= rect.top - 4 && event.clientY <= rect.bottom + 4)
-        ContainerVisual.state(view.dom, 'container-left-exited', true);
+        view.revealTypePanel();
+    };
+    view.revealTypePanel = () => {
+      if (!view.dom.classList.contains('container-left-exited'))
+        view.dom.dispatchEvent(new CustomEvent('container-type-revealed', { bubbles: true }));
+      ContainerVisual.state(view.dom, 'container-left-exited', true);
     };
     view.onPointerLeave = event => {
       ContainerVisual.clearCorner(view);
       const rect = view.dom.getBoundingClientRect();
       const crossedLeft = event.clientX < rect.left && event.clientX >= rect.left - 72 &&
         event.clientY >= rect.top - 4 && event.clientY <= rect.bottom + 4;
-      ContainerVisual.state(view.dom, 'container-left-exited', view.pointerWasInside && crossedLeft);
+      if (view.pointerWasInside && crossedLeft) view.revealTypePanel();
+      else ContainerVisual.state(view.dom, 'container-left-exited', false);
       if (!crossedLeft) view.pointerWasInside = false;
     };
     view.dom.addEventListener('pointermove', view.onPointerMove);

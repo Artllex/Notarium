@@ -46,11 +46,38 @@ try {
     assert.equal(await panel.isVisible(), false);
     const box = await container.boundingBox();
     await page.mouse.move(0, 0);
+    await page.waitForTimeout(5100);
     await page.mouse.move(box.x - 6, box.y + box.height / 2);
     assert.equal(await panel.isVisible(), false);
     await revealTypeTools(container);
     await page.mouse.move(0, 0);
     assert.equal(await panel.isVisible(), false);
+  });
+  await check('Type panel warm navigation renews for five seconds and allows returning', async () => {
+    await open('type-warm-navigation', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'paragraph', content: [{ type: 'text', text: 'First' }] },
+      { type: 'paragraph', content: [{ type: 'text', text: 'Second' }] }
+    ] } }));
+    const boxes = page.locator('.tiptap > .object-container');
+    const first = boxes.nth(0), second = boxes.nth(1);
+    const enterArea = async box => { const r = await box.boundingBox(); await page.mouse.move(r.x - 6, r.y + r.height / 2); };
+    const panel = box => box.locator(':scope > .container-type-tools');
+    await page.mouse.move(0, 0);
+    await enterArea(second);
+    assert.equal(await panel(second).isVisible(), false);
+    await revealTypeTools(first);
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(3000);
+    await enterArea(second);
+    assert.equal(await panel(second).isVisible(), true);
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(3000);
+    await enterArea(first);
+    assert.equal(await panel(first).isVisible(), true);
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(5100);
+    await enterArea(second);
+    assert.equal(await panel(second).isVisible(), false);
   });
   await check('Open Type panel stays above neighboring container text so backdrop blur applies', async () => {
     await open('left-panel-stacking', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [

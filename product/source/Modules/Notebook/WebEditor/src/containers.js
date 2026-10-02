@@ -681,7 +681,14 @@ export function setupContainers(editor, options) {
     hoverRefreshFrame = requestAnimationFrame(publishHoveredType);
   };
   editor.on('update', refreshHoveredType);
-  document.addEventListener('pointermove', event => {
+  let typePanelWarmUntil = 0;
+  let typePanelNote = null;
+  const rememberTypePanel = () => {
+    typePanelWarmUntil = performance.now() + 5000;
+    typePanelNote = options.noteId?.();
+  };
+  editor.view.dom.addEventListener('container-type-revealed', rememberTypePanel);
+  const onContainerPointerMove = event => {
     for (const active of editor.view.dom.querySelectorAll('.container-left-exited')) {
       const container = active.getBoundingClientRect(), panel = active.querySelector(':scope > .container-type-tools')?.getBoundingClientRect();
       if (!panel || event.clientX < panel.left || event.clientX >= container.left ||
@@ -689,6 +696,17 @@ export function setupContainers(editor, options) {
         active.classList.remove('container-left-exited');
         if (active.containerView) active.containerView.pointerWasInside = false;
       }
+    }
+    if (typePanelNote === options.noteId?.() && performance.now() < typePanelWarmUntil) {
+      const candidates = [...editor.view.dom.querySelectorAll('.object-container:not(.container-empty)')]
+        .filter(dom => {
+          const rect = dom.getBoundingClientRect();
+          return event.clientX >= rect.left - 72 && event.clientX < rect.left &&
+            event.clientY >= rect.top && event.clientY <= rect.bottom;
+        });
+      // Prefer the innermost container when nested panels share the same area.
+      candidates.sort((a, b) => a.getBoundingClientRect().height - b.getBoundingClientRect().height);
+      candidates[0]?.containerView?.revealTypePanel();
     }
     const pairLine = event.target.closest?.('.container-pair-resize');
     if (pairLine) {
@@ -726,7 +744,8 @@ export function setupContainers(editor, options) {
       return distance(a.rect) - distance(b.rect) || a.rect.width * a.rect.height - b.rect.width * b.rect.height;
     });
     setRowHover(candidates[0]?.dom || null);
-  }, true);
+  };
+  document.addEventListener('pointermove', onContainerPointerMove, true);
   const selectGap = event => {
     if (event.button !== 0 || event.target.closest?.('.container-pair-resize,.container-gap-boundary,.container-type-tools,.container-tools,.container-resize,.container-resize-edge,.container-add-tools')) return;
     const horizontal = rowBoundaryAtPoint(event.clientX, event.clientY);
@@ -759,6 +778,8 @@ export function setupContainers(editor, options) {
   };
   editor.view.dom.parentElement.addEventListener('dblclick', preventRowDoubleClick, true);
   editor.on('destroy', () => {
+    document.removeEventListener('pointermove', onContainerPointerMove, true);
+    editor.view.dom.removeEventListener('container-type-revealed', rememberTypePanel);
     editor.off('update', refreshHoveredType);
     cancelAnimationFrame(hoverRefreshFrame);
     document.removeEventListener('keydown', onCtrlKey, true);
