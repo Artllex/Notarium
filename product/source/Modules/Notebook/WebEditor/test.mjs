@@ -32,6 +32,48 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Page layout flows text onto multiple pages, persists and supports undo', async () => {
+    await open('layout-pages', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'paragraph', content: [{ type: 'text', text: 'Tekst na kolejnych stronach. '.repeat(600) }] }
+    ] } }));
+    const original = await json();
+    await command('setPageLayout', { paged: true, size: 'A5', color: '#232323', top: 15, bottom: 15, left: 15, right: 15,
+      footer: 'Notarium', numbering: true, start: 4, hyphenation: true });
+    await page.waitForFunction(() => document.querySelectorAll('.layout-paper').length > 1);
+    assert.ok(await page.locator('.layout-paper').count() > 1);
+    assert.equal(await page.locator('.layout-footer').first().textContent(), 'Notarium · 4');
+    const fragments = await page.locator('.tiptap p').first().evaluate(el => { const range = document.createRange(); range.selectNodeContents(el); return [...range.getClientRects()].map(r => r.left); });
+    assert.ok(Math.max(...fragments) - Math.min(...fragments) > 400, 'Text must actually flow onto another page');
+    await page.screenshot({ path: resolve(reportDirectory, 'page-layout.png') });
+    const saved = await page.evaluate(() => window.notatnik.snapshot());
+    await command('undo'); assert.deepEqual(await json(), original);
+    await command('redo');
+    const expected = (await json()).attrs.pageLayout;
+    await open('layout-pages-reopen', '', saved.documentJson);
+    assert.deepEqual((await json()).attrs.pageLayout, expected);
+    await open('layout-pages-markdown', saved.markdown);
+    assert.deepEqual((await json()).attrs.pageLayout, expected);
+    await command('pageLayout');
+    assert.equal(await page.locator('#page-layout-dialog').evaluate(el => el.open), true);
+    await page.locator('#page-layout-dialog button[value=cancel]').click();
+    await open('layout-unset', 'Plain');
+    assert.equal(await page.locator('.layout-paper').count(), 0);
+    assert.equal(await page.locator('#editor').evaluate(el => el.classList.contains('document-paged')), false);
+  });
+  await check('A full fixed-width row rejects an additional container without changing the document', async () => {
+    await open('full-row-drop', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'layoutRow', content: ['A', 'B'].map(text => ({ type: 'paragraph', attrs: { boxWidth: 475 }, content: [{ type: 'text', text }] })) },
+      { type: 'paragraph', content: [{ type: 'text', text: 'Source' }] }
+    ] } }));
+    const original = await json();
+    const source = await page.locator('.tiptap > .object-container').last().boundingBox();
+    const target = await page.locator('.layout-row > .object-container').last().boundingBox();
+    await page.mouse.move(source.x + 10, source.y + 2); await page.mouse.down();
+    await page.mouse.move(target.x + target.width - 10, target.y + target.height / 2, { steps: 8 });
+    assert.equal(await page.locator('.block-drop-marker').isVisible(), false);
+    await page.mouse.up();
+    assert.deepEqual(await json(), original);
+  });
   await check('Ctrl clicks toggle multiple containers and Escape clears every selection', async () => {
     await open('multi-select', 'A\n\nB\n\nC');
     const boxes = page.locator('.tiptap > .object-container');

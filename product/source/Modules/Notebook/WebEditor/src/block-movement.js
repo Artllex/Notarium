@@ -47,9 +47,20 @@ export function collapseRows(tr) {
     }
   }
 }
+export function canMoveBeside(editor, from, targetPos) {
+  const targetDom = editor.view.nodeDOM(targetPos), sourceDom = editor.view.nodeDOM(from);
+  const row = targetDom?.parentElement;
+  if (!row?.matches('.layout-row')) return true;
+  const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+  const children = [...row.children].filter(dom => dom.matches('.object-container') && dom !== sourceDom);
+  const used = children.reduce((sum, dom) => sum + dom.getBoundingClientRect().width +
+    (parseFloat(getComputedStyle(dom).marginLeft) || 0), 0);
+  return used + children.length * gap + 60 <= row.clientWidth + 1;
+}
 export function moveBeside(editor, from, targetPos, side) {
   const node = editor.state.doc.nodeAt(from), target = editor.state.doc.nodeAt(targetPos);
   if (!node || !target || targetPos >= from && targetPos < from + node.nodeSize || from >= targetPos && from < targetPos + target.nodeSize) return false;
+  if (!canMoveBeside(editor, from, targetPos)) return false;
   const tr = closeHistory(editor.state.tr).delete(from, from + node.nodeSize);
   const to = tr.mapping.map(targetPos), $to = tr.doc.resolve(to);
   const reset = value => value.type.create({ ...value.attrs, boxWidth: null, boxOffsetX: null,
@@ -174,6 +185,9 @@ export function setupBlockMovement(editor, noteId) {
       lastX >= block.rect.left && lastX <= block.rect.right);
     drag.side = null;
     if (beside) {
+      if (!canMoveBeside(editor, drag.pos, beside.pos)) {
+        marker.style.display = 'none'; return;
+      }
       drag.side = lastX < beside.rect.left + beside.rect.width / 2 ? 'left' : 'right';
       drag.targetPos = beside.pos;
       Object.assign(marker.style, { display: 'block', left: (drag.side === 'left' ? beside.rect.left : beside.rect.right) + 'px',

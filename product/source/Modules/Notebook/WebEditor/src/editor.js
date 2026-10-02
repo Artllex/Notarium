@@ -22,6 +22,8 @@ import { ContainerAttributes, LayoutRow, BlockGroup, setupContainers, alignConta
 import { editContainer, dismissContainer } from './container-dialog.js';
 import { textTarget, clearTextTarget } from './rich-label.js';
 import { ContainerKeyboard } from './container-keyboard.js';
+import { setupPageLayout, normalizeLayout } from './page-layout.js';
+let pageLayout;
 
 const post = message => window.chrome?.webview?.postMessage(message);
 const sessions = new Map();
@@ -60,7 +62,7 @@ const autoEmptyAfterRow = Extension.create({
 });
 const editor = new Editor({
   element: document.querySelector('#editor'),
-  extensions: [Extension.create({ name: 'documentLayout', addGlobalAttributes: () => [{ types: ['doc'], attributes: { layout: { default: 'note' }, contentWidth: { default: null } } }] }), StarterKit.configure({ codeBlock: false, link: { openOnClick: false, autolink: true } }), TextStyle, Color, FontFamily,
+  extensions: [Extension.create({ name: 'documentLayout', addGlobalAttributes: () => [{ types: ['doc'], attributes: { layout: { default: 'note' }, contentWidth: { default: null }, pageLayout: { default: null } } }] }), StarterKit.configure({ codeBlock: false, link: { openOnClick: false, autolink: true } }), TextStyle, Color, FontFamily,
     Highlight.configure({ multicolor: true }), TextAlign.configure({ types: ['heading', 'paragraph'] }),
     TaskList, TaskItem.configure({ nested: true }), CodeCell, CodeBlockSurface, ContainerAttributes, LayoutRow, BlockGroup, autoEmptyAfterRow,
     CaptionImage.configure({ allowBase64: true, onEdit: editImage }),
@@ -87,6 +89,7 @@ const editor = new Editor({
 });
 
 const movement = setupBlockMovement(editor, () => noteId);
+pageLayout = setupPageLayout(editor);
 setupMedia(editor, () => noteId);
 const containerNavigation = setupContainers(editor, { editImage, openMath, editContainer, noteId: () => noteId, imageDialogOpen: () => document.querySelector('#image-dialog').open });
 new ContainerKeyboard(editor, containerNavigation);
@@ -128,6 +131,7 @@ function publishSelection() {
 
 const resolvedContentWidth = doc => doc.attrs.contentWidth ?? (doc.attrs.layout === 'article' ? 790 : 0);
 function applyDocumentLayout(doc) {
+  pageLayout?.apply(doc);
   editor.view.dom.dataset.layout = doc.attrs.layout || 'note';
   const width = resolvedContentWidth(doc);
   editor.view.dom.dataset.contentWidth = String(width);
@@ -135,6 +139,7 @@ function applyDocumentLayout(doc) {
 }
 
 function open(message) {
+  pageLayout.dismiss();
   clearTextTarget();
   movement.cancel();
   dismissMedia();
@@ -151,6 +156,8 @@ function open(message) {
         doc = PMParser.fromSchema(editor.schema).parse(host);
         const article = (message.markdown || '').match(/<!-- notarium:article(?: width=(\d+))? -->/);
         if (article) doc = doc.type.create({ ...doc.attrs, layout: 'article', contentWidth: article[1] ? Number(article[1]) : 790 }, doc.content);
+        const pageSettings = (message.markdown || '').match(/<!-- notarium:page-layout ([^ ]+) -->/);
+        if (pageSettings) doc = doc.type.create({ ...doc.attrs, pageLayout: normalizeLayout(JSON.parse(decodeURIComponent(pageSettings[1]))) }, doc.content);
       }
       state = EditorState.create({ doc: normalizeAutomaticEmptyAfterRows(doc), schema: editor.schema, plugins: editor.state.plugins });
     }
@@ -173,6 +180,12 @@ function insertionBoundary() {
 function command(message) {
   if (!noteId) return;
   const action = message.action, value = message.value;
+  if (action === 'pageLayout') { pageLayout.open(); return; }
+  if (action === 'setPageLayout') {
+    const settings = normalizeLayout(typeof value === 'string' ? JSON.parse(value) : value);
+    editor.view.dispatch(closeHistory(editor.state.tr).setDocAttribute('pageLayout', settings).setDocAttribute('contentWidth', settings.width));
+    editor.view.dispatch(closeHistory(editor.state.tr)); return;
+  }
   if (action === 'undo') { editor.commands.undo(); return; }
   if (action === 'redo') { editor.commands.redo(); return; }
   if (action === 'persistentHighlights') {
@@ -258,7 +271,8 @@ function receive(message) {
       }
       case 'view':
         document.documentElement.style.setProperty('--text-size', `${16 * message.zoom / 100}px`);
-        document.documentElement.style.setProperty('--line-height', String(message.spacing)); break;
+        document.documentElement.style.setProperty('--line-height', String(message.spacing));
+        applyDocumentLayout(editor.state.doc); break;
       case 'focus': textTarget(editor).commands.focus(); break;
       case 'close': sessions.delete(message.noteId); dirty.delete(message.noteId); break;
       case 'flush': post({ type: 'flushed', requestId: message.requestId, noteId, changed: dirty.has(noteId), ...snapshot(editor) }); break;

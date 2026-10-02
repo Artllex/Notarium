@@ -145,6 +145,14 @@ DEV jest miejscem ręcznych prób komponentów, nie zamiennikiem automatycznych 
 
 ## 12. Git i artefakty
 
+### Układ dokumentu
+
+Przycisk Układ na pasku formatowania otwiera ustawienia przechowywane w atrybucie `doc.pageLayout`: tryb ciągły/strony, szerokość, format A3/A4/A5/Letter/Legal, orientację, kolor, marginesy, wcięcia, odstępy, stopkę, numerację i dzielenie wyrazów. Zmiana jest jedną operacją historii. JSON zachowuje atrybut bezpośrednio; Markdown przenosi go w zakodowanym komentarzu `notarium:page-layout`.
+
+Widok stron wykorzystuje natywny przepływ CSS: kolejne strony są obok siebie i mają wspólny edytowalny dokument. Tekst może przechodzić między stronami bez tworzenia sztucznych kontenerów ani zmiany treści. Wiersze wielokolumnowe i obiekty mają unikać rozdzielania. Obiekt wyższy od dostępnej wysokości strony wymaga osobnego rozwiązania skalowania/fragmentacji; nie jest automatycznie zmniejszany. Stopki i numery są warstwą prezentacji, nie węzłami dokumentu. Dzielenie wyrazów jest realizowane przez słownik przeglądarki dla języka polskiego.
+
+Upuszczenie obok istniejącego wiersza wymaga wolnego miejsca na minimalną szerokość nowego kontenera (60 px) i odstęp. Warunek jest sprawdzany zarówno dla podglądu, jak i dla transakcji; brak miejsca nie zmienia dokumentu.
+
 Przeciąganie nad Empty podświetla cały pusty kontener stylem zaznaczenia, bez zmiany dokumentu. Upuszczenie zastępuje Empty przenoszonym kontenerem z zachowaniem geometrii docelowego miejsca. Jedna operacja historii obejmuje usunięcie źródła i zastąpienie Empty; anulowanie usuwa tylko podgląd.
 
 Panel Type uruchamia się po wyjściu przez lewą krawędź kontenera. Przez 5 sekund od ostatniego ponownego pokazania panelu można również wejść bezpośrednio w obszar Type dowolnego kontenera, w tym wrócić do poprzedniego. Wyjście z obszaru nadal chowa kartę; podtrzymanie dotyczy sposobu jej ponownego wywołania, nie stałej widoczności. Stan jest lokalny dla edytora i notatki, bez zmian w zapisywanym dokumencie.
