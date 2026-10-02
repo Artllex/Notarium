@@ -6,6 +6,22 @@ public class ActionButton : Button
 {
     public ActionButton() => SetResourceReference(StyleProperty, typeof(Button));
 }
+public sealed class SidebarRowIconButton : ActionButton
+{
+    public SidebarRowIconButton()
+    {
+        Width = 25;
+        Height = 25;
+        Padding = new Thickness(0);
+        var border = new FrameworkElementFactory(typeof(Border));
+        border.SetValue(Border.BackgroundProperty, System.Windows.Media.Brushes.Transparent);
+        var content = new FrameworkElementFactory(typeof(ContentPresenter));
+        content.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+        content.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+        border.AppendChild(content);
+        Template = new ControlTemplate(typeof(SidebarRowIconButton)) { VisualTree = border };
+    }
+}
 public class ToolPanel : Border { }
 public class TabCard : Grid { }
 public class CompositePanel : UserControl
