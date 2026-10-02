@@ -58,6 +58,9 @@ export class ContainerKeyboard {
     const $from = selection.$from, depth = $from.depth, parent = $from.node(depth - 1);
     if (!['doc', 'layoutRow', 'blockGroup'].includes(parent.type.name)) return false;
     const index = $from.index(depth - 1), backward = key === 'ArrowLeft' || key === 'ArrowUp';
+    if (key === 'ArrowDown' && parent.type.name === 'doc' && index + 1 === parent.childCount &&
+        $from.parent.type.name === 'paragraph' && $from.parent.attrs.boxEmpty && !$from.parent.content.size)
+      return true; // Native browser movement otherwise leaves the visible caret outside Empty.
     let target;
     if (backward) {
       if (index === 0 || (key === 'ArrowLeft' && $from.parentOffset !== 0) ||

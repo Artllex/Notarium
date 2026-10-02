@@ -298,6 +298,19 @@ try {
     await focus(1, true); await page.keyboard.press('ArrowDown'); assert.deepEqual(await location(), [2, 0]);
     await focus(2, true); await page.keyboard.press('ArrowRight'); assert.deepEqual(await location(), [2, 1]);
     await page.keyboard.press('ArrowDown'); assert.deepEqual(await location(), [3, 0]);
+    const caretInEmpty = () => page.evaluate(() => {
+      const anchor = window.getSelection()?.anchorNode;
+      const element = anchor?.nodeType === 1 ? anchor : anchor?.parentElement;
+      return !!element?.closest('.container-empty');
+    });
+    assert.equal(await caretInEmpty(), true);
+    for (let repeat = 0; repeat < 5; repeat++) {
+      await page.keyboard.press('ArrowDown');
+      assert.deepEqual(await location(), [3, 0]);
+      assert.equal(await caretInEmpty(), true);
+    }
+    await page.keyboard.type('z');
+    assert.equal((await json()).content[3].content[0].text, 'z');
     await focus(1); await page.keyboard.press('ArrowRight'); assert.equal((await location())[0], 1);
     await focus(1); await page.keyboard.press('ArrowDown'); assert.equal((await location())[0], 1);
   });
