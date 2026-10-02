@@ -7,6 +7,7 @@ import { ContainerInteractions } from './container-interactions.js';
 import { collapseRows, moveBlock } from './block-movement.js';
 import { ContainerVisual } from './container-visual.js';
 import { containerTypes, getContainerType } from './container-types.js';
+import { lastLineStartSelection } from './container-keyboard.js';
 
 const types = Object.keys(containerTypes);
 export const BlockGroup = Node.create({
@@ -508,18 +509,7 @@ export function setupContainers(editor, options) {
         !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
       const before = boundaryTarget.before;
       const end = Selection.near(editor.state.doc.resolve(before - 1), -1);
-      let previous = end;
-      if (event.key === 'ArrowUp' && end instanceof TextSelection) {
-        const start = end.$from.start(), endPos = end.from;
-        const lastLineTop = editor.view.coordsAtPos(endPos).top;
-        let low = start, high = endPos;
-        while (low < high) {
-          const middle = Math.floor((low + high) / 2);
-          if (editor.view.coordsAtPos(middle).top < lastLineTop - 1) low = middle + 1;
-          else high = middle;
-        }
-        previous = TextSelection.create(editor.state.doc, low);
-      }
+      const previous = event.key === 'ArrowUp' ? lastLineStartSelection(editor.view, end) : end;
       boundaryTarget = null; hideEndCaret();
       editor.view.dispatch(editor.state.tr.setSelection(previous).scrollIntoView());
       editor.view.focus();

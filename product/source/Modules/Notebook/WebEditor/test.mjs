@@ -274,6 +274,33 @@ try {
     await page.keyboard.press('ArrowUp');
     assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'X');
   });
+  await check('Four arrows cross text containers at their proper edges, except Right into trailing Empty', async () => {
+    await open('four-container-arrows', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'paragraph', content: [{ type: 'text', text: 'A' }] },
+      { type: 'paragraph', content: [{ type: 'text', text: 'one' }, { type: 'hardBreak' }, { type: 'text', text: 'two' }] },
+      { type: 'paragraph', content: [{ type: 'text', text: 'C' }] },
+      { type: 'paragraph', attrs: { boxEmpty: true } }
+    ] } }));
+    const focus = (index, end = false) => page.evaluate(({ index, end }) => {
+      const editor = window.notatnik.editor, doc = editor.state.doc;
+      let pos = 0;
+      for (let i = 0; i < index; i++) pos += doc.child(i).nodeSize;
+      editor.commands.setTextSelection(pos + 1 + (end ? doc.child(index).content.size : 0));
+      editor.view.focus();
+    }, { index, end });
+    const location = () => page.evaluate(() => {
+      const $from = window.notatnik.editor.state.selection.$from;
+      return [$from.index(0), $from.parentOffset];
+    });
+    await focus(2); await page.keyboard.press('ArrowLeft'); assert.deepEqual(await location(), [1, 7]);
+    await focus(2); await page.keyboard.press('ArrowUp'); assert.deepEqual(await location(), [1, 4]);
+    await focus(1, true); await page.keyboard.press('ArrowRight'); assert.deepEqual(await location(), [2, 0]);
+    await focus(1, true); await page.keyboard.press('ArrowDown'); assert.deepEqual(await location(), [2, 0]);
+    await focus(2, true); await page.keyboard.press('ArrowRight'); assert.deepEqual(await location(), [2, 1]);
+    await page.keyboard.press('ArrowDown'); assert.deepEqual(await location(), [3, 0]);
+    await focus(1); await page.keyboard.press('ArrowRight'); assert.equal((await location())[0], 1);
+    await focus(1); await page.keyboard.press('ArrowDown'); assert.equal((await location())[0], 1);
+  });
   await check('ArrowLeft and ArrowUp from the end insertion caret target the end and last line start', async () => {
     await open('arrow-up-below-last', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
       { type: 'paragraph', content: [{ type: 'text', text: 'A' }] },
