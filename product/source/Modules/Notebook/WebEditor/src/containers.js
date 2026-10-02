@@ -505,6 +505,10 @@ export function setupContainers(editor, options) {
     return insertAtBoundary(target, editor.schema.nodes.paragraph.create(null, content), 1 + value.length);
   };
   const onBoundaryKeydown = event => {
+    if (activeBoundary()?.kind === 'end' && ['ArrowDown', 'ArrowRight'].includes(event.key) &&
+        !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+      event.preventDefault(); event.stopImmediatePropagation(); return;
+    }
     if (activeBoundary()?.kind === 'end' && ['ArrowLeft', 'ArrowUp'].includes(event.key) &&
         !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
       const before = boundaryTarget.before;
@@ -588,16 +592,10 @@ export function setupContainers(editor, options) {
   editor.view.dom.addEventListener('copy', onCopy, true);
   editor.view.dom.addEventListener('paste', onPaste, true);
   boundaryFocus.addEventListener('paste', onPaste, true);
-  const onClickBelowLast = event => {
-    if (event.button !== 0 || !editor.isEditable || !options.noteId?.()) return;
-    if (event.target.closest?.('.object-container,.layout-row,.container-add-tools')) return;
-    const blocks = [...editor.view.dom.children].filter(child => child.matches?.('.object-container,.layout-row'));
-    const lastDom = blocks.at(-1);
-    if (!lastDom) return;
-    const lastRect = lastDom.getBoundingClientRect();
-    if (event.clientY <= lastRect.bottom + 6) return;
+  const focusEndInsertion = () => {
+    if (!editor.isEditable || !options.noteId?.()) return false;
     const last = editor.state.doc.lastChild;
-    if (!last) return;
+    if (!last) return false;
     const position = editor.state.doc.content.size;
     if (last.type.name === 'paragraph' && !last.content.size) {
       boundaryTarget = null;
@@ -609,6 +607,15 @@ export function setupContainers(editor, options) {
       positionEndCaret();
     }
     editor.view.focus();
+    return true;
+  };
+  const onClickBelowLast = event => {
+    if (event.button !== 0 || !editor.isEditable || !options.noteId?.()) return;
+    if (event.target.closest?.('.object-container,.layout-row,.container-add-tools')) return;
+    const blocks = [...editor.view.dom.children].filter(child => child.matches?.('.object-container,.layout-row'));
+    const lastDom = blocks.at(-1);
+    if (!lastDom || event.clientY <= lastDom.getBoundingClientRect().bottom + 6) return;
+    if (!focusEndInsertion()) return;
     event.preventDefault(); event.stopPropagation();
   };
   editor.view.dom.parentElement.addEventListener('mousedown', onClickBelowLast, true);
@@ -776,6 +783,7 @@ export function setupContainers(editor, options) {
     editor.view.dom.parentElement.removeEventListener('click', preventBoundaryClick, true);
     editor.view.dom.parentElement.removeEventListener('dblclick', preventRowDoubleClick, true);
   });
+  return { focusEndInsertion };
 }
 export function alignContainer(editor, alignment) {
   const selection = editor.state.selection;

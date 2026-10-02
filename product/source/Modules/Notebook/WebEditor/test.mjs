@@ -314,6 +314,33 @@ try {
     await focus(1); await page.keyboard.press('ArrowRight'); assert.equal((await location())[0], 1);
     await focus(1); await page.keyboard.press('ArrowDown'); assert.equal((await location())[0], 1);
   });
+  await check('Repeated Down from the last text container reaches and stays at the default insertion line', async () => {
+    await open('down-without-stored-empty', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'paragraph', content: [{ type: 'text', text: 'A' }] },
+      { type: 'paragraph', content: [{ type: 'text', text: 'B' }] },
+      { type: 'paragraph', content: [{ type: 'text', text: 'C' }] }
+    ] } }));
+    await page.evaluate(() => window.notatnik.editor.commands.focus('end'));
+    await page.keyboard.press('ArrowRight');
+    assert.equal(await page.locator('.container-end-caret').isVisible(), false);
+    await page.keyboard.press('ArrowDown');
+    const caret = page.locator('.container-end-caret');
+    assert.equal(await caret.isVisible(), true);
+    const bounds = await caret.boundingBox();
+    for (let repeat = 0; repeat < 8; repeat++) {
+      await page.keyboard.press('ArrowDown');
+      assert.equal(await caret.isVisible(), true);
+      assert.deepEqual(await caret.boundingBox(), bounds);
+      assert.equal((await json()).content.length, 3);
+    }
+    await page.keyboard.press('ArrowLeft');
+    assert.equal(await caret.isVisible(), false);
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parentOffset), 1);
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.type('Nowy');
+    assert.equal((await json()).content.length, 4);
+    assert.equal((await json()).content[3].content[0].text, 'Nowy');
+  });
   await check('ArrowLeft and ArrowUp from the end insertion caret target the end and last line start', async () => {
     await open('arrow-up-below-last', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
       { type: 'paragraph', content: [{ type: 'text', text: 'A' }] },

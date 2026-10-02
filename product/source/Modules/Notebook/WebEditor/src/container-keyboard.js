@@ -16,8 +16,9 @@ export function lastLineStartSelection(view, end) {
 
 // One keyboard policy for text, nested containers and embedded code editors.
 export class ContainerKeyboard {
-  constructor(editor) {
+  constructor(editor, navigation = {}) {
     this.editor = editor;
+    this.navigation = navigation;
     this.onKey = event => this.handle(event);
     editor.view.dom.addEventListener('keydown', this.onKey, true);
     editor.on('destroy', () => editor.view.dom.removeEventListener('keydown', this.onKey, true));
@@ -70,9 +71,11 @@ export class ContainerKeyboard {
       if (target.from >= current) return false;
       if (key === 'ArrowUp') target = lastLineStartSelection(view, target);
     } else {
-      if (index + 1 >= parent.childCount ||
-          (key === 'ArrowRight' && $from.parentOffset !== $from.parent.content.size) ||
+      if ((key === 'ArrowRight' && $from.parentOffset !== $from.parent.content.size) ||
           (key === 'ArrowDown' && !view.endOfTextblock('down'))) return false;
+      if (index + 1 >= parent.childCount)
+        return key === 'ArrowDown' && parent.type.name === 'doc' ?
+          this.navigation.focusEndInsertion?.() === true : false;
       const next = parent.child(index + 1);
       if (key === 'ArrowRight' && parent.type.name === 'doc' && index + 2 === parent.childCount &&
           next.type.name === 'paragraph' && next.attrs.boxEmpty && !next.content.size) return true;
