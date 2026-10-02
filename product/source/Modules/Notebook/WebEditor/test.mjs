@@ -260,6 +260,20 @@ try {
     await page.keyboard.press('Shift+Tab');
     assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'third');
   });
+  await check('ArrowUp from a new empty container enters the preceding container', async () => {
+    await open('arrow-up-containers', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'paragraph', content: [{ type: 'text', text: 'A' }] },
+      { type: 'paragraph', content: [{ type: 'text', text: 'X' }] },
+      { type: 'paragraph', content: [{ type: 'text', text: 'C' }] },
+      { type: 'paragraph', attrs: { boxEmpty: true } }
+    ] } }));
+    await page.evaluate(() => window.notatnik.editor.commands.focus('end'));
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), '');
+    await page.keyboard.press('ArrowUp');
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'C');
+    await page.keyboard.press('ArrowUp');
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'X');
+  });
   await check('Container shortcuts preserve nesting, code newlines and undo', async () => {
     await open('keyboard-nested'); await command('container');
     await page.keyboard.type('alpha'); await page.keyboard.press('Enter'); await page.keyboard.type('beta');

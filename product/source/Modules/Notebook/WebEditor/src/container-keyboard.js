@@ -1,4 +1,4 @@
-import { NodeSelection, TextSelection } from '@tiptap/pm/state';
+import { NodeSelection, Selection, TextSelection } from '@tiptap/pm/state';
 import { closeHistory } from '@tiptap/pm/history';
 
 // One keyboard policy for text, nested containers and embedded code editors.
@@ -11,6 +11,9 @@ export class ContainerKeyboard {
   }
   handle(event) {
     if (event.isComposing || !this.editor.isEditable || event.altKey || event.target.closest('input,textarea,select,button')) return;
+    if (event.key === 'ArrowUp' && !event.ctrlKey && !event.metaKey && !event.shiftKey && this.focusPreviousOnUp()) {
+      event.preventDefault(); event.stopImmediatePropagation(); return;
+    }
     const create = event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.shiftKey;
     const next = event.key === 'Tab' && event.shiftKey && !event.ctrlKey && !event.metaKey;
     const newline = event.key === 'Enter' && !event.ctrlKey && !event.metaKey && !event.shiftKey;
@@ -32,6 +35,19 @@ export class ContainerKeyboard {
     if (typeof pos !== 'number') return;
     if (create) this.createAfter(pos);
     else this.focusNext(wrapper);
+  }
+  focusPreviousOnUp() {
+    const { state, view } = this.editor;
+    const { selection } = state;
+    if (!(selection instanceof TextSelection) || !selection.empty || selection.$from.depth !== 1 ||
+        !view.endOfTextblock('up')) return false;
+    const current = selection.$from.before(1);
+    if (current === 0 || !state.doc.resolve(current).nodeBefore) return false;
+    const previous = Selection.near(state.doc.resolve(current - 1), -1);
+    if (previous.from >= current) return false;
+    view.dispatch(state.tr.setSelection(previous).scrollIntoView());
+    view.focus();
+    return true;
   }
   createAfter(pos) {
     const { state, view, schema } = this.editor;
