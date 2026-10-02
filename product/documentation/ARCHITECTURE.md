@@ -145,6 +145,8 @@ DEV jest miejscem ręcznych prób komponentów, nie zamiennikiem automatycznych 
 
 ## 12. Git i artefakty
 
+Przeciąganie nad Empty podświetla cały pusty kontener stylem zaznaczenia, bez zmiany dokumentu. Upuszczenie zastępuje Empty przenoszonym kontenerem z zachowaniem geometrii docelowego miejsca. Jedna operacja historii obejmuje usunięcie źródła i zastąpienie Empty; anulowanie usuwa tylko podgląd.
+
 Panel Type uruchamia się po wyjściu przez lewą krawędź kontenera. Przez 5 sekund od ostatniego ponownego pokazania panelu można również wejść bezpośrednio w obszar Type dowolnego kontenera, w tym wrócić do poprzedniego. Wyjście z obszaru nadal chowa kartę; podtrzymanie dotyczy sposobu jej ponownego wywołania, nie stałej widoczności. Stan jest lokalny dla edytora i notatki, bez zmian w zapisywanym dokumencie.
 
 Kanoniczne repozytorium jest w C:/NOTARIUM. Historia zaczyna się od poprzednich commitów repozytorium Artllex/Notarium; przeniesienie i refaktoryzacja są kolejnym commitem, nie nową, oderwaną historią.

@@ -32,6 +32,32 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Dropping on Empty replaces it, highlights its full surface and supports cancellation and undo', async () => {
+    for (const reverse of [false, true]) {
+      const source = { type: 'paragraph', content: [{ type: 'text', text: 'Moving' }] };
+      const empty = { type: 'paragraph', attrs: { boxEmpty: true, boxHeight: 70 } };
+      await open('replace-empty-' + reverse, '', JSON.stringify({ version: 1, doc: { type: 'doc', content: reverse ? [empty, source] : [source, empty] } }));
+      const original = await json();
+      const boxes = page.locator('.tiptap > .object-container');
+      const moving = boxes.nth(reverse ? 1 : 0), destination = boxes.nth(reverse ? 0 : 1);
+      const dragToEmpty = async () => {
+        const a = await moving.boundingBox(), b = await destination.boundingBox();
+        await page.mouse.move(a.x + 10, a.y + 2); await page.mouse.down();
+        await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 });
+        assert.equal(await destination.evaluate(el => el.classList.contains('container-drop-empty')), true);
+        assert.equal(await destination.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(130, 184, 248, 0.18)');
+        assert.deepEqual(await json(), original);
+      };
+      await dragToEmpty(); await page.keyboard.press('Escape'); await page.mouse.up();
+      assert.equal(await page.locator('.container-drop-empty').count(), 0);
+      assert.deepEqual(await json(), original);
+      await dragToEmpty(); await page.mouse.up();
+      assert.equal((await json()).content.length, 1);
+      assert.equal((await json()).content[0].content[0].text, 'Moving');
+      assert.equal((await json()).content[0].attrs.boxHeight, 70);
+      await command('undo'); assert.deepEqual(await json(), original);
+    }
+  });
   await check('Type panel appears only after crossing the container left edge', async () => {
     await open('left-edge-panel', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
       { type: 'paragraph', content: [{ type: 'text', text: 'Panel trigger' }] }

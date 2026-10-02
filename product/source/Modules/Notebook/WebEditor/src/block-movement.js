@@ -1,5 +1,22 @@
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import { closeHistory } from '@tiptap/pm/history';
+import { getContainerType } from './container-types.js';
+
+export function replaceEmpty(editor, from, targetPos) {
+  const source = editor.state.doc.nodeAt(from), empty = editor.state.doc.nodeAt(targetPos);
+  if (!source || !empty || !getContainerType(empty).isEmpty ||
+      targetPos >= from && targetPos < from + source.nodeSize ||
+      from >= targetPos && from < targetPos + empty.nodeSize) return false;
+  const tr = closeHistory(editor.state.tr).delete(from, from + source.nodeSize);
+  const to = tr.mapping.map(targetPos);
+  const moving = source.type.create({ ...source.attrs, boxWidth: empty.attrs.boxWidth,
+    boxHeight: empty.attrs.boxHeight, boxOffsetX: empty.attrs.boxOffsetX,
+    boxAlign: empty.attrs.boxAlign }, source.content, source.marks);
+  tr.replaceWith(to, to + empty.nodeSize, moving).setSelection(NodeSelection.create(tr.doc, to));
+  collapseRows(tr);
+  editor.view.dispatch(tr); editor.view.dispatch(closeHistory(editor.state.tr));
+  return true;
+}
 
 // All top-level document nodes use the same move operation, including CodeMirror cells.
 export function moveBlock(editor, from, boundary) {
@@ -67,6 +84,7 @@ export function setupBlockMovement(editor, noteId) {
     if (!drag) return;
     const moving = drag; const allowed = valid();
     cancelAnimationFrame(frame); drag = null; marker.style.display = 'none';
+    moving.emptyTarget?.classList.remove('container-drop-empty');
     if (moving?.dom) { moving.dom.classList.remove('container-lifted'); moving.dom.style.removeProperty('--drag-x'); moving.dom.style.removeProperty('--drag-y'); }
     document.body.classList.remove('moving-block');
     if (moving.active) {
@@ -86,7 +104,8 @@ export function setupBlockMovement(editor, noteId) {
       }
     }
     if (commit && allowed && moving.active) {
-      if (moving.inside) moveInto(editor, moving.pos, moving.targetPos);
+      if (moving.emptyTarget) replaceEmpty(editor, moving.pos, moving.targetPos);
+      else if (moving.inside) moveInto(editor, moving.pos, moving.targetPos);
       else if (moving.gap) {
         const paragraph = editor.schema.nodes.paragraph.create({ boxEmpty: true });
         const tr = closeHistory(editor.state.tr).insert(moving.boundary, paragraph);
@@ -98,6 +117,9 @@ export function setupBlockMovement(editor, noteId) {
   }
   function target(y) {
     if (!valid()) { finish(); return; }
+    drag.emptyTarget?.classList.remove('container-drop-empty');
+    drag.emptyTarget = null;
+    drag.gap = false;
     const editorRect = root.getBoundingClientRect();
     const dropMargin = 32;
     if (lastX < editorRect.left - dropMargin || lastX > editorRect.right + dropMargin ||
@@ -109,6 +131,14 @@ export function setupBlockMovement(editor, noteId) {
     let candidates = blocks().filter(block => block.pos < drag.pos || block.pos >= drag.pos + source.nodeSize);
     drag.side = null; drag.inside = false; drag.boundary = null; marker.dataset.inside = 'false';
     if (!candidates.length) return;
+    const empty = candidates.slice().reverse().find(block => getContainerType(block.node).isEmpty &&
+      lastX >= block.rect.left && lastX <= block.rect.right && y >= block.rect.top && y <= block.rect.bottom);
+    if (empty) {
+      drag.emptyTarget = empty.dom; drag.targetPos = empty.pos;
+      empty.dom.classList.add('container-drop-empty');
+      marker.style.display = 'none';
+      return;
+    }
     const inside = candidates.slice().reverse().find(block => block.node.type.name === 'blockGroup' &&
       y > block.rect.top + 12 && y < block.rect.bottom - 12 && lastX > block.rect.left + 12 && lastX < block.rect.right - 12);
     const sourceParent = editor.state.doc.resolve(drag.pos);
