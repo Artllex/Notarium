@@ -281,7 +281,7 @@ try {
     await page.mouse.click((leftBox.x + leftBox.width + emptyBox.x) / 2, emptyBox.y + 18);
     assert.equal(await page.evaluate(() => document.activeElement?.classList.contains('container-boundary-focus')), true);
     assert.equal(await page.locator('.container-selected').count(), 0);
-    assert.equal(await page.evaluate(() => getComputedStyle(document.elementFromPoint(...(() => { const r = document.querySelector('.container-empty').getBoundingClientRect(); return [r.left + 90, r.top + 18]; })())).cursor), 'grab');
+    assert.equal(await page.evaluate(() => getComputedStyle(document.elementFromPoint(...(() => { const r = document.querySelector('.container-empty').getBoundingClientRect(); return [r.left + 90, r.top + 18]; })())).cursor), 'default');
     await page.evaluate(() => {
       const transfer = new DataTransfer();
       transfer.setData('application/x-notarium-container+json', JSON.stringify({ type: 'paragraph', attrs: { boxWidth: 90 }, content: [{ type: 'text', text: 'Wklejony' }] }));
