@@ -118,6 +118,7 @@ public sealed class MainPanel : Window
         try
         {
             var window = module.CreateWindow();
+            if (window is IModuleNavigationHost navigationHost) navigationHost.SetModuleNavigation(CreateModuleNavigation(module.Id));
             if (window.Content is ApplicationFrame frame && frame.Menu.Content is MenuBar menu) ConfigureMenu(menu);
             _windows.Add(module.Id, window);
             window.Closed += (_, _) => { _windows.Remove(module.Id); RefreshRecent(); };
@@ -125,6 +126,29 @@ public sealed class MainPanel : Window
             return window;
         }
         catch (Exception error) { DialogService.Show(this, error.Message, "Nie można otworzyć modułu", MessageBoxButton.OK, MessageBoxImage.Error); return null; }
+    }
+    private StackPanel CreateModuleNavigation(string activeId)
+    {
+        var panel = new StackPanel { Margin = new Thickness(8, 0, 8, 0) };
+        foreach (var entry in _catalog.Entries)
+        {
+            var label = new Grid();
+            label.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
+            label.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            label.Children.Add(new ModuleIcon(entry.Id) { VerticalAlignment = VerticalAlignment.Center });
+            var text = new TextBlock { Text = entry.DisplayName, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap };
+            Grid.SetColumn(text, 1); label.Children.Add(text);
+            var button = new ActionButton { Content = label, HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                Margin = new Thickness(0, 4, 0, 4), ToolTip = entry.IsAvailable ? "Otwórz moduł" : "Moduł nie jest zainstalowany" };
+            if (entry.Id == activeId) button.Background = new SolidColorBrush(Color.FromRgb(45, 45, 45));
+            System.Windows.Automation.AutomationProperties.SetName(button, entry.DisplayName);
+            button.Click += (_, _) => {
+                if (entry.Implementation is { } module) Open(module);
+                else DialogService.Show(this, $"Brakuje modułu „{entry.DisplayName}”. Jego funkcjonalność nie jest jeszcze dostępna.", "Brak modułu", MessageBoxButton.OK, MessageBoxImage.Information);
+            };
+            panel.Children.Add(button);
+        }
+        return panel;
     }
     private void ConfigureMenu(MenuBar menu)
     {

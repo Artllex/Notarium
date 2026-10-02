@@ -145,6 +145,8 @@ DEV jest miejscem ręcznych prób komponentów, nie zamiennikiem automatycznych 
 
 ## 12. Git i artefakty
 
+Okno Notatnika udostępnia slot nawigacji `IModuleNavigationHost`. Shell wypełnia go pozycjami aktualnego katalogu modułów, wspólnymi `ModuleIcon` i akcjami otwierania istniejących okien. Nawigacja jest nad wyszukiwaniem i biblioteką; moduł nie ładuje własnej kopii katalogu ani nie tworzy niezależnych okien modułów.
+
 ### Układ dokumentu
 
 Przycisk Układ na pasku formatowania otwiera ustawienia przechowywane w atrybucie `doc.pageLayout`: tryb ciągły/strony, szerokość, format A3/A4/A5/Letter/Legal, orientację, kolor, marginesy, wcięcia, odstępy, stopkę, numerację i dzielenie wyrazów. Zmiana jest jedną operacją historii. JSON zachowuje atrybut bezpośrednio; Markdown przenosi go w zakodowanym komentarzu `notarium:page-layout`.

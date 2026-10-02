@@ -13,8 +13,9 @@ using Notarium.UI;
 
 namespace Notatnik;
 
-public partial class MainWindow : Window, INotifyPropertyChanged, Notarium.Contracts.INewItemWindow
+public partial class MainWindow : Window, INotifyPropertyChanged, Notarium.Contracts.INewItemWindow, Notarium.Contracts.IModuleNavigationHost
 {
+    public void SetModuleNavigation(UIElement navigation) => LibraryView.ModuleNavigation.Content = navigation;
     public void CreateNewItem() => NewNote_Click(this, new RoutedEventArgs());
     private readonly NotebookLibrary _library;
     private readonly RecentFilesStore _recentFiles;

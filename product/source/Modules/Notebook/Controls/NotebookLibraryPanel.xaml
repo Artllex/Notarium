@@ -4,13 +4,14 @@
         <local:FavoriteButtonVisibilityConverter x:Key="FavoriteButtonVisibility" />
     </ui:CompositePanel.Resources>
     <Grid Background="{StaticResource Panel}">
-                <Grid.RowDefinitions><RowDefinition Height="52" /><RowDefinition Height="46" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="52" /><RowDefinition Height="Auto" /><RowDefinition Height="46" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                 <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <ui:ActionButton Width="28" Height="28" HorizontalAlignment="Left" Margin="10,0,0,0" Padding="0" ToolTip="Ukryj panel boczny" Click="SidebarIcon_Click" AutomationProperties.Name="Ukryj panel boczny"><ui:BrandIcon Width="28" Height="28" /></ui:ActionButton>
-                    <TextBlock Text="Notatnik" Foreground="{StaticResource Text}" Margin="47,0,6,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                    <TextBlock Text="Notarium" Foreground="{StaticResource Text}" Margin="47,0,6,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
                 </Grid>
 
-                <Grid Grid.Row="1" Margin="6,3,6,7">
+                <Border Grid.Row="1" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,0,0,6"><ContentControl x:Name="ModuleNavigation" /></Border>
+                <Grid Grid.Row="2" Margin="6,9,6,7">
                     <Border Background="#2B2B2B" BorderBrush="#3D3D3D" BorderThickness="1" CornerRadius="5" />
                     <TextBlock Text="⌕" FontSize="19" Foreground="{StaticResource Muted}" Margin="11,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
                     <TextBox x:Name="SearchBox" Margin="34,0,39,0" Background="Transparent" BorderThickness="0" Foreground="{StaticResource Text}" CaretBrush="White" FontSize="13" VerticalContentAlignment="Center" TextChanged="SearchBox_TextChanged" />
@@ -19,7 +20,7 @@
                 </Grid>
 
 
-                <ListBox Grid.Row="2" x:Name="NotesList" ItemsSource="{Binding Notes}" SelectedItem="{Binding ActiveNote, Mode=OneWay}" SelectionChanged="NotesList_SelectionChanged" Background="Transparent" BorderThickness="0" Padding="5,0" Foreground="{StaticResource Text}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox Grid.Row="3" x:Name="NotesList" ItemsSource="{Binding Notes}" SelectedItem="{Binding ActiveNote, Mode=OneWay}" SelectionChanged="NotesList_SelectionChanged" Background="Transparent" BorderThickness="0" Padding="5,0" Foreground="{StaticResource Text}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Padding" Value="0" /><Setter Property="Margin" Value="0" /><Setter Property="BorderThickness" Value="0" /><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><Border x:Name="ItemBorder" Padding="9,5" BorderBrush="#353535" BorderThickness="0,0,0,1" CornerRadius="4" Background="Transparent"><ContentPresenter /></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="ItemBorder" Property="Background" Value="#2D2D2D" /></Trigger><Trigger Property="IsSelected" Value="True"><Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource Selected}" /></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter></Style></ListBox.ItemContainerStyle>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
@@ -54,7 +55,7 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <Border Grid.Row="3" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="6,10,6,10">
+                <Border Grid.Row="4" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="6,10,6,10">
                     <StackPanel>
                         <ui:ActionButton ToolTip="Konto — makieta" Height="32" Padding="9,2" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" Foreground="{StaticResource Text}">
                             <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,2,0,0" /><TextBlock Grid.Column="1" Text="Konto" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" /></Grid>
