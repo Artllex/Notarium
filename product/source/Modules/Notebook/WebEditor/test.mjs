@@ -32,6 +32,28 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Ctrl+Enter in any column creates a new line after the whole row', async () => {
+    for (const nested of [false, true]) for (const column of [0, 1, 2]) {
+      const row = { type: 'layoutRow', content: ['A', 'B', 'C'].map(text => ({ type: 'paragraph', content: [{ type: 'text', text }] })) };
+      const content = nested ? [{ type: 'blockGroup', content: [row] }] : [row];
+      await open(`new-line-${nested}-${column}`, '', JSON.stringify({ version: 1, doc: { type: 'doc', content } }));
+      const original = await json();
+      await page.locator('.layout-row > .object-container').nth(column).locator('p').click();
+      await page.keyboard.press('Control+Enter');
+      const document = await json(), siblings = nested ? document.content[0].content : document.content;
+      assert.ok(siblings.length >= 2);
+      assert.equal(siblings[0].type, 'layoutRow');
+      assert.equal(siblings[0].content.length, 3);
+      assert.equal(siblings[1].type, 'paragraph');
+      assert.equal(siblings[1].attrs.boxEmpty, true);
+      await page.keyboard.type('New line');
+      assert.equal((nested ? (await json()).content[0].content : (await json()).content)[1].content[0].text, 'New line');
+      await command('undo'); await command('undo');
+      const restored = await json();
+      assert.deepEqual(restored.content[0], original.content[0]);
+      assert.ok(restored.content.slice(1).every(node => node.type === 'paragraph' && !node.content));
+    }
+  });
   await check('Dropping on Empty replaces it, highlights its full surface and supports cancellation and undo', async () => {
     for (const reverse of [false, true]) {
       const source = { type: 'paragraph', content: [{ type: 'text', text: 'Moving' }] };

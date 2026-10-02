@@ -91,7 +91,15 @@ export class ContainerKeyboard {
     const { state, view, schema } = this.editor;
     const node = state.doc.nodeAt(pos);
     if (!node) return;
-    const boundary = pos + node.nodeSize;
+    let boundary = pos + node.nodeSize;
+    const $pos = state.doc.resolve(pos);
+    // A row owns its columns: creating a new line must leave that row intact.
+    for (let depth = $pos.depth; depth > 0; depth--) {
+      if ($pos.node(depth).type.name === 'layoutRow') {
+        boundary = $pos.after(depth);
+        break;
+      }
+    }
     const tr = closeHistory(state.tr).insert(boundary, schema.nodes.paragraph.create({ boxEmpty: true }));
     tr.setSelection(TextSelection.create(tr.doc, boundary + 1));
     view.dispatch(tr.scrollIntoView());
