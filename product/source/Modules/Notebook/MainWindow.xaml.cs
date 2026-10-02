@@ -58,7 +58,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged, Notarium.Contr
         workspace.RowDefinitions.RemoveAt(4);
         var frame = new ApplicationFrame(this);
         frame.RestoreSidebarFromWorkspace = true;
-        frame.SidebarVisibilityChanged += show => { TabsView.SetSidebarCollapsed(!show); Dispatcher.BeginInvoke(new Action(() => RefreshVisibleTabs())); };
+        frame.SidebarVisibilityChanged += show =>
+        {
+            TabsView.SetSidebarCollapsed(!show);
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                RefreshVisibleTabs();
+                Editor.UpdateLayout();
+                Editor.RefreshViewport();
+            }), DispatcherPriority.Loaded);
+        };
         TabsView.SidebarRestoreRequested += (_, _) => frame.ToggleSidebar();
         frame.Sidebar.Content = LibraryView; frame.Menu.Content = MainMenu; frame.Workspace.Content = workspace; frame.Status.Content = NotebookStatusBar;
         LibraryView.SidebarToggleRequested += (_, _) => frame.ToggleSidebar();

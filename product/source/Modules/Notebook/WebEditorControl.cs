@@ -47,6 +47,7 @@ public sealed class WebEditorControl : UserControl, IDisposable
     public WebEditorControl()
     {
         var grid = new Grid(); grid.Children.Add(_web); grid.Children.Add(_status); Content = grid;
+        SizeChanged += (_, _) => RefreshViewport();
         Loaded += async (_, _) => await InitializeAsync();
         _web.PreviewMouseLeftButtonDown += (_, e) =>
         {
@@ -56,6 +57,16 @@ public sealed class WebEditorControl : UserControl, IDisposable
         };
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Undo, (_, _) => Execute("undo"), (_, e) => e.CanExecute = CanUndoContent));
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Redo, (_, _) => Execute("redo"), (_, e) => e.CanExecute = CanRedoContent));
+    }
+
+    public void RefreshViewport()
+    {
+        if (ActualWidth <= 0 || _disposed) return;
+        // The composition surface can keep its previous width after the sidebar
+        // changes columns, leaving the browser scrollbar inside the workspace.
+        _web.Width = ActualWidth;
+        _web.InvalidateMeasure();
+        _web.InvalidateArrange();
     }
 
     private async Task InitializeAsync()
