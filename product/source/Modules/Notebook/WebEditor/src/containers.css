@@ -1,5 +1,7 @@
 .object-container:hover,.object-container.container-row-hover{outline-color:#444}
 .object-container.container-selected{outline-color:#82b8f8}
+.object-container.container-multi-selected{outline-color:#82b8f8!important}
+body .object-container.container-empty.container-multi-selected{outline-color:#82b8f8!important;background-color:rgba(130,184,248,.18)!important;box-shadow:0 0 0 4px rgba(130,184,248,.18)}
 body.persistent-container-highlights .object-container{outline-color:#444}
 body.persistent-container-highlights .object-container.container-selected{outline-color:#82b8f8}
 body .object-container.container-empty{outline-color:transparent!important;min-width:0}

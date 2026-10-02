@@ -204,6 +204,7 @@ export function setupBlockMovement(editor, noteId) {
     lastY = event.clientY; lastX = event.clientX;
   }
   function pointerDown(event) {
+    if (event.ctrlKey || event.metaKey) return;
     if (event.button !== 0 || event.target.closest('button,input,select,.inline-crop,.inline-crop-tools,.image-title,figcaption,.container-title,.container-caption,.container-resize,.container-resize-edge,.container-select-edge,.container-pair-resize,.container-gap-boundary,.image-resize,.column-resize-handle')) return;
     const block = locate(event.target);
     if (!block) return;

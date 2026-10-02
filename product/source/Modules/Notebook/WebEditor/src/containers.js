@@ -381,6 +381,45 @@ export class ContainerView {
 }
 
 export function setupContainers(editor, options) {
+  const multiSelected = new Set();
+  const paintMultiSelection = () => {
+    for (const dom of editor.view.dom.querySelectorAll('.object-container'))
+      dom.classList.toggle('container-multi-selected', multiSelected.has(dom.containerView?.props.getPos()));
+  };
+  const clearMultiSelection = () => { multiSelected.clear(); paintMultiSelection(); };
+  const multiClick = event => {
+    const dom = event.target.closest?.('.object-container');
+    if (!dom || !editor.view.dom.contains(dom) || event.button !== 0) return;
+    if (!(event.ctrlKey || event.metaKey)) { clearMultiSelection(); return; }
+    if (event.target.closest('button,input,select,.container-resize,.container-resize-edge,.container-pair-resize,.container-gap-boundary')) return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    if (event.type !== 'pointerdown') return;
+    const pos = dom.containerView?.props.getPos();
+    if (typeof pos !== 'number') return;
+    const selection = editor.state.selection;
+    if (!multiSelected.size && selection instanceof NodeSelection) multiSelected.add(selection.from);
+    if (multiSelected.has(pos)) multiSelected.delete(pos); else multiSelected.add(pos);
+    if (selection instanceof NodeSelection)
+      editor.view.dispatch(editor.state.tr.setSelection(TextSelection.near(editor.state.doc.resolve(selection.from))));
+    paintMultiSelection();
+  };
+  const cancelSelections = event => {
+    if (event.key !== 'Escape') return;
+    clearMultiSelection(); boundaryTarget = null; hideEndCaret();
+    ContainerVisual.state(editor.view.dom, 'containers-all-selected', false);
+    ContainerVisual.state(editor.view.dom, 'container-boundary-selected', false);
+    const selection = editor.state.selection;
+    if (!selection.empty || selection instanceof NodeSelection)
+      editor.view.dispatch(editor.state.tr.setSelection(TextSelection.near(editor.state.doc.resolve(selection.from))));
+  };
+  const onMultiTransaction = ({ transaction }) => {
+    if (transaction.docChanged) clearMultiSelection();
+  };
+  document.addEventListener('pointerdown', multiClick, true);
+  document.addEventListener('mousedown', multiClick, true);
+  document.addEventListener('click', multiClick, true);
+  document.addEventListener('keydown', cancelSelections, true);
+  editor.on('transaction', onMultiTransaction);
   const showCtrlActions = enabled => editor.view.dom.classList.toggle('container-ctrl-actions', enabled);
   const onCtrlKey = event => showCtrlActions(event.ctrlKey);
   const clearCtrlActions = () => showCtrlActions(false);
@@ -778,6 +817,9 @@ export function setupContainers(editor, options) {
   };
   editor.view.dom.parentElement.addEventListener('dblclick', preventRowDoubleClick, true);
   editor.on('destroy', () => {
+    for (const type of ['pointerdown', 'mousedown', 'click']) document.removeEventListener(type, multiClick, true);
+    document.removeEventListener('keydown', cancelSelections, true);
+    editor.off('transaction', onMultiTransaction);
     document.removeEventListener('pointermove', onContainerPointerMove, true);
     editor.view.dom.removeEventListener('container-type-revealed', rememberTypePanel);
     editor.off('update', refreshHoveredType);

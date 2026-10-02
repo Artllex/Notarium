@@ -32,6 +32,21 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Ctrl clicks toggle multiple containers and Escape clears every selection', async () => {
+    await open('multi-select', 'A\n\nB\n\nC');
+    const boxes = page.locator('.tiptap > .object-container');
+    await boxes.nth(0).locator('p').click({ modifiers: ['Control'] });
+    await boxes.nth(1).locator('p').click({ modifiers: ['Control'] });
+    assert.equal(await page.locator('.container-multi-selected').count(), 2);
+    await boxes.nth(0).locator('p').click({ modifiers: ['Control'] });
+    assert.equal(await page.locator('.container-multi-selected').count(), 1);
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('.container-multi-selected,.container-selected,.containers-all-selected,.container-boundary-selected').count(), 0);
+    await boxes.nth(0).locator('p').click();
+    await page.keyboard.press('Control+a');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.empty), true);
+  });
   await check('Ctrl+Enter in any column creates a new line after the whole row', async () => {
     for (const nested of [false, true]) for (const column of [0, 1, 2]) {
       const row = { type: 'layoutRow', content: ['A', 'B', 'C'].map(text => ({ type: 'paragraph', content: [{ type: 'text', text }] })) };
