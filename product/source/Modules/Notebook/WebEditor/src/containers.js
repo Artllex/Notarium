@@ -504,10 +504,22 @@ export function setupContainers(editor, options) {
     return insertAtBoundary(target, editor.schema.nodes.paragraph.create(null, content), 1 + value.length);
   };
   const onBoundaryKeydown = event => {
-    if (activeBoundary()?.kind === 'end' && event.key === 'ArrowUp' &&
+    if (activeBoundary()?.kind === 'end' && ['ArrowLeft', 'ArrowUp'].includes(event.key) &&
         !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
       const before = boundaryTarget.before;
-      const previous = Selection.near(editor.state.doc.resolve(before - 1), -1);
+      const end = Selection.near(editor.state.doc.resolve(before - 1), -1);
+      let previous = end;
+      if (event.key === 'ArrowUp' && end instanceof TextSelection) {
+        const start = end.$from.start(), endPos = end.from;
+        const lastLineTop = editor.view.coordsAtPos(endPos).top;
+        let low = start, high = endPos;
+        while (low < high) {
+          const middle = Math.floor((low + high) / 2);
+          if (editor.view.coordsAtPos(middle).top < lastLineTop - 1) low = middle + 1;
+          else high = middle;
+        }
+        previous = TextSelection.create(editor.state.doc, low);
+      }
       boundaryTarget = null; hideEndCaret();
       editor.view.dispatch(editor.state.tr.setSelection(previous).scrollIntoView());
       editor.view.focus();

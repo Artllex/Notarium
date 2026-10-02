@@ -274,18 +274,36 @@ try {
     await page.keyboard.press('ArrowUp');
     assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'X');
   });
-  await check('ArrowUp from the insertion caret below the last container enters it', async () => {
+  await check('ArrowLeft and ArrowUp from the end insertion caret target the end and last line start', async () => {
     await open('arrow-up-below-last', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
       { type: 'paragraph', content: [{ type: 'text', text: 'A' }] },
       { type: 'paragraph', content: [{ type: 'text', text: 'B' }] },
-      { type: 'paragraph', content: [{ type: 'text', text: 'C' }] }
+      { type: 'paragraph', content: [{ type: 'text', text: 'one' }, { type: 'hardBreak' }, { type: 'text', text: 'two' }] }
     ] } }));
     const last = await page.locator('.tiptap > .object-container').last().boundingBox();
     await page.mouse.click(last.x + 10, last.y + last.height + 35);
     assert.equal(await page.locator('.container-end-caret').isVisible(), true);
+    await page.keyboard.press('ArrowLeft');
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parentOffset), 7);
+    await page.mouse.click(last.x + 10, last.y + last.height + 35);
+    assert.equal(await page.locator('.container-end-caret').isVisible(), true);
     await page.keyboard.press('ArrowUp');
-    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'C');
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parentOffset), 4);
     assert.equal(await page.locator('.container-end-caret').isVisible(), false);
+    await open('arrow-up-wrapped-line', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'paragraph', attrs: { boxWidth: 170 }, content: [{ type: 'text', text: 'Pierwsza linia oraz druga linia i ostatnie słowa' }] }
+    ] } }));
+    const wrapped = await page.locator('.tiptap > .object-container').last().boundingBox();
+    await page.mouse.click(wrapped.x + 10, wrapped.y + wrapped.height + 35);
+    assert.equal(await page.locator('.container-end-caret').isVisible(), true);
+    await page.keyboard.press('ArrowUp');
+    assert.equal(await page.evaluate(() => {
+      const { state, view } = window.notatnik.editor;
+      const pos = state.selection.from, last = state.selection.$from.end();
+      return pos > state.selection.$from.start() && pos < last &&
+        view.coordsAtPos(pos).top === view.coordsAtPos(last).top &&
+        view.coordsAtPos(pos - 1).top < view.coordsAtPos(last).top;
+    }), true);
   });
   await check('Container shortcuts preserve nesting, code newlines and undo', async () => {
     await open('keyboard-nested'); await command('container');
