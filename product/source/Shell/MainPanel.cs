@@ -135,7 +135,7 @@ public sealed class MainPanel : Window
             var label = new Grid();
             label.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
             label.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            label.Children.Add(new ModuleIcon(entry.Id) { VerticalAlignment = VerticalAlignment.Center });
+            label.Children.Add(new ModuleIcon(entry.Id) { Width = 16, Height = 16, VerticalAlignment = VerticalAlignment.Center });
             var text = new TextBlock { Text = entry.DisplayName, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap };
             Grid.SetColumn(text, 1); label.Children.Add(text);
             var button = new ActionButton { Content = label, HorizontalContentAlignment = HorizontalAlignment.Stretch,
