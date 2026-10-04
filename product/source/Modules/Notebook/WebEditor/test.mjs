@@ -32,6 +32,21 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Multi-column rows retain the same vertical spacing as standalone containers', async () => {
+    const paragraph = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
+    await open('row-spacing', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      paragraph('Before'), { type: 'layoutRow', content: [paragraph('A'), paragraph('X')] },
+      paragraph('B'), paragraph('C')
+    ] } }));
+    const single = page.locator('.tiptap > .object-container');
+    const before = await single.nth(0).boundingBox();
+    const row = await page.locator('.layout-row > .object-container').first().boundingBox();
+    const b = await single.nth(1).boundingBox();
+    const c = await single.nth(2).boundingBox();
+    const expected = c.y - b.y - b.height;
+    assert.ok(Math.abs(row.y - before.y - before.height - expected) < 1, 'Gap above row must match standalone gap');
+    assert.ok(Math.abs(b.y - row.y - row.height - expected) < 1, 'Gap below row must match standalone gap');
+  });
   await check('Page layout flows text onto multiple pages, persists and supports undo', async () => {
     await open('layout-pages', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
       { type: 'paragraph', content: [{ type: 'text', text: 'Tekst na kolejnych stronach. '.repeat(600) }] }

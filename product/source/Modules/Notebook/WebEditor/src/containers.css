@@ -135,8 +135,8 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 .object-container[data-container-type=codeCell]:is(:hover,.container-row-hover,.container-selected)>.code-cell>.cell-tools button,
 .object-container[data-container-type=codeBlock]:is(:hover,.container-row-hover,.container-selected)>.code-cell>.cell-tools button,
 .code-cell .cell-tools .cell-language-input:focus{visibility:visible;opacity:1;pointer-events:auto;animation:container-chrome-appear 180ms ease-out both}
-.layout-row{display:flex;gap:22px;align-items:flex-start;clear:both;margin:12px 0;cursor:default}
-.layout-row>.object-container{flex:1 1 0;width:0;min-width:60px}
+.layout-row{display:flex;gap:22px;align-items:flex-start;clear:both;margin:0 0 13px;cursor:default}
+.layout-row>.object-container{flex:1 1 0;width:0;min-width:60px;margin-bottom:0}
 .layout-row>.object-container[style*="width:"]{flex:0 0 auto;max-width:none}
 
 /* Native fragmentation retains a single editable document and its history. */
