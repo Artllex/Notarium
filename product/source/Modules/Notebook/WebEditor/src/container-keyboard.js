@@ -34,6 +34,7 @@ export class ContainerKeyboard {
     const newline = event.key === 'Enter' && !event.ctrlKey && !event.metaKey && !event.shiftKey;
     if (!create && !next && !newline) return;
     if (newline && event.target.closest('.cm-editor,.rich-label')) return;
+    if (newline && (this.editor.isActive('listItem') || this.editor.isActive('taskItem'))) return;
     event.preventDefault(); event.stopImmediatePropagation();
     if (newline) {
       if (this.editor.state.selection.$from.parent.type.spec.code) this.editor.commands.insertContent('\n');

@@ -32,6 +32,20 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Typed list markers after a hard break activate lists and Enter continues items', async () => {
+    for (const [marker, selector] of [['1.', 'ol'], ['-', 'ul']]) {
+      await open('typed-list-' + marker, 'Lista:');
+      await page.locator('.tiptap p').click();
+      await page.keyboard.press('End');
+      await page.keyboard.press('Enter');
+      await page.keyboard.type(marker + ' pierwszy');
+      assert.equal(await page.locator('.tiptap ' + selector).count(), 1);
+      await page.keyboard.press('Enter');
+      await page.keyboard.type('drugi');
+      assert.equal(await page.locator('.tiptap ' + selector + ' > li').count(), 2);
+      assert.equal(await page.locator('.tiptap ' + selector + ' > li').last().textContent(), 'drugi');
+    }
+  });
   await check('Multi-column rows retain the same vertical spacing as standalone containers', async () => {
     const paragraph = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
     await open('row-spacing', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [

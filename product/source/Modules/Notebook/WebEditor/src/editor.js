@@ -72,6 +72,28 @@ const editor = new Editor({
   content: '<p></p>',
   editorProps: {
     attributes: { spellcheck: 'true', 'aria-label': 'Edytor notatki' },
+    handleTextInput(view, from, to, text) {
+      if (text !== ' ' || from !== to) return false;
+      const $from = view.state.doc.resolve(from), paragraph = $from.parent;
+      if (paragraph.type.name !== 'paragraph') return false;
+      let lineStart = 0;
+      paragraph.forEach((node, offset) => { if (node.type.name === 'hardBreak' && offset < $from.parentOffset) lineStart = offset + node.nodeSize; });
+      if (!lineStart) return false; // StarterKit handles markers at the beginning of a paragraph.
+      const marker = paragraph.textBetween(lineStart, $from.parentOffset);
+      const ordered = /^(\d+)\.$/.exec(marker);
+      if (!ordered && marker !== '-') return false;
+      const schema = view.state.schema;
+      const before = paragraph.type.create(paragraph.attrs, paragraph.content.cut(0, lineStart - 1));
+      const itemParagraph = schema.nodes.paragraph.create(null, paragraph.content.cut($from.parentOffset));
+      const list = schema.nodes[ordered ? 'orderedList' : 'bulletList'].create(ordered ? { start: Number(ordered[1]) } : null,
+        schema.nodes.listItem.create(null, itemParagraph));
+      const group = schema.nodes.blockGroup.create(null, [before, list]);
+      const start = $from.before();
+      const tr = view.state.tr.replaceWith(start, $from.after(), group);
+      tr.setSelection(TextSelection.create(tr.doc, start + 1 + before.nodeSize + 3));
+      view.dispatch(tr.scrollIntoView());
+      return true;
+    },
     handleClick(_view, _pos, event) {
       const link = event.target.closest('a');
       if (!link) return false;
