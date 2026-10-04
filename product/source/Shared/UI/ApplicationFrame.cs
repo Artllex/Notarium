@@ -119,7 +119,13 @@ public sealed class ApplicationFrame : Grid
         brand.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         var brandButton = new ActionButton { Content = new BrandIcon { Width = 28, Height = 28 }, Width = 28, Height = 28, Padding = new Thickness(0), ToolTip = "Ukryj panel boczny" };
         System.Windows.Automation.AutomationProperties.SetName(brandButton, "Ukryj panel boczny");
-        brandButton.Click += (_, _) => toggleSidebar?.Invoke();
+          brandButton.Click += (_, _) => toggleSidebar?.Invoke();
+          if (toggleSidebar is null) {
+              brandButton.ToolTip = null;
+              brandButton.IsHitTestVisible = false;
+              brandButton.Focusable = false;
+              System.Windows.Automation.AutomationProperties.SetName(brandButton, "Notarium");
+          }
         brand.Children.Add(brandButton);
         var brandText = new TextBlock { Text = "Notarium", Foreground = UiPolicy.Current.TextBrush, FontSize = 18, FontWeight = FontWeights.SemiBold, Margin = new Thickness(9, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap };
         SetColumn(brandText, 1); brand.Children.Add(brandText); grid.Children.Add(brand);

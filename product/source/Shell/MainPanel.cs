@@ -38,7 +38,7 @@ public sealed class MainPanel : Window
         }
         if (catalog.Modules.Count == 0) panel.Children.Add(new TextBlock { Text = "Brak zainstalowanych modułów." });
         foreach (var error in catalog.Errors) panel.Children.Add(new TextBlock { Text = "Nie można załadować modułu: " + error, TextWrapping = TextWrapping.Wrap });
-        frame.Sidebar.Content = ApplicationFrame.SidebarLayout(panel, null, frame.ToggleSidebar);
+        frame.Sidebar.Content = ApplicationFrame.SidebarLayout(panel, null);
         var workspace = new StackPanel { Margin = new Thickness(24, 20, 24, 20) };
         workspace.Children.Add(new TextBlock { Text = "Notarium", FontSize = 28, Margin = new Thickness(0, 0, 0, 28) });
         workspace.Children.Add(new TextBlock { Text = "Proponowane", FontSize = 21, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 7) });
