@@ -12,7 +12,7 @@ import { TableKit } from '@tiptap/extension-table';
 import TextAlign from '@tiptap/extension-text-align';
 import { NumberedMath, CaptionImage } from './document-elements.js';
 import { setupMedia, openMath, openImage, editImage, openTable, dismissMedia } from './media.js';
-import { EditorState, Plugin, TextSelection } from '@tiptap/pm/state';
+import { EditorState, Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 import { DOMParser as PMParser } from '@tiptap/pm/model';
 import { closeHistory } from '@tiptap/pm/history';
 import { CodeCell, CodeBlockSurface } from './code-cell.js';
@@ -25,6 +25,21 @@ import { ContainerKeyboard } from './container-keyboard.js';
 import { setupPageLayout, normalizeLayout } from './page-layout.js';
 import { listClipboardText } from './list-clipboard.js';
 let pageLayout;
+const lineListUndoKey = new PluginKey('lineListUndo');
+const lineListUndo = Extension.create({
+  name: 'lineListUndo',
+  addProseMirrorPlugins() {
+    return [new Plugin({
+      key: lineListUndoKey,
+      isInputRules: true,
+      state: {
+        init: () => null,
+        apply: (tr, previous) => tr.getMeta(lineListUndoKey) ||
+          (tr.docChanged || tr.selectionSet ? null : previous)
+      }
+    })];
+  }
+});
 
 const post = message => window.chrome?.webview?.postMessage(message);
 const sessions = new Map();
@@ -65,7 +80,7 @@ const editor = new Editor({
   element: document.querySelector('#editor'),
   extensions: [Extension.create({ name: 'documentLayout', addGlobalAttributes: () => [{ types: ['doc'], attributes: { layout: { default: 'note' }, contentWidth: { default: null }, pageLayout: { default: null } } }] }), StarterKit.configure({ codeBlock: false, link: { openOnClick: false, autolink: true } }), TextStyle, Color, FontFamily,
     Highlight.configure({ multicolor: true }), TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    TaskList, TaskItem.configure({ nested: true }), CodeCell, CodeBlockSurface, ContainerAttributes, LayoutRow, BlockGroup, autoEmptyAfterRow,
+    TaskList, TaskItem.configure({ nested: true }), CodeCell, CodeBlockSurface, ContainerAttributes, LayoutRow, BlockGroup, autoEmptyAfterRow, lineListUndo,
     CaptionImage.configure({ allowBase64: true, onEdit: editImage }),
     TableKit.configure({ table: { resizable: true } }),
     InlineMath.configure({ katexOptions: { throwOnError: false, trust: false, maxExpand: 1000 } }),
@@ -95,6 +110,7 @@ const editor = new Editor({
       const start = $from.before();
       const tr = view.state.tr.replaceWith(start, $from.after(), group);
       tr.setSelection(TextSelection.create(tr.doc, start + 1 + before.nodeSize + 3));
+      tr.setMeta(lineListUndoKey, { transform: tr, from, to, text });
       view.dispatch(tr.scrollIntoView());
       return true;
     },

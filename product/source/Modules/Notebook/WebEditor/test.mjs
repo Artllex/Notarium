@@ -32,6 +32,19 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Backspace reverses automatic list activation without losing preceding text', async () => {
+    for (const marker of ['1.', '-']) for (const prefix of ['', 'Lista:']) {
+      await open('list-backspace-' + marker + '-' + prefix, prefix);
+      await page.locator('.tiptap p').click();
+      await page.keyboard.press('End');
+      if (prefix) await page.keyboard.press('Enter');
+      await page.keyboard.type(marker + ' ');
+      assert.equal(await page.locator('.tiptap ol,.tiptap ul').count(), 1);
+      await page.keyboard.press('Backspace');
+      assert.equal(await page.locator('.tiptap ol,.tiptap ul').count(), 0);
+      if (prefix) assert.ok((await page.locator('.tiptap').textContent()).includes(prefix));
+    }
+  });
   await check('Copying multiple list items includes markers, a single item omits its marker', async () => {
     for (const type of ['orderedList', 'bulletList']) {
       await open('clipboard-' + type, '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
