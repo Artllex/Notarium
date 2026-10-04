@@ -43,7 +43,6 @@ public sealed class MainPanel : Window
         foreach (var error in catalog.Errors) panel.Children.Add(new TextBlock { Text = "Nie można załadować modułu: " + error, TextWrapping = TextWrapping.Wrap });
         frame.Sidebar.Content = ApplicationFrame.SidebarLayout(panel, null, onBrandHover: ResetModulePreview);
         var workspace = new StackPanel { Margin = new Thickness(24, 20, 24, 20) };
-        _workspaceTitle.MouseEnter += (_, _) => ResetModulePreview();
         workspace.Children.Add(_workspaceTitle);
         workspace.Children.Add(new TextBlock { Text = "Proponowane", FontSize = 21, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 7) });
         workspace.Children.Add(new TextBlock { Text = "Ostatnio używane notatki i pliki", Foreground = new SolidColorBrush(Color.FromRgb(170, 170, 170)), Margin = new Thickness(0, 0, 0, 14) });
