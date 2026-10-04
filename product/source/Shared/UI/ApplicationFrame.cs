@@ -19,6 +19,7 @@ public sealed class ApplicationFrame : Grid
     private readonly GridSplitter _sidebarSplitter;
     private readonly ActionButton _sidebarToggle;
     private readonly BrandIcon _titleBrandIcon;
+    private readonly bool _interactiveTitleLogo;
     private double _lastSidebarWidth = 250;
     private double _dragStartSidebarWidth = 250;
     public bool RestoreSidebarFromWorkspace { get; set; }
@@ -35,14 +36,15 @@ public sealed class ApplicationFrame : Grid
         _separatorLine.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         _sidebarSplitter.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         _sidebarToggle.ToolTip = show ? "Ukryj panel boczny" : "Pokaż panel boczny";
-        _titleBrandIcon.Width = _titleBrandIcon.Height = show ? 16 : 28;
+        _titleBrandIcon.Width = _titleBrandIcon.Height = !_interactiveTitleLogo || show ? 16 : 28;
         _sidebarToggle.Width = _sidebarToggle.Height = show ? 20 : 28;
         _sidebarToggle.Visibility = !show && RestoreSidebarFromWorkspace ? Visibility.Collapsed : Visibility.Visible;
         SidebarVisibilityChanged?.Invoke(show);
     }
 
-    public ApplicationFrame(Window owner)
+    public ApplicationFrame(Window owner, bool interactiveTitleLogo = true)
     {
+        _interactiveTitleLogo = interactiveTitleLogo;
         Background = UiPolicy.Current.SurfaceBrush;
         owner.Background = UiPolicy.Current.SurfaceBrush; owner.Foreground = UiPolicy.Current.TextBrush;
         owner.FontFamily = new FontFamily(UiPolicy.Current.FontFamily);
@@ -82,7 +84,12 @@ public sealed class ApplicationFrame : Grid
         System.Windows.Automation.AutomationProperties.SetName(_sidebarToggle, "Pokaż lub ukryj panel boczny");
         _sidebarToggle.Click += (_, _) => ToggleSidebar();
         WindowChrome.SetIsHitTestVisibleInChrome(_sidebarToggle, true);
-        windowBrand.Children.Add(_sidebarToggle);
+        if (interactiveTitleLogo) windowBrand.Children.Add(_sidebarToggle);
+        else {
+            _sidebarToggle.Content = null;
+            _titleBrandIcon.Margin = new Thickness(2, 0, 5, 0);
+            windowBrand.Children.Add(_titleBrandIcon);
+        }
         windowBrand.Children.Add(new TextBlock { Text = "Notarium", VerticalAlignment = VerticalAlignment.Center, FontSize = 12 });
         title.Children.Add(windowBrand);
         title.MouseLeftButtonDown += (_, e) => { if (e.ClickCount == 2) owner.WindowState = owner.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized; else if (e.ButtonState == MouseButtonState.Pressed) owner.DragMove(); };

@@ -16,7 +16,7 @@ public sealed class MainPanel : Window
         Title = "Notarium"; Width = 900; Height = 600; MinWidth = 500; MinHeight = 300;
         Background = new SolidColorBrush(Color.FromRgb(30, 30, 30)); Foreground = Brushes.White;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        var frame = new ApplicationFrame(this);
+        var frame = new ApplicationFrame(this, interactiveTitleLogo: false);
         var panel = new StackPanel { Margin = new Thickness(8, 0, 8, 0) };
         var catalog = _catalog = new ModuleCatalog(Path.Combine(AppContext.BaseDirectory, "Modules"));
         foreach (var entry in catalog.Entries)
