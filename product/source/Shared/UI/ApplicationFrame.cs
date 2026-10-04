@@ -131,7 +131,11 @@ public sealed class ApplicationFrame : Grid
             grid.Children.Add(label);
             navigationRow = 2;
         }
-        SetRow(navigation, navigationRow); grid.Children.Add(navigation);
+          var moduleList = new AnimatedModuleList { Content = navigation };
+          brandText.Cursor = System.Windows.Input.Cursors.Hand;
+          brandText.ToolTip = "Zwiń lub rozwiń listę modułów";
+          brandText.MouseLeftButtonDown += (_, e) => { moduleList.Toggle(); e.Handled = true; };
+          SetRow(moduleList, navigationRow); grid.Children.Add(moduleList);
         var footer = new StackPanel { Margin = new Thickness(8, 10, 8, 20) };
         foreach (var (text, glyph) in new[] { ("Konto", "\uE77B"), ("Ustawienia", "\uE713") })
         {

@@ -7,10 +7,10 @@
                 <Grid.RowDefinitions><RowDefinition Height="52" /><RowDefinition Height="Auto" /><RowDefinition Height="46" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                 <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <ui:ActionButton Width="28" Height="28" HorizontalAlignment="Left" Margin="10,0,0,0" Padding="0" ToolTip="Ukryj panel boczny" Click="SidebarIcon_Click" AutomationProperties.Name="Ukryj panel boczny"><ui:BrandIcon Width="28" Height="28" /></ui:ActionButton>
-                    <TextBlock Text="Notarium" Foreground="{StaticResource Text}" Margin="47,0,6,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                    <TextBlock Text="Notarium" Foreground="{StaticResource Text}" Margin="47,0,6,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Cursor="Hand" ToolTip="Zwiń lub rozwiń listę modułów" MouseLeftButtonDown="ModuleListToggle_Click" />
                 </Grid>
 
-                <Border Grid.Row="1" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,0,0,6"><ContentControl x:Name="ModuleNavigation" /></Border>
+                <Border Grid.Row="1" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,0,0,6"><ui:AnimatedModuleList x:Name="ModuleNavigation" /></Border>
                 <Grid Grid.Row="2" Margin="6,3,6,7">
                     <Border Background="#2B2B2B" BorderBrush="#3D3D3D" BorderThickness="1" CornerRadius="5" />
                     <TextBlock Text="⌕" FontSize="19" Foreground="{StaticResource Muted}" Margin="11,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False" />
