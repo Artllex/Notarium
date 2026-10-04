@@ -23,6 +23,7 @@ import { editContainer, dismissContainer } from './container-dialog.js';
 import { textTarget, clearTextTarget } from './rich-label.js';
 import { ContainerKeyboard } from './container-keyboard.js';
 import { setupPageLayout, normalizeLayout } from './page-layout.js';
+import { listClipboardText } from './list-clipboard.js';
 let pageLayout;
 
 const post = message => window.chrome?.webview?.postMessage(message);
@@ -72,6 +73,9 @@ const editor = new Editor({
   content: '<p></p>',
   editorProps: {
     attributes: { spellcheck: 'true', 'aria-label': 'Edytor notatki' },
+    clipboardTextSerializer(slice, view) {
+      return listClipboardText(slice, view.state) ?? slice.content.textBetween(0, slice.content.size, '\n\n', '\n');
+    },
     handleTextInput(view, from, to, text) {
       if (text !== ' ' || from !== to) return false;
       const $from = view.state.doc.resolve(from), paragraph = $from.parent;

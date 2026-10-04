@@ -478,7 +478,7 @@ export function setupContainers(editor, options) {
     const json = selection.node.toJSON();
     if (rect) json.attrs = { ...json.attrs, boxWidth: Math.round(rect.width), boxHeight: Math.round(rect.height), boxAlign: 'left' };
     event.clipboardData.setData(containerFormat, JSON.stringify(json));
-    event.clipboardData.setData('text/plain', selection.node.textContent || '');
+    event.clipboardData.setData('text/plain', listClipboardText(editor.state.selection.content(), editor.state) ?? selection.node.textContent ?? '');
     event.preventDefault();
   };
   const activeBoundary = () => boundaryTarget?.doc === editor.state.doc &&
@@ -857,3 +857,4 @@ export function alignContainer(editor, alignment) {
   editor.view.dispatch(closeHistory(editor.state.tr).setNodeMarkup(selection.from, undefined, getContainerType(node).copyAttrs(attrs)));
   return true;
 }
+import { listClipboardText } from './list-clipboard.js';

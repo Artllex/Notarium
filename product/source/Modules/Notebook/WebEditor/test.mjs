@@ -32,6 +32,23 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Copying multiple list items includes markers, a single item omits its marker', async () => {
+    for (const type of ['orderedList', 'bulletList']) {
+      await open('clipboard-' + type, '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+        { type, attrs: type === 'orderedList' ? { start: 3 } : {}, content: ['Alpha', 'Beta', 'Gamma'].map(text => ({ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] })) }
+      ] } }));
+      const copy = async (first, last) => page.evaluate(({ first, last }) => {
+        const editor = window.notatnik.editor, positions = [];
+        editor.state.doc.descendants((node, pos) => { if (node.type.name === 'paragraph') positions.push({ from: pos + 1, to: pos + 1 + node.content.size }); });
+        editor.commands.setTextSelection({ from: positions[first].from, to: positions[last].to });
+        const data = new DataTransfer();
+        editor.view.dom.dispatchEvent(new ClipboardEvent('copy', { clipboardData: data, bubbles: true, cancelable: true }));
+        return data.getData('text/plain');
+      }, { first, last });
+      assert.equal(await copy(1, 1), 'Beta');
+      assert.equal(await copy(1, 2), type === 'orderedList' ? '4. Beta\n5. Gamma' : '- Beta\n- Gamma');
+    }
+  });
   await check('Typed list markers after a hard break activate lists and Enter continues items', async () => {
     for (const [marker, selector] of [['1.', 'ol'], ['-', 'ul']]) {
       await open('typed-list-' + marker, 'Lista:');
