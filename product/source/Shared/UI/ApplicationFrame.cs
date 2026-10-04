@@ -36,8 +36,8 @@ public sealed class ApplicationFrame : Grid
         _separatorLine.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         _sidebarSplitter.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         _sidebarToggle.ToolTip = show ? "Ukryj panel boczny" : "Pokaż panel boczny";
-        _titleBrandIcon.Width = _titleBrandIcon.Height = !_interactiveTitleLogo || show ? 16 : 28;
-        _sidebarToggle.Width = _sidebarToggle.Height = show ? 20 : 28;
+        _titleBrandIcon.Width = _titleBrandIcon.Height = 16;
+        _sidebarToggle.Width = _sidebarToggle.Height = 20;
         _sidebarToggle.Visibility = Visibility.Visible;
         SidebarVisibilityChanged?.Invoke(show);
     }
