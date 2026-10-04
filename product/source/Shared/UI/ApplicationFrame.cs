@@ -114,7 +114,7 @@ public sealed class ApplicationFrame : Grid
         Status.Content = new Border { Background = UiPolicy.Brush("#262626"), BorderBrush = (Brush)owner.FindResource("Line"), BorderThickness = new Thickness(0, 1, 0, 0) };
         SetRow(Status, 3); SetColumnSpan(Status, 3); Children.Add(Status);
     }
-    public static Grid SidebarLayout(UIElement navigation, string? heading, Action? toggleSidebar = null)
+    public static Grid SidebarLayout(UIElement navigation, string? heading, Action? toggleSidebar = null, Action? onBrandHover = null)
     {
         var grid = new Grid();
         var hasHeading = !string.IsNullOrWhiteSpace(heading);
@@ -148,6 +148,7 @@ public sealed class ApplicationFrame : Grid
           brandText.Cursor = System.Windows.Input.Cursors.Hand;
           brandText.ToolTip = "Zwiń lub rozwiń listę modułów";
           brandText.MouseLeftButtonDown += (_, e) => { moduleList.Toggle(); e.Handled = true; };
+          brandText.MouseEnter += (_, _) => onBrandHover?.Invoke();
           SetRow(moduleList, navigationRow); grid.Children.Add(moduleList);
         var footer = new StackPanel { Margin = new Thickness(8, 10, 8, 20) };
         foreach (var (text, glyph) in new[] { ("Konto", "\uE77B"), ("Ustawienia", "\uE713") })

@@ -11,6 +11,8 @@ public sealed class MainPanel : Window
     private readonly Dictionary<string, Window> _windows = new();
     private readonly ModuleCatalog _catalog;
     private readonly StackPanel _recentList = new();
+    private readonly TextBlock _workspaceTitle = new() { Text = "Notarium", FontSize = 28, Margin = new Thickness(0, 0, 0, 28) };
+    private string? _previewModuleId;
     public MainPanel()
     {
         Title = "Notarium"; Width = 900; Height = 600; MinWidth = 500; MinHeight = 300;
@@ -29,6 +31,7 @@ public sealed class MainPanel : Window
             Grid.SetColumn(moduleName, 1); label.Children.Add(moduleName);
             var button = new ActionButton { Content = label, HorizontalContentAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(0, 4, 0, 4), ToolTip = entry.IsAvailable ? "Otwórz moduł" : "Moduł nie jest zainstalowany" };
             System.Windows.Automation.AutomationProperties.SetName(button, entry.DisplayName);
+            button.MouseEnter += (_, _) => PreviewModule(entry.Id, entry.DisplayName);
             button.Click += (_, _) =>
             {
                 if (entry.Implementation is { } module) Open(module);
@@ -38,9 +41,10 @@ public sealed class MainPanel : Window
         }
         if (catalog.Modules.Count == 0) panel.Children.Add(new TextBlock { Text = "Brak zainstalowanych modułów." });
         foreach (var error in catalog.Errors) panel.Children.Add(new TextBlock { Text = "Nie można załadować modułu: " + error, TextWrapping = TextWrapping.Wrap });
-        frame.Sidebar.Content = ApplicationFrame.SidebarLayout(panel, null);
+        frame.Sidebar.Content = ApplicationFrame.SidebarLayout(panel, null, onBrandHover: ResetModulePreview);
         var workspace = new StackPanel { Margin = new Thickness(24, 20, 24, 20) };
-        workspace.Children.Add(new TextBlock { Text = "Notarium", FontSize = 28, Margin = new Thickness(0, 0, 0, 28) });
+        _workspaceTitle.MouseEnter += (_, _) => ResetModulePreview();
+        workspace.Children.Add(_workspaceTitle);
         workspace.Children.Add(new TextBlock { Text = "Proponowane", FontSize = 21, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 7) });
         workspace.Children.Add(new TextBlock { Text = "Ostatnio używane notatki i pliki", Foreground = new SolidColorBrush(Color.FromRgb(170, 170, 170)), Margin = new Thickness(0, 0, 0, 14) });
         workspace.Children.Add(_recentList);
@@ -66,7 +70,19 @@ public sealed class MainPanel : Window
         frame.Menu.Content = menu;
         Content = frame;
         Activated += (_, _) => RefreshRecent();
+        MouseLeave += (_, _) => { if (!IsMouseOver) ResetModulePreview(); };
+        PreviewKeyDown += (_, e) => { if (e.Key == System.Windows.Input.Key.Escape) { ResetModulePreview(); e.Handled = true; } };
         RefreshRecent();
+    }
+    private void PreviewModule(string id, string name)
+    {
+        if (_previewModuleId == id) return;
+        _previewModuleId = id; _workspaceTitle.Text = name; RefreshRecent();
+    }
+    private void ResetModulePreview()
+    {
+        if (_previewModuleId is null) return;
+        _previewModuleId = null; _workspaceTitle.Text = "Notarium"; RefreshRecent();
     }
     private void RefreshRecent()
     {
@@ -74,6 +90,7 @@ public sealed class MainPanel : Window
         var items = new List<(INotariumModule Module, IRecentDocumentsModule Provider, RecentDocument Document)>();
         foreach (var module in _catalog.Modules)
         {
+            if (_previewModuleId is not null && module.Id != _previewModuleId) continue;
             if (module is not IRecentDocumentsModule provider) continue;
             try { items.AddRange(provider.GetRecentDocuments().Select(document => (module, provider, document))); }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
@@ -110,7 +127,7 @@ public sealed class MainPanel : Window
             };
             _recentList.Children.Add(button);
         }
-        if (_recentList.Children.Count == 0) _recentList.Children.Add(new TextBlock { Text = "Tu pojawią się ostatnio używane notatki i pliki.", Foreground = new SolidColorBrush(Color.FromRgb(160, 160, 160)) });
+        if (_recentList.Children.Count == 0) _recentList.Children.Add(new TextBlock { Text = _previewModuleId is null ? "Tu pojawią się ostatnio używane notatki i pliki." : "Brak ostatnio używanych dokumentów w tym module.", Foreground = new SolidColorBrush(Color.FromRgb(160, 160, 160)) });
     }
     private Window? Open(INotariumModule module)
     {
