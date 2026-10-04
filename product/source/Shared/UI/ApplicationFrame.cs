@@ -38,7 +38,7 @@ public sealed class ApplicationFrame : Grid
         _sidebarToggle.ToolTip = show ? "Ukryj panel boczny" : "Pokaż panel boczny";
         _titleBrandIcon.Width = _titleBrandIcon.Height = !_interactiveTitleLogo || show ? 16 : 28;
         _sidebarToggle.Width = _sidebarToggle.Height = show ? 20 : 28;
-        _sidebarToggle.Visibility = !show && RestoreSidebarFromWorkspace ? Visibility.Collapsed : Visibility.Visible;
+        _sidebarToggle.Visibility = Visibility.Visible;
         SidebarVisibilityChanged?.Invoke(show);
     }
 
