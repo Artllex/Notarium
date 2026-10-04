@@ -8,6 +8,11 @@ namespace Notarium.UI;
 public sealed class AnimatedModuleList : ContentControl
 {
     private bool _expanded = true;
+    public bool IsExpanded
+    {
+        get => _expanded;
+        set { _expanded = value; BeginAnimation(HeightProperty, null); Height = value ? double.NaN : 0; }
+    }
     public AnimatedModuleList() { ClipToBounds = true; VerticalAlignment = VerticalAlignment.Top; }
     public void Toggle()
     {
