@@ -75,7 +75,7 @@ try {
     assert.equal(await page.locator('.layout-paper').count(), 0);
     assert.equal(await page.locator('#editor').evaluate(el => el.classList.contains('document-paged')), false);
   });
-  await check('A full fixed-width row rejects an additional container without changing the document', async () => {
+  await check('A full fixed-width row shrinks existing columns to fit an additional container', async () => {
     await open('full-row-drop', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
       { type: 'layoutRow', content: ['A', 'B'].map(text => ({ type: 'paragraph', attrs: { boxWidth: 475 }, content: [{ type: 'text', text }] })) },
       { type: 'paragraph', content: [{ type: 'text', text: 'Source' }] }
@@ -85,8 +85,15 @@ try {
     const target = await page.locator('.layout-row > .object-container').last().boundingBox();
     await page.mouse.move(source.x + 10, source.y + 2); await page.mouse.down();
     await page.mouse.move(target.x + target.width - 10, target.y + target.height / 2, { steps: 8 });
-    assert.equal(await page.locator('.block-drop-marker').isVisible(), false);
+    assert.equal(await page.locator('.block-drop-marker').isVisible(), true);
     await page.mouse.up();
+    assert.equal(await page.locator('.layout-row > .object-container').count(), 3);
+    const bounds = await page.locator('.layout-row').evaluate(row => {
+      const rect = row.getBoundingClientRect();
+      return [...row.children].map(child => { const r = child.getBoundingClientRect(); return { width: r.width, inside: r.right <= rect.right + 1 && r.left >= rect.left - 1 }; });
+    });
+    assert.ok(bounds.every(box => box.inside && box.width >= 60 && box.width < 475));
+    await command('undo');
     assert.deepEqual(await json(), original);
   });
   await check('Ctrl clicks toggle multiple containers and Escape clears every selection', async () => {

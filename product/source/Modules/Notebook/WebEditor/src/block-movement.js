@@ -53,9 +53,7 @@ export function canMoveBeside(editor, from, targetPos) {
   if (!row?.matches('.layout-row')) return true;
   const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
   const children = [...row.children].filter(dom => dom.matches('.object-container') && dom !== sourceDom);
-  const used = children.reduce((sum, dom) => sum + dom.getBoundingClientRect().width +
-    (parseFloat(getComputedStyle(dom).marginLeft) || 0), 0);
-  return used + children.length * gap + 60 <= row.clientWidth + 1;
+  return (children.length + 1) * 60 + children.length * gap <= row.clientWidth + 1;
 }
 export function moveBeside(editor, from, targetPos, side) {
   const node = editor.state.doc.nodeAt(from), target = editor.state.doc.nodeAt(targetPos);
@@ -65,7 +63,16 @@ export function moveBeside(editor, from, targetPos, side) {
   const to = tr.mapping.map(targetPos), $to = tr.doc.resolve(to);
   const reset = value => value.type.create({ ...value.attrs, boxWidth: null, boxOffsetX: null,
     boxAlign: value.attrs.boxAlign === 'justify' ? 'left' : value.attrs.boxAlign, placement: 'block-left' }, value.content, value.marks);
-  if ($to.parent.type.name === 'layoutRow') tr.insert(side === 'left' ? to : to + target.nodeSize, reset(node));
+  if ($to.parent.type.name === 'layoutRow') {
+    const children = [];
+    $to.parent.forEach((child, offset) => {
+      const isTarget = $to.start() + offset === to;
+      if (isTarget && side === 'left') children.push(reset(node));
+      children.push(reset(child));
+      if (isTarget && side !== 'left') children.push(reset(node));
+    });
+    tr.replaceWith($to.before(), $to.after(), editor.schema.nodes.layoutRow.create($to.parent.attrs, children));
+  }
   else {
     const children = side === 'left' ? [reset(node), reset(target)] : [reset(target), reset(node)];
     tr.replaceWith(to, to + target.nodeSize, editor.schema.nodes.layoutRow.create(null, children));
