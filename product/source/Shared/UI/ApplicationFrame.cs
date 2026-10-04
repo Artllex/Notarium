@@ -135,7 +135,9 @@ public sealed class ApplicationFrame : Grid
           }
         brand.Children.Add(brandButton);
         var brandText = new TextBlock { Text = "Notarium", Foreground = UiPolicy.Current.TextBrush, FontSize = 18, FontWeight = FontWeights.SemiBold, Margin = new Thickness(9, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.NoWrap };
-        SetColumn(brandText, 1); brand.Children.Add(brandText); grid.Children.Add(brand);
+        brandText.Margin = new Thickness(0);
+        var brandTextButton = new PlainTextButton { Content = brandText, Margin = new Thickness(9, 0, 0, 0) };
+        SetColumn(brandTextButton, 1); brand.Children.Add(brandTextButton); grid.Children.Add(brand);
         var navigationRow = 1;
         if (hasHeading)
         {
@@ -146,9 +148,9 @@ public sealed class ApplicationFrame : Grid
         }
           var moduleList = new AnimatedModuleList { Content = navigation };
           brandText.Cursor = System.Windows.Input.Cursors.Hand;
-          brandText.ToolTip = "Zwiń lub rozwiń listę modułów";
-          brandText.MouseLeftButtonDown += (_, e) => { moduleList.Toggle(); e.Handled = true; };
-          brandText.MouseEnter += (_, _) => onBrandHover?.Invoke();
+          brandTextButton.ToolTip = "Zwiń lub rozwiń listę modułów";
+          brandTextButton.Click += (_, e) => { moduleList.Toggle(); e.Handled = true; };
+          brandTextButton.MouseEnter += (_, _) => onBrandHover?.Invoke();
           SetRow(moduleList, navigationRow); grid.Children.Add(moduleList);
         var footer = new StackPanel { Margin = new Thickness(8, 10, 8, 20) };
         foreach (var (text, glyph) in new[] { ("Konto", "\uE77B"), ("Ustawienia", "\uE713") })

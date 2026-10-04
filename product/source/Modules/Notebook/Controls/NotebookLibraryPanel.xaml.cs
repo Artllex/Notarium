@@ -7,7 +7,7 @@ using Notarium.UI;
 namespace Notatnik;
 public partial class NotebookLibraryPanel : CompositePanel {
     public NotebookLibraryPanel() => InitializeComponent();
-    private void ModuleListToggle_Click(object sender, MouseButtonEventArgs e) { ModuleNavigation.Toggle(); e.Handled = true; }
+    private void ModuleListToggle_Click(object sender, RoutedEventArgs e) { ModuleNavigation.Toggle(); e.Handled = true; }
     public event System.EventHandler? SidebarToggleRequested;
     private void SidebarIcon_Click(object sender, RoutedEventArgs e) => SidebarToggleRequested?.Invoke(this, System.EventArgs.Empty);
     private void InlineTitle_LostFocus(object sender, RoutedEventArgs e) => Emit("InlineTitle_LostFocus", sender, e);

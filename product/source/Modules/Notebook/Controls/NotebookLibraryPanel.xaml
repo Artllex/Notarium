@@ -7,7 +7,7 @@
                 <Grid.RowDefinitions><RowDefinition Height="52" /><RowDefinition Height="Auto" /><RowDefinition Height="46" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                 <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <ui:ActionButton Width="28" Height="28" HorizontalAlignment="Left" Margin="10,0,0,0" Padding="0" ToolTip="Ukryj panel boczny" Click="SidebarIcon_Click" AutomationProperties.Name="Ukryj panel boczny"><ui:BrandIcon Width="28" Height="28" /></ui:ActionButton>
-                    <TextBlock Text="Notarium" Foreground="{StaticResource Text}" Margin="47,0,6,0" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Cursor="Hand" ToolTip="Zwiń lub rozwiń listę modułów" MouseLeftButtonDown="ModuleListToggle_Click" />
+                    <ui:PlainTextButton Margin="47,0,6,0" ToolTip="Zwiń lub rozwiń listę modułów" Click="ModuleListToggle_Click"><TextBlock Text="Notarium" Foreground="{StaticResource Text}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" /></ui:PlainTextButton>
                 </Grid>
 
                 <Border Grid.Row="1" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,0,0,6"><ui:AnimatedModuleList x:Name="ModuleNavigation" /></Border>
