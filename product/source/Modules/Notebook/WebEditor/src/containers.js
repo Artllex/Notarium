@@ -756,6 +756,14 @@ export function setupContainers(editor, options) {
   };
   editor.view.dom.parentElement.addEventListener('mousedown', onClickBelowLast, true);
   const clearBoundaryOnOtherClick = event => {
+    if (event.button === 0 && editor.view.dom.parentElement.contains(event.target) &&
+        !event.target.closest?.('.object-container') && !ContainerInteractions.isControl(event.target)) {
+      clearMultiSelection();
+      ContainerVisual.state(editor.view.dom, 'containers-all-selected', false);
+      const selection = editor.state.selection;
+      if (selection instanceof NodeSelection)
+        editor.view.dispatch(editor.state.tr.setSelection(TextSelection.near(editor.state.doc.resolve(selection.from))));
+    }
     if (!event.target.closest?.('.container-pair-resize,.container-gap-boundary')) {
       boundaryTarget = null;
       hideEndCaret();

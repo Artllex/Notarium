@@ -32,6 +32,23 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Clicking empty space beside a selected container clears node and multiple selection', async () => {
+    await open('outside-selection', 'First\n\nSecond');
+    await page.waitForTimeout(100);
+    const first = page.locator('.object-container').first();
+    const box = await first.boundingBox();
+    await page.evaluate(() => window.notatnik.editor.commands.setNodeSelection(0));
+    await page.mouse.click(box.x - 30, box.y + 10);
+    assert.equal(await page.evaluate(() => Boolean(window.notatnik.editor.state.selection.node)), false);
+    assert.equal(await page.locator('.container-selected').count(), 0);
+    await page.keyboard.down('Control');
+    await first.click();
+    await page.locator('.object-container').nth(1).click();
+    await page.keyboard.up('Control');
+    assert.ok(await page.locator('.container-multi-selected').count());
+    await page.mouse.click(box.x - 30, box.y + 10);
+    assert.equal(await page.locator('.container-multi-selected').count(), 0);
+  });
   await check('Deleting a typed list marker keeps a text caret instead of selecting the container', async () => {
     for (const marker of ['1.', '1. ', '- ', '-']) {
       await open('delete-marker-' + marker, 'Lista:');
