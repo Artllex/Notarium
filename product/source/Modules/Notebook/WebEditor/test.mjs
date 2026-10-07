@@ -32,6 +32,18 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('The visible top frame selects containers in every row rather than the row gap', async () => {
+    const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
+    await open('top-frame-rows', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'layoutRow', content: [p('A'), p('B')] },
+      { type: 'layoutRow', content: [p('C'), p('D')] }, p('End')
+    ] } }));
+    for (const text of ['B', 'D']) {
+      const box = await page.locator('.object-container').filter({ has: page.locator('p', { hasText: new RegExp('^' + text + '$') }) }).boundingBox();
+      await page.mouse.click(box.x + 20, box.y - 4);
+      assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.node?.textContent), text);
+    }
+  });
   await check('Boundary paste in a fixed-width row shrinks neighbors without overflow', async () => {
     const p = text => ({ type: 'paragraph', attrs: { boxWidth: 300 }, content: [{ type: 'text', text }] });
     await open('paste-boundary-fit', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [

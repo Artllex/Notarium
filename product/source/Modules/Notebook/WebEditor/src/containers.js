@@ -871,7 +871,7 @@ export function setupContainers(editor, options) {
   };
   document.addEventListener('pointermove', onContainerPointerMove, true);
   const selectGap = event => {
-    if (event.button !== 0 || event.target.closest?.('.container-pair-resize,.container-gap-boundary,.container-type-tools,.container-tools,.container-resize,.container-resize-edge,.container-add-tools')) return;
+    if (event.button !== 0 || event.target.closest?.('.container-select-edge,.container-pair-resize,.container-gap-boundary,.container-type-tools,.container-tools,.container-resize,.container-resize-edge,.container-add-tools')) return;
     const horizontal = rowBoundaryAtPoint(event.clientX, event.clientY);
     if (event.target.closest?.('.object-container') && !horizontal) return;
     const gap = horizontal ? null : gapAtPoint(event.clientX, event.clientY);
