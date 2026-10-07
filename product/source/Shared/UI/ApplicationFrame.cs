@@ -84,12 +84,10 @@ public sealed class ApplicationFrame : Grid
         System.Windows.Automation.AutomationProperties.SetName(_sidebarToggle, "Pokaż lub ukryj panel boczny");
         _sidebarToggle.Click += (_, _) => ToggleSidebar();
         WindowChrome.SetIsHitTestVisibleInChrome(_sidebarToggle, true);
-        if (interactiveTitleLogo) windowBrand.Children.Add(_sidebarToggle);
-        else {
-            _sidebarToggle.Content = null;
-            _titleBrandIcon.Margin = new Thickness(2, 0, 5, 0);
-            windowBrand.Children.Add(_titleBrandIcon);
-        }
+        _sidebarToggle.Content = null;
+        _titleBrandIcon.Margin = new Thickness(2, 0, 5, 0);
+        _titleBrandIcon.IsHitTestVisible = false;
+        windowBrand.Children.Add(_titleBrandIcon);
         windowBrand.Children.Add(new TextBlock { Text = "Notarium", VerticalAlignment = VerticalAlignment.Center, FontSize = 12 });
         title.Children.Add(windowBrand);
         title.MouseLeftButtonDown += (_, e) => { if (e.ClickCount == 2) owner.WindowState = owner.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized; else if (e.ButtonState == MouseButtonState.Pressed) owner.DragMove(); };
