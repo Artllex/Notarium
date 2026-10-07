@@ -506,7 +506,7 @@ export function setupContainers(editor, options) {
         return { ...inner, update(nextNode, nextDecorations, nextInnerDecorations) {
           const parent = view.state.doc.resolve(getPos()).parent;
           if (parent.type.name !== 'blockGroup' || !parent.attrs.textFlow) return false;
-          return update ? update(nextNode, nextDecorations, nextInnerDecorations) : nextNode.type === node.type;
+          return update ? update(nextNode, nextDecorations, nextInnerDecorations) : nextNode.sameMarkup(node);
         } };
       }
       return new ContainerView(inner, { node, editor, getPos, noteId: options.noteId, setBoundaryTarget }, viewOptions);

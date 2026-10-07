@@ -104,6 +104,10 @@ const editor = new Editor({
   element: document.querySelector('#editor'),
   extensions: [Extension.create({ name: 'documentLayout', addGlobalAttributes: () => [{ types: ['doc'], attributes: { layout: { default: 'note' }, contentWidth: { default: null }, pageLayout: { default: null } } }] }), StarterKit.configure({ codeBlock: false, trailingNode: false, link: { openOnClick: false, autolink: true } }), containerTrailingNode, textFlowSelection, TextStyle, Color, FontFamily,
     Highlight.configure({ multicolor: true }), TextAlign.configure({ types: ['heading', 'paragraph'] }),
+    Extension.create({ name: 'paragraphLineSpacing', addGlobalAttributes: () => [{ types: ['paragraph', 'heading'], attributes: {
+      lineSpacing: { default: null, parseHTML: el => Number(el.style.lineHeight) || null,
+        renderHTML: attrs => attrs.lineSpacing ? { style: `line-height:${attrs.lineSpacing}` } : {} }
+    } }] }),
     TaskList, TaskItem.configure({ nested: true }), CodeCell, CodeBlockSurface, ContainerAttributes, LayoutRow, BlockGroup, autoEmptyAfterRow, lineListUndo,
     CaptionImage.configure({ allowBase64: true, onEdit: editImage }),
     TableKit.configure({ table: { resizable: true } }),
@@ -254,6 +258,20 @@ function command(message) {
   }
   if (action === 'undo') { editor.commands.undo(); return; }
   if (action === 'redo') { editor.commands.redo(); return; }
+  if (action === 'lineSpacing') {
+    const spacing = Number(value);
+    if (!Number.isFinite(spacing) || spacing < 1 || spacing > 2) return;
+    const { from, to, empty } = editor.state.selection;
+    const tr = closeHistory(editor.state.tr);
+    editor.state.doc.nodesBetween(from, to, (node, pos) => {
+      if (!['paragraph', 'heading'].includes(node.type.name)) return;
+      if (!empty && (pos + node.nodeSize <= from || pos >= to)) return;
+      tr.setNodeMarkup(pos, undefined, { ...node.attrs, lineSpacing: spacing });
+    });
+    if (tr.docChanged) editor.view.dispatch(tr);
+    editor.view.dispatch(closeHistory(editor.state.tr));
+    return;
+  }
   if (action === 'persistentHighlights') {
     document.body.classList.toggle('persistent-container-highlights', value === true || value === 'true');
     return;
@@ -337,7 +355,6 @@ function receive(message) {
       }
       case 'view':
         document.documentElement.style.setProperty('--text-size', `${16 * message.zoom / 100}px`);
-        document.documentElement.style.setProperty('--line-height', String(message.spacing));
         applyDocumentLayout(editor.state.doc); break;
       case 'focus': textTarget(editor).commands.focus(); break;
       case 'close': sessions.delete(message.noteId); dirty.delete(message.noteId); break;

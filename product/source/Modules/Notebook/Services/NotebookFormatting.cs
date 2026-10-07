@@ -85,6 +85,7 @@ public sealed class NotebookFormatting
             item.Click += (_, _) =>
             {
                 Editor.LineSpacingFactor = selectedValue;
+                Editor.Execute("lineSpacing", selectedValue.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 _spacingLabel($"↕ {label}");
                 Editor.Focus();
             };

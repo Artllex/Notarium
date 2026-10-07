@@ -32,6 +32,27 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Line spacing formats only selected list paragraphs and supports undo', async () => {
+    await open('selected-spacing', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'paragraph', content: [{ type: 'text', text: 'Lista:' }] },
+      { type: 'orderedList', content: ['One', 'Two', 'Three'].map(text => ({ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] })) }
+    ] } }));
+    await page.waitForTimeout(100);
+    const before = await json();
+    await page.evaluate(() => {
+      const editor = window.notatnik.editor, positions = {};
+      editor.state.doc.descendants((node, pos) => { if (node.type.name === 'paragraph') positions[node.textContent] = pos; });
+      editor.commands.setTextSelection({ from: positions.Two + 1, to: positions.Three + 6 });
+    });
+    await command('lineSpacing', '2');
+    const attrs = await page.evaluate(() => { const result = {}; window.notatnik.editor.state.doc.descendants(node => { if (node.type.name === 'paragraph') result[node.textContent] = node.attrs.lineSpacing; }); return result; });
+    assert.equal(attrs['Lista:'], null);
+    assert.equal(attrs.One, null);
+    assert.equal(attrs.Two, 2);
+    assert.equal(attrs.Three, 2);
+    await command('undo');
+    assert.deepEqual((await json()).content.slice(0, before.content.length), before.content);
+  });
   await check('Clicking empty space beside a selected container clears node and multiple selection', async () => {
     await open('outside-selection', 'First\n\nSecond');
     await page.waitForTimeout(100);
