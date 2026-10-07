@@ -32,6 +32,26 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Pasting beside an occupied column fits the receiving row without shifting other rows', async () => {
+    const p = text => ({ type: 'paragraph', attrs: { boxWidth: 300 }, content: [{ type: 'text', text }] });
+    await open('paste-row-width', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'layoutRow', content: [p('A1'), p('X'), p('B')] },
+      { type: 'layoutRow', content: [p('C'), p('A'), p('D')] }, p('dsd')
+    ] } }));
+    const firstBefore = await page.locator('.layout-row').first().boundingBox();
+    await page.evaluate(() => {
+      const editor = window.notatnik.editor, positions = {};
+      editor.state.doc.descendants((node, pos) => { if (node.type.name === 'paragraph') positions[node.textContent] = pos; });
+      editor.commands.setNodeSelection(positions.A1);
+      const data = new DataTransfer();
+      editor.view.dom.dispatchEvent(new ClipboardEvent('copy', { clipboardData: data, bubbles: true, cancelable: true }));
+      editor.commands.setNodeSelection(positions.A);
+      editor.view.dom.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
+    });
+    assert.equal(await page.locator('.layout-row').nth(1).locator(':scope > .object-container').count(), 4);
+    assert.deepEqual(await page.locator('.layout-row').first().boundingBox(), firstBefore);
+    assert.ok(await page.locator('.layout-row').nth(1).evaluate(row => [...row.children].every(child => child.getBoundingClientRect().right <= row.getBoundingClientRect().right + 1)));
+  });
   await check('Pasting a container replaces selected Empty or Empty with a text caret and supports undo', async () => {
     for (const mode of ['node', 'caret']) {
       const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });

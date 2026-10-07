@@ -584,7 +584,21 @@ export function setupContainers(editor, options) {
       return;
     }
     event.preventDefault(); event.stopImmediatePropagation();
-    const pos = selection.to, tr = closeHistory(editor.state.tr).insert(pos, clone);
+    const pos = selection.to, tr = closeHistory(editor.state.tr);
+    const $pos = editor.state.doc.resolve(selection.from);
+    if ($pos.parent.type.name === 'layoutRow') {
+      const row = editor.view.nodeDOM($pos.before());
+      const gap = parseFloat(getComputedStyle(row).columnGap) || 22;
+      const available = row.clientWidth - gap * $pos.parent.childCount;
+      const cloneWidth = clone.attrs.boxWidth || available / ($pos.parent.childCount + 1);
+      if (cloneWidth + 60 * $pos.parent.childCount > available + 1) return;
+      // Keep copied dimensions; only the receiving row's existing columns share the remaining space.
+      $pos.parent.forEach((child, offset) => {
+        tr.setNodeMarkup($pos.start() + offset, undefined, { ...child.attrs, boxWidth: null, boxOffsetX: null, boxAlign: 'left' });
+      });
+      clone = clone.type.create({ ...clone.attrs, boxOffsetX: null, boxAlign: 'left' }, clone.content, clone.marks);
+    }
+    tr.insert(pos, clone);
     tr.setSelection(NodeSelection.create(tr.doc, pos));
     editor.view.dispatch(tr.scrollIntoView()); editor.view.dispatch(closeHistory(editor.state.tr)); editor.view.focus();
   };
