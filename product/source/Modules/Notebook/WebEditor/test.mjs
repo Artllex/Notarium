@@ -32,6 +32,30 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Paste preserves exact row edges at fractional viewport widths', async () => {
+    const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
+    await open('paste-fractional-width', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'layoutRow', content: [p('A1'), p('X'), p('B')] },
+      { type: 'layoutRow', content: [p('C'), p('A'), p('D')] }
+    ] } }));
+    await page.evaluate(() => { window.notatnik.editor.view.dom.style.width = '901.5px'; });
+    const row = page.locator('.layout-row').nth(1);
+    const before = await row.boundingBox();
+    await page.evaluate(() => {
+      const editor = window.notatnik.editor, positions = {};
+      editor.state.doc.descendants((node, pos) => { if (node.type.name === 'paragraph') positions[node.textContent] = pos; });
+      editor.commands.setNodeSelection(positions.A1);
+      const data = new DataTransfer();
+      editor.view.dom.dispatchEvent(new ClipboardEvent('copy', { clipboardData: data, bubbles: true, cancelable: true }));
+      editor.commands.setTextSelection(positions.D + 1);
+      editor.view.dom.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
+    });
+    const after = await row.boundingBox();
+    assert.equal(after.x, before.x);
+    const last = await row.locator(':scope > .object-container').last().boundingBox();
+    assert.ok(Math.abs(last.x + last.width - before.x - before.width) < 0.05, 'Paste must preserve the precise right edge, without integer rounding');
+    await page.evaluate(() => { window.notatnik.editor.view.dom.style.width = ''; });
+  });
   await check('The visible top frame selects containers in every row rather than the row gap', async () => {
     const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
     await open('top-frame-rows', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [

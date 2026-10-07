@@ -541,7 +541,7 @@ export function setupContainers(editor, options) {
     if (target.kind === 'vertical' && !$pos.nodeBefore?.attrs.boxEmpty && !$pos.nodeAfter?.attrs.boxEmpty) {
       const row = editor.view.nodeDOM($pos.before());
       const gap = parseFloat(getComputedStyle(row).columnGap) || 22;
-      const available = row.clientWidth - gap * $pos.parent.childCount;
+      const available = row.getBoundingClientRect().width - gap * $pos.parent.childCount;
       const width = inserted.attrs.boxWidth || available / ($pos.parent.childCount + 1);
       if (width + 60 * $pos.parent.childCount > available + 1) return false;
       $pos.parent.forEach((child, offset) => {
@@ -609,7 +609,7 @@ export function setupContainers(editor, options) {
     if ($pos.parent.type.name === 'layoutRow') {
       const row = editor.view.nodeDOM($pos.before());
       const gap = parseFloat(getComputedStyle(row).columnGap) || 22;
-      const available = row.clientWidth - gap * $pos.parent.childCount;
+      const available = row.getBoundingClientRect().width - gap * $pos.parent.childCount;
       const cloneWidth = clone.attrs.boxWidth || available / ($pos.parent.childCount + 1);
       if (cloneWidth + 60 * $pos.parent.childCount > available + 1) return;
       // Keep copied dimensions; only the receiving row's existing columns share the remaining space.
