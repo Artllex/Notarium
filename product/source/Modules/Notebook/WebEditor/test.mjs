@@ -32,6 +32,18 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Right leaves the last column for the next container and Left returns', async () => {
+    const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
+    await open('arrows-after-row', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'layoutRow', content: [p('C'), p('D')] }, p('dsd')
+    ] } }));
+    await page.locator('.layout-row p').last().click();
+    await page.keyboard.press('End');
+    await page.keyboard.press('ArrowRight');
+    assert.deepEqual(await page.evaluate(() => ({ text: window.notatnik.editor.state.selection.$from.parent.textContent, offset: window.notatnik.editor.state.selection.$from.parentOffset })), { text: 'dsd', offset: 0 });
+    await page.keyboard.press('ArrowLeft');
+    assert.deepEqual(await page.evaluate(() => ({ text: window.notatnik.editor.state.selection.$from.parent.textContent, offset: window.notatnik.editor.state.selection.$from.parentOffset })), { text: 'D', offset: 1 });
+  });
   await check('Backspace reverses automatic list activation without losing preceding text', async () => {
     for (const marker of ['1.', '-']) for (const prefix of ['', 'Lista:']) {
       await open('list-backspace-' + marker + '-' + prefix, prefix);

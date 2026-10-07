@@ -57,16 +57,23 @@ export class ContainerKeyboard {
     const { state, view } = this.editor;
     const { selection } = state;
     if (!(selection instanceof TextSelection) || !selection.empty || selection.$from.depth < 1) return false;
-    const $from = selection.$from, depth = $from.depth, parent = $from.node(depth - 1);
+    const $from = selection.$from;
+    let depth = $from.depth, parent = $from.node(depth - 1);
     if (!['doc', 'layoutRow', 'blockGroup'].includes(parent.type.name)) return false;
-    const index = $from.index(depth - 1), backward = key === 'ArrowLeft' || key === 'ArrowUp';
+    let index = $from.index(depth - 1);
+    const backward = key === 'ArrowLeft' || key === 'ArrowUp';
     if (key === 'ArrowDown' && parent.type.name === 'doc' && index + 1 === parent.childCount &&
         $from.parent.type.name === 'paragraph' && $from.parent.attrs.boxEmpty && !$from.parent.content.size)
       return true; // Native browser movement otherwise leaves the visible caret outside Empty.
     let target;
     if (backward) {
-      if (index === 0 || (key === 'ArrowLeft' && $from.parentOffset !== 0) ||
+      if ((key === 'ArrowLeft' && $from.parentOffset !== 0) ||
           (key === 'ArrowUp' && !view.endOfTextblock('up'))) return false;
+      while (index === 0 && depth > 1) {
+        depth--; parent = $from.node(depth - 1); index = $from.index(depth - 1);
+        if (!['doc', 'layoutRow', 'blockGroup'].includes(parent.type.name)) return false;
+      }
+      if (index === 0) return false;
       const current = $from.before(depth);
       target = Selection.near(state.doc.resolve(current - 1), -1);
       if (target.from >= current) return false;
@@ -74,6 +81,10 @@ export class ContainerKeyboard {
     } else {
       if ((key === 'ArrowRight' && $from.parentOffset !== $from.parent.content.size) ||
           (key === 'ArrowDown' && !view.endOfTextblock('down'))) return false;
+      while (index + 1 >= parent.childCount && depth > 1) {
+        depth--; parent = $from.node(depth - 1); index = $from.index(depth - 1);
+        if (!['doc', 'layoutRow', 'blockGroup'].includes(parent.type.name)) return false;
+      }
       if (index + 1 >= parent.childCount)
         return key === 'ArrowDown' && parent.type.name === 'doc' ?
           this.navigation.focusEndInsertion?.() === true : false;
