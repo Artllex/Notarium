@@ -224,7 +224,7 @@ try {
     await page.mouse.move(0, 0);
     assert.equal(await panel.isVisible(), false);
   });
-  await check('Type panel warm navigation renews for five seconds and allows returning', async () => {
+  await check('Type warm navigation requires one second of hover and expires three seconds after leaving', async () => {
     await open('type-warm-navigation', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
       { type: 'paragraph', content: [{ type: 'text', text: 'First' }] },
       { type: 'paragraph', content: [{ type: 'text', text: 'Second' }] }
@@ -238,15 +238,25 @@ try {
     assert.equal(await panel(second).isVisible(), false);
     await revealTypeTools(first);
     await page.mouse.move(0, 0);
-    await page.waitForTimeout(3000);
+    await enterArea(second);
+    assert.equal(await panel(second).isVisible(), false, 'A brief Type hover must not start warm navigation');
+    await revealTypeTools(first);
+    await panel(first).hover();
+    await page.waitForTimeout(1100);
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(1500);
     await enterArea(second);
     assert.equal(await panel(second).isVisible(), true);
+    await panel(second).hover();
+    await page.waitForTimeout(1100);
     await page.mouse.move(0, 0);
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
     await enterArea(first);
     assert.equal(await panel(first).isVisible(), true);
+    await panel(first).hover();
+    await page.waitForTimeout(1100);
     await page.mouse.move(0, 0);
-    await page.waitForTimeout(5100);
+    await page.waitForTimeout(3100);
     await enterArea(second);
     assert.equal(await panel(second).isVisible(), false);
   });

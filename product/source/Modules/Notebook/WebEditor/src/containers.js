@@ -723,7 +723,7 @@ export function setupContainers(editor, options) {
   let typePanelWarmUntil = 0;
   let typePanelNote = null;
   const rememberTypePanel = () => {
-    typePanelWarmUntil = performance.now() + 5000;
+    typePanelWarmUntil = performance.now() + 3000;
     typePanelNote = options.noteId?.();
   };
   editor.view.dom.addEventListener('container-type-revealed', rememberTypePanel);

@@ -53,10 +53,15 @@ export class ContainerInteractions {
         view.revealTypePanel();
     };
     view.revealTypePanel = () => {
-      if (!view.dom.classList.contains('container-left-exited'))
-        view.dom.dispatchEvent(new CustomEvent('container-type-revealed', { bubbles: true }));
       ContainerVisual.state(view.dom, 'container-left-exited', true);
     };
+    let typeHoverStarted = null;
+    view.typeTools.addEventListener('pointerenter', () => { typeHoverStarted = performance.now(); });
+    view.typeTools.addEventListener('pointerleave', () => {
+      if (typeHoverStarted !== null && performance.now() - typeHoverStarted >= 1000)
+        view.dom.dispatchEvent(new CustomEvent('container-type-revealed', { bubbles: true }));
+      typeHoverStarted = null;
+    });
     view.onPointerLeave = event => {
       ContainerVisual.clearCorner(view);
       const rect = view.dom.getBoundingClientRect();
