@@ -32,9 +32,24 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Deleting a typed list marker keeps a text caret instead of selecting the container', async () => {
+    for (const marker of ['1.', '1. ', '- ', '-']) {
+      await open('delete-marker-' + marker, 'Lista:');
+      await page.waitForTimeout(100);
+      await page.locator('.tiptap p').click();
+      await page.keyboard.press('End');
+      await page.keyboard.press('Enter');
+      await page.keyboard.type(marker);
+      for (let i = 0; i < marker.length + 1; i++) {
+        await page.keyboard.press('Backspace');
+        assert.equal(await page.evaluate(() => Boolean(window.notatnik.editor.state.selection.node)), false, marker + ' backspace ' + i);
+      }
+    }
+  });
   await check('Automatic lists after a soft break remain a single text container', async () => {
     for (const marker of ['1.', '-']) {
       await open('single-list-container-' + marker, 'Lista:');
+      await page.waitForTimeout(100);
       await page.locator('.tiptap p').click();
       await page.keyboard.press('End');
       await page.keyboard.press('Enter');

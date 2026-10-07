@@ -501,7 +501,14 @@ export function setupContainers(editor, options) {
       const inner = original[type]?.(node, view, getPos, decorations, innerDecorations) ||
         DOMSerializer.renderSpec(document, node.type.spec.toDOM(node));
       if (!['doc', 'layoutRow', 'blockGroup'].includes($pos.parent.type.name)) return inner;
-      if ($pos.parent.type.name === 'blockGroup' && $pos.parent.attrs.textFlow) return inner;
+      if ($pos.parent.type.name === 'blockGroup' && $pos.parent.attrs.textFlow) {
+        const update = inner.update?.bind(inner);
+        return { ...inner, update(nextNode, nextDecorations, nextInnerDecorations) {
+          const parent = view.state.doc.resolve(getPos()).parent;
+          if (parent.type.name !== 'blockGroup' || !parent.attrs.textFlow) return false;
+          return update ? update(nextNode, nextDecorations, nextInnerDecorations) : nextNode.type === node.type;
+        } };
+      }
       return new ContainerView(inner, { node, editor, getPos, noteId: options.noteId, setBoundaryTarget }, viewOptions);
     };
   }
@@ -662,6 +669,9 @@ export function setupContainers(editor, options) {
     if (selection instanceof NodeSelection && types.includes(selection.node.type.name)) return { from: selection.from, to: selection.to };
     if (!selection.empty) return null;
     const $from = selection.$from;
+    for (let depth = 1; depth <= $from.depth; depth++) {
+      if ($from.node(depth).type.name === 'blockGroup' && $from.node(depth).attrs.textFlow) return null;
+    }
     for (let depth = $from.depth; depth > 0; depth--) {
       const node = $from.node(depth), parent = $from.node(depth - 1);
       if (['doc', 'layoutRow', 'blockGroup'].includes(parent.type.name) && types.includes(node.type.name) && !node.textContent)
