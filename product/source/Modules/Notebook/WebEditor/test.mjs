@@ -32,6 +32,25 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Boundary paste in a fixed-width row shrinks neighbors without overflow', async () => {
+    const p = text => ({ type: 'paragraph', attrs: { boxWidth: 300 }, content: [{ type: 'text', text }] });
+    await open('paste-boundary-fit', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'layoutRow', content: [p('A1'), p('X'), p('B')] },
+      { type: 'layoutRow', content: [p('C'), p('A'), p('D')] }, p('dsd')
+    ] } }));
+    await page.evaluate(() => {
+      const editor = window.notatnik.editor;
+      editor.commands.setNodeSelection(1);
+      const data = new DataTransfer();
+      editor.view.dom.dispatchEvent(new ClipboardEvent('copy', { clipboardData: data, bubbles: true, cancelable: true }));
+      const target = editor.view.dom.querySelectorAll('.layout-row')[1].querySelector('.object-container').containerView;
+      target.props.setBoundaryTarget({ kind: 'vertical', before: target.props.getPos() });
+      document.activeElement.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
+    });
+    const row = page.locator('.layout-row').nth(1);
+    assert.equal(await row.locator(':scope > .object-container').count(), 4);
+    assert.ok(await row.evaluate(row => [...row.children].every(child => child.getBoundingClientRect().right <= row.getBoundingClientRect().right + 1)));
+  });
   await check('Pasting beside an occupied column fits the receiving row without shifting other rows', async () => {
     const p = text => ({ type: 'paragraph', attrs: { boxWidth: 300 }, content: [{ type: 'text', text }] });
     await open('paste-row-width', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [

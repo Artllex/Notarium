@@ -538,6 +538,16 @@ export function setupContainers(editor, options) {
     const inserted = target.kind === 'vertical' ? node.type.create(
       { ...node.attrs, boxOffsetX: null, boxAlign: 'left' }, node.content, node.marks) : node;
     let tr = closeHistory(editor.state.tr), insertionPos = pos;
+    if (target.kind === 'vertical' && !$pos.nodeBefore?.attrs.boxEmpty && !$pos.nodeAfter?.attrs.boxEmpty) {
+      const row = editor.view.nodeDOM($pos.before());
+      const gap = parseFloat(getComputedStyle(row).columnGap) || 22;
+      const available = row.clientWidth - gap * $pos.parent.childCount;
+      const width = inserted.attrs.boxWidth || available / ($pos.parent.childCount + 1);
+      if (width + 60 * $pos.parent.childCount > available + 1) return false;
+      $pos.parent.forEach((child, offset) => {
+        tr.setNodeMarkup($pos.start() + offset, undefined, { ...child.attrs, boxWidth: null, boxOffsetX: null, boxAlign: 'left' });
+      });
+    }
     if (target.kind === 'vertical' && inserted.attrs.boxWidth) {
       const required = Math.round(inserted.attrs.boxWidth) + 22;
       const right = tr.doc.nodeAt(pos), left = $pos.nodeBefore;
