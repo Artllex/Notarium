@@ -32,6 +32,23 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Automatic lists after a soft break remain a single text container', async () => {
+    for (const marker of ['1.', '-']) {
+      await open('single-list-container-' + marker, 'Lista:');
+      await page.locator('.tiptap p').click();
+      await page.keyboard.press('End');
+      await page.keyboard.press('Enter');
+      await page.keyboard.type(marker + ' ');
+      assert.equal(await page.locator('.text-flow-content .object-container').count(), 0);
+      assert.equal(await page.locator('[data-container-type=blockGroup]').count(), 1);
+      assert.equal(await page.locator('.block-group-content').count(), 0);
+      assert.equal(await page.locator('.text-flow-content ol,.text-flow-content ul').count(), 1);
+      await page.keyboard.press('Backspace');
+      assert.equal(await page.locator('.tiptap ol,.tiptap ul').count(), 0);
+      assert.equal(await page.locator('.object-container').filter({ hasText: 'Lista:' }).count(), 1);
+      assert.ok((await page.locator('.tiptap').textContent()).includes('Lista:'));
+    }
+  });
   await check('Paste preserves exact row edges at fractional viewport widths', async () => {
     const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
     await open('paste-fractional-width', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [

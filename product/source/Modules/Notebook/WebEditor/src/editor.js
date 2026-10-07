@@ -102,11 +102,11 @@ const editor = new Editor({
       const ordered = /^(\d+)\.$/.exec(marker);
       if (!ordered && marker !== '-') return false;
       const schema = view.state.schema;
-      const before = paragraph.type.create(paragraph.attrs, paragraph.content.cut(0, lineStart - 1));
+      const before = paragraph.type.create(null, paragraph.content.cut(0, lineStart - 1));
       const itemParagraph = schema.nodes.paragraph.create(null, paragraph.content.cut($from.parentOffset));
       const list = schema.nodes[ordered ? 'orderedList' : 'bulletList'].create(ordered ? { start: Number(ordered[1]) } : null,
         schema.nodes.listItem.create(null, itemParagraph));
-      const group = schema.nodes.blockGroup.create(null, [before, list]);
+      const group = schema.nodes.blockGroup.create({ ...paragraph.attrs, textFlow: true }, [before, list]);
       const start = $from.before();
       const tr = view.state.tr.replaceWith(start, $from.after(), group);
       tr.setSelection(TextSelection.create(tr.doc, start + 1 + before.nodeSize + 3));

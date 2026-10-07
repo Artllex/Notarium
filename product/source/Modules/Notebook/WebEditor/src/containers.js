@@ -12,8 +12,9 @@ import { lastLineStartSelection } from './container-keyboard.js';
 const types = Object.keys(containerTypes);
 export const BlockGroup = Node.create({
   name: 'blockGroup', group: 'block', content: 'block+', defining: true, isolating: true,
+  addAttributes: () => ({ textFlow: { default: false, parseHTML: el => el.getAttribute('data-text-flow') === 'true', renderHTML: attrs => attrs.textFlow ? { 'data-text-flow': 'true' } : {} } }),
   parseHTML: () => [{ tag: 'section[data-block-group]' }],
-  renderHTML: ({ HTMLAttributes }) => ['section', { ...HTMLAttributes, 'data-block-group': 'true', class: 'block-group-content' }, 0]
+  renderHTML: ({ node, HTMLAttributes }) => ['section', { ...HTMLAttributes, 'data-block-group': 'true', class: node.attrs.textFlow ? 'text-flow-content' : 'block-group-content' }, 0]
 });
 const backgroundColor = value => /^#[0-9a-f]{6}$/i.test(value || '') ? value : null;
 export const LayoutRow = Node.create({
@@ -500,6 +501,7 @@ export function setupContainers(editor, options) {
       const inner = original[type]?.(node, view, getPos, decorations, innerDecorations) ||
         DOMSerializer.renderSpec(document, node.type.spec.toDOM(node));
       if (!['doc', 'layoutRow', 'blockGroup'].includes($pos.parent.type.name)) return inner;
+      if ($pos.parent.type.name === 'blockGroup' && $pos.parent.attrs.textFlow) return inner;
       return new ContainerView(inner, { node, editor, getPos, noteId: options.noteId, setBoundaryTarget }, viewOptions);
     };
   }
