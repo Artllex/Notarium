@@ -545,7 +545,7 @@ export function setupContainers(editor, options) {
       const width = inserted.attrs.boxWidth || available / ($pos.parent.childCount + 1);
       if (width + 60 * $pos.parent.childCount > available + 1) return false;
       $pos.parent.forEach((child, offset) => {
-        tr.setNodeMarkup($pos.start() + offset, undefined, { ...child.attrs, boxWidth: null, boxOffsetX: null, boxAlign: 'left' });
+        tr.setNodeMarkup($pos.start() + offset, undefined, { ...child.attrs, boxWidth: (available - width) / $pos.parent.childCount, boxOffsetX: null, boxAlign: 'left' });
       });
     }
     if (target.kind === 'vertical' && inserted.attrs.boxWidth) {
@@ -572,7 +572,17 @@ export function setupContainers(editor, options) {
     return true;
   };
   const onPaste = event => {
-    const selection = selectedContainer(), data = event.clipboardData?.getData(containerFormat);
+    let selection = selectedContainer();
+    const data = event.clipboardData?.getData(containerFormat);
+    if (!selection && editor.state.selection.empty) {
+      const $from = editor.state.selection.$from;
+      for (let depth = $from.depth; depth > 0; depth--) {
+        if (types.includes($from.node(depth).type.name) && ['doc', 'layoutRow', 'blockGroup'].includes($from.node(depth - 1).type.name)) {
+          selection = { from: $from.before(depth), to: $from.after(depth) };
+          break;
+        }
+      }
+    }
     const target = activeBoundary();
     const emptyRange = emptyContainerSelection(event);
     const empty = emptyRange && editor.state.doc.nodeAt(emptyRange.from);
@@ -604,7 +614,7 @@ export function setupContainers(editor, options) {
       if (cloneWidth + 60 * $pos.parent.childCount > available + 1) return;
       // Keep copied dimensions; only the receiving row's existing columns share the remaining space.
       $pos.parent.forEach((child, offset) => {
-        tr.setNodeMarkup($pos.start() + offset, undefined, { ...child.attrs, boxWidth: null, boxOffsetX: null, boxAlign: 'left' });
+        tr.setNodeMarkup($pos.start() + offset, undefined, { ...child.attrs, boxWidth: (available - cloneWidth) / $pos.parent.childCount, boxOffsetX: null, boxAlign: 'left' });
       });
       clone = clone.type.create({ ...clone.attrs, boxOffsetX: null, boxAlign: 'left' }, clone.content, clone.marks);
     }

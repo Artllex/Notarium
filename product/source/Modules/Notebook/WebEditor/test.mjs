@@ -64,7 +64,7 @@ try {
       editor.commands.setNodeSelection(positions.A1);
       const data = new DataTransfer();
       editor.view.dom.dispatchEvent(new ClipboardEvent('copy', { clipboardData: data, bubbles: true, cancelable: true }));
-      editor.commands.setNodeSelection(positions.A);
+      editor.commands.setTextSelection(positions.A + 1);
       editor.view.dom.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
     });
     assert.equal(await page.locator('.layout-row').nth(1).locator(':scope > .object-container').count(), 4);
