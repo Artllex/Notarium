@@ -3,6 +3,7 @@ import { VisualRegistry } from '../../../../Shared/Web/UI/registry.js';
 VisualRegistry.install();
 import { Editor, Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
+import { TrailingNode } from '@tiptap/extensions';
 import { TextStyle, Color, FontFamily } from '@tiptap/extension-text-style';
 import Highlight from '@tiptap/extension-highlight';
 import TaskList from '@tiptap/extension-task-list';
@@ -12,7 +13,7 @@ import { TableKit } from '@tiptap/extension-table';
 import TextAlign from '@tiptap/extension-text-align';
 import { NumberedMath, CaptionImage } from './document-elements.js';
 import { setupMedia, openMath, openImage, editImage, openTable, dismissMedia } from './media.js';
-import { EditorState, Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
+import { EditorState, Plugin, PluginKey, TextSelection, NodeSelection } from '@tiptap/pm/state';
 import { DOMParser as PMParser } from '@tiptap/pm/model';
 import { closeHistory } from '@tiptap/pm/history';
 import { CodeCell, CodeBlockSurface } from './code-cell.js';
@@ -26,6 +27,29 @@ import { setupPageLayout, normalizeLayout } from './page-layout.js';
 import { listClipboardText } from './list-clipboard.js';
 let pageLayout;
 const lineListUndoKey = new PluginKey('lineListUndo');
+// Text-flow groups are editable to their end, just like paragraphs.
+const containerTrailingNode = TrailingNode.extend({
+  addProseMirrorPlugins() {
+    return this.parent().map(plugin => new Plugin({ ...plugin.spec,
+      appendTransaction: (transactions, oldState, state) => state.doc.lastChild?.attrs.textFlow ? null :
+        plugin.spec.appendTransaction?.call(plugin, transactions, oldState, state)
+    }));
+  }
+});
+const textFlowSelection = Extension.create({
+  name: 'textFlowSelection',
+  addProseMirrorPlugins() {
+    return [new Plugin({ appendTransaction(_transactions, _oldState, state) {
+      if (!(state.selection instanceof NodeSelection)) return null;
+      const $from = state.selection.$from;
+      for (let depth = 1; depth <= $from.depth; depth++) {
+        if ($from.node(depth).type.name === 'blockGroup' && $from.node(depth).attrs.textFlow)
+          return state.tr.setSelection(NodeSelection.create(state.doc, $from.before(depth)));
+      }
+      return null;
+    } })];
+  }
+});
 const lineListUndo = Extension.create({
   name: 'lineListUndo',
   addProseMirrorPlugins() {
@@ -78,7 +102,7 @@ const autoEmptyAfterRow = Extension.create({
 });
 const editor = new Editor({
   element: document.querySelector('#editor'),
-  extensions: [Extension.create({ name: 'documentLayout', addGlobalAttributes: () => [{ types: ['doc'], attributes: { layout: { default: 'note' }, contentWidth: { default: null }, pageLayout: { default: null } } }] }), StarterKit.configure({ codeBlock: false, link: { openOnClick: false, autolink: true } }), TextStyle, Color, FontFamily,
+  extensions: [Extension.create({ name: 'documentLayout', addGlobalAttributes: () => [{ types: ['doc'], attributes: { layout: { default: 'note' }, contentWidth: { default: null }, pageLayout: { default: null } } }] }), StarterKit.configure({ codeBlock: false, trailingNode: false, link: { openOnClick: false, autolink: true } }), containerTrailingNode, textFlowSelection, TextStyle, Color, FontFamily,
     Highlight.configure({ multicolor: true }), TextAlign.configure({ types: ['heading', 'paragraph'] }),
     TaskList, TaskItem.configure({ nested: true }), CodeCell, CodeBlockSurface, ContainerAttributes, LayoutRow, BlockGroup, autoEmptyAfterRow, lineListUndo,
     CaptionImage.configure({ allowBase64: true, onEdit: editImage }),

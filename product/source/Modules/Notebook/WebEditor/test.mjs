@@ -43,11 +43,26 @@ try {
       assert.equal(await page.locator('[data-container-type=blockGroup]').count(), 1);
       assert.equal(await page.locator('.block-group-content').count(), 0);
       assert.equal(await page.locator('.text-flow-content ol,.text-flow-content ul').count(), 1);
+      assert.equal((await json()).content.length, 1, 'Activating a list must not append an empty container');
       await page.keyboard.press('Backspace');
       assert.equal(await page.locator('.tiptap ol,.tiptap ul').count(), 0);
       assert.equal(await page.locator('.object-container').filter({ hasText: 'Lista:' }).count(), 1);
       assert.ok((await page.locator('.tiptap').textContent()).includes('Lista:'));
     }
+  });
+  await check('Text-flow node selection targets the whole container and survives reopening without an extra Empty', async () => {
+    const doc = { version: 1, doc: { type: 'doc', content: [{ type: 'blockGroup', attrs: { textFlow: true }, content: [
+      { type: 'paragraph', content: [{ type: 'text', text: 'Lista:' }] },
+      { type: 'bulletList', content: [{ type: 'listItem', content: [{ type: 'paragraph' }] }] }
+    ] }] } };
+    await open('text-flow-selection', '', JSON.stringify(doc));
+    await page.evaluate(() => window.notatnik.editor.commands.setNodeSelection(1));
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.node.type.name), 'blockGroup');
+    await page.locator('.text-flow-content p').first().click();
+    await page.keyboard.press('End');
+    await page.keyboard.type('x');
+    assert.equal((await json()).content.length, 1);
+    assert.equal(await page.locator('.text-flow-content .ProseMirror-selectednode').count(), 0);
   });
   await check('Paste preserves exact row edges at fractional viewport widths', async () => {
     const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
