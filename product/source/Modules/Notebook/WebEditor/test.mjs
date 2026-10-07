@@ -32,6 +32,22 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Selected containers navigate spatially and Shift expands and contracts a range', async () => {
+    const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
+    await open('node-arrow-range', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'layoutRow', content: [p('A'), p('B')] }, { type: 'layoutRow', content: [p('C'), p('D')] }
+    ] } }));
+    await page.locator('.object-container').first().locator('p').click();
+    await page.evaluate(() => { const editor = window.notatnik.editor; editor.commands.setNodeSelection(1); editor.view.focus(); });
+    const selected = () => page.evaluate(() => window.notatnik.editor.state.selection.node?.textContent);
+    await page.keyboard.press('ArrowRight'); assert.equal(await selected(), 'B');
+    await page.keyboard.press('ArrowDown'); assert.equal(await selected(), 'D');
+    await page.keyboard.press('ArrowUp'); assert.equal(await selected(), 'B');
+    await page.keyboard.press('Shift+ArrowRight'); assert.equal(await page.locator('.container-multi-selected').count(), 2);
+    await page.keyboard.press('Shift+ArrowRight'); assert.equal(await page.locator('.container-multi-selected').count(), 3);
+    await page.keyboard.press('Shift+ArrowLeft'); assert.equal(await page.locator('.container-multi-selected').count(), 2);
+    await page.keyboard.press('Escape'); assert.equal(await page.locator('.container-multi-selected,.container-selected').count(), 0);
+  });
   await check('Right leaves the last column for the next container and Left returns', async () => {
     const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
     await open('arrows-after-row', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
