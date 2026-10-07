@@ -32,6 +32,31 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Pasting a container replaces selected Empty or Empty with a text caret and supports undo', async () => {
+    for (const mode of ['node', 'caret']) {
+      const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
+      await open('paste-empty-' + mode, '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+        p('Source'), { type: 'layoutRow', content: [p('C'), { type: 'paragraph', attrs: { boxEmpty: true } }, p('D')] }, p('dsd')
+      ] } }));
+      await page.waitForTimeout(100);
+      const before = await json();
+      await page.evaluate(mode => {
+        const editor = window.notatnik.editor;
+        editor.commands.setNodeSelection(0);
+        const data = new DataTransfer();
+        editor.view.dom.dispatchEvent(new ClipboardEvent('copy', { clipboardData: data, bubbles: true, cancelable: true }));
+        let emptyPos;
+        editor.state.doc.descendants((node, pos, parent) => { if (node.attrs.boxEmpty && parent.type.name === 'layoutRow') emptyPos = pos; });
+        if (mode === 'node') editor.commands.setNodeSelection(emptyPos);
+        else editor.commands.setTextSelection(emptyPos + 1);
+        editor.view.dom.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
+      }, mode);
+      const row = (await json()).content[1];
+      assert.equal(row.content.length, 3);
+      assert.equal(row.content[1].content[0].text, 'Source');
+      await command('undo'); assert.deepEqual(await json(), before);
+    }
+  });
   await check('Selected containers navigate spatially and Shift expands and contracts a range', async () => {
     const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
     await open('node-arrow-range', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [

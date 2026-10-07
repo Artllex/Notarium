@@ -564,10 +564,21 @@ export function setupContainers(editor, options) {
   const onPaste = event => {
     const selection = selectedContainer(), data = event.clipboardData?.getData(containerFormat);
     const target = activeBoundary();
-    if ((!selection && !target) || !data) return;
+    const emptyRange = emptyContainerSelection(event);
+    const empty = emptyRange && editor.state.doc.nodeAt(emptyRange.from);
+    const replaceEmpty = empty && getContainerType(empty).isEmpty;
+    if ((!selection && !target && !replaceEmpty) || !data) return;
     let clone;
     try { clone = editor.schema.nodeFromJSON(JSON.parse(data)); } catch { return; }
     if (!types.includes(clone.type.name)) return;
+    if (replaceEmpty) {
+      event.preventDefault(); event.stopImmediatePropagation();
+      const tr = closeHistory(editor.state.tr).replaceWith(emptyRange.from, emptyRange.to, clone);
+      tr.setSelection(NodeSelection.create(tr.doc, emptyRange.from));
+      boundaryTarget = null; hideEndCaret(); clearMultiSelection();
+      editor.view.dispatch(tr.scrollIntoView()); editor.view.dispatch(closeHistory(editor.state.tr)); editor.view.focus();
+      return;
+    }
     if (target) {
       if (insertAtBoundary(target, clone)) { event.preventDefault(); event.stopImmediatePropagation(); }
       return;
