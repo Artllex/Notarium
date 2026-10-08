@@ -17,7 +17,7 @@ public sealed record DocumentChangedEventArgs(Guid NoteId, string DocumentJson, 
 public sealed class WebEditorControl : UserControl, IDisposable
 {
     private const string Origin = "https://notatnik.local/";
-    private readonly WebView2CompositionControl _web = new();
+    private readonly NotebookWebView _web = new();
     private readonly TextBlock _status = new() { Text = "Uruchamianie edytora…", Margin = new Thickness(24), Foreground = System.Windows.Media.Brushes.LightGray };
     private readonly Dictionary<string, TaskCompletionSource<bool>> _flushes = new();
     private object? _pendingDocument;

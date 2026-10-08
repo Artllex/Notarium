@@ -80,6 +80,14 @@ internal static class Program
         poll.Tick += (_, _) => { if (nativeEditor.Ready.IsCompleted || nativeError is not null || DateTime.UtcNow >= deadline) frame.Continue = false; };
         poll.Start(); System.Windows.Threading.Dispatcher.PushFrame(frame); poll.Stop();
         Check(nativeEditor.Ready.IsCompletedSuccessfully && nativeError is null, "real WebView2 editor reaches ready in isolated module data: " + nativeError);
+        var mouseTests = nativeHost.Dispatcher.InvokeAsync(() => MouseInputRegression.RunAsync(nativeEditor)).Task.Unwrap();
+        frame = new System.Windows.Threading.DispatcherFrame();
+        deadline = DateTime.UtcNow.AddSeconds(45);
+        poll = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+        poll.Tick += (_, _) => { if (mouseTests.IsCompleted || DateTime.UtcNow >= deadline) frame.Continue = false; };
+        poll.Start(); System.Windows.Threading.Dispatcher.PushFrame(frame); poll.Stop();
+        Check(mouseTests.IsCompleted, "native mouse regression finishes within its deadline");
+        _passed += mouseTests.GetAwaiter().GetResult();
         nativeEditor.Dispose(); nativeHost.Close();
         Console.WriteLine($"TOTAL {_passed} checks passed; fixture: {fixture}");
         app.Shutdown();

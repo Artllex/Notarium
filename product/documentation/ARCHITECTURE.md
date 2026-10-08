@@ -97,6 +97,8 @@ Notatnik zapisuje w notes.json także czas ostatniego otwarcia notatki. RecentFi
 
 WebEditorControl jest mostem: przekazuje dokument i polecenia, odbiera zmiany, zaznaczenie i błędy. Wiadomości zmian zawierają ID notatki, więc spóźniona wiadomość nie zmienia innej notatki.
 
+NotebookWebView przekazuje każde naciśnięcie lewego przycisku myszy dokładnie raz. W WebView2 1.0.3719.77 obsługa WPF `OnMouseDoubleClick` wysyła dodatkowe naciśnięcie oprócz `OnMouseDown`; adapter pomija tylko tę dodatkową ścieżkę. Chromium otrzymuje zwykłe down/up i sam rozpoznaje dwuklik oraz trójklik. Test `Tests/MouseInputRegression.cs` uruchamia rzeczywisty WebEditorControl z odizolowanymi danymi i sprawdza liczbę zdarzeń, zaznaczanie wiersza/kontenera, Ctrl+klik i przeciąganie tekstu; testy samej przeglądarki nie pokrywają przekazywania zdarzeń przez WPF.
+
 Tiptap/ProseMirror obsługuje dokument i transakcje. CodeMirror obsługuje kod; jego zmiany trafiają do wspólnej historii dokumentu. Cropper obsługuje kadrowanie, KaTeX matematykę. Elementy wewnętrzne tych silników pozostają ich własnością.
 
 | Plik WebEditor/src | Odpowiedzialność |
