@@ -23,6 +23,7 @@ Poza nimi: systemowe otwieranie/zapis pliku i wybór dowolnego koloru RGB; komun
 
 ## Inwarianty
 
+- Kolejność wspólnego paska: File, Edit, View, Układ, Wstawianie, Odwołania, Obiekty, Help. Napisy menu i kart są wyrównane pionowo; podkreślenie aktywnej karty nie przesuwa tekstu ani nie zwiększa wysokości paska.
 - Panele zmniejszają obszar dokumentu, nie zasłaniają go. Prawy i górny mogą być otwarte jednocześnie; mają własne zamknięcie i respektują ograniczenie animacji systemowych.
 - Przełączenie sekcji anuluje niezapisany szkic poprzedniej sekcji; przełączenie notatki zamyka oba panele. ESC zamyka ostatnio aktywny panel. Nie zapisuje formularzy.
 - Link, Math i tabela zachowują pierwotne zaznaczenie. Zmiana treści dokumentu anuluje otwarte szkice właściwości, aby nie zastosować ich do przesuniętego/usuniętego obiektu. Numeracje operuje na aktualnych ustawieniach tej samej notatki.

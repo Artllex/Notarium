@@ -62,8 +62,8 @@ internal static class Program
         Check(window.FindName("MainMenu") is MenuBar, "menu bar uses shared menu component");
         var notebookFrame = window.Content as ApplicationFrame;
         var ribbonMenu = notebookFrame?.Menu.Content as NotebookRibbon;
-        ((MenuBar)window.FindName("MainMenu")).RaiseEvent(new RoutedEventArgs(FrameworkElement.LoadedEvent));
-        Check(ribbonMenu is not null && RibbonVisualRegression.Descendants<MenuBar>(ribbonMenu).Single() == window.FindName("MainMenu"),
+        foreach (var menu in RibbonVisualRegression.Descendants<MenuBar>(ribbonMenu!)) menu.RaiseEvent(new RoutedEventArgs(FrameworkElement.LoadedEvent));
+        Check(ribbonMenu is not null && RibbonVisualRegression.Descendants<MenuBar>(ribbonMenu).Contains((MenuBar)window.FindName("MainMenu")),
             "native ribbon owns the shared File Edit menu without a separate row");
         notebookFrame!.Measure(new Size(1180, 760)); notebookFrame.Arrange(new Rect(0, 0, 1180, 760)); notebookFrame.UpdateLayout();
         var menuTop = ((FrameworkElement)window.FindName("MainMenu")).TranslatePoint(new Point(0, 0), notebookFrame).Y;
@@ -72,6 +72,15 @@ internal static class Program
         var fileMenu = (MenuBar)window.FindName("MainMenu");
         Check(fileMenu.ActualWidth > 100 && RibbonVisualRegression.Button(ribbonMenu!, "Układ").TranslatePoint(new Point(), ribbonMenu).X >= fileMenu.TranslatePoint(new Point(fileMenu.ActualWidth, 0), ribbonMenu).X,
             "ribbon tabs follow the visible File Edit menu without overlapping it");
+        var lastTab = RibbonVisualRegression.Button(ribbonMenu!, "Obiekty");
+        var helpButton = RibbonVisualRegression.Button(ribbonMenu!, "Help");
+        Check(helpButton.TranslatePoint(new Point(), ribbonMenu).X >= lastTab.TranslatePoint(new Point(lastTab.ActualWidth, 0), ribbonMenu).X,
+            "Help follows all ribbon tabs");
+        var referenceLabel = RibbonVisualRegression.Descendants<AccessText>(RibbonVisualRegression.Button(ribbonMenu!, "File")).Single();
+        Check(new[] { "Układ", "Wstawianie", "Odwołania", "Obiekty", "Help" }.All(name => {
+            var text = RibbonVisualRegression.Descendants<AccessText>(RibbonVisualRegression.Button(ribbonMenu!, name)).Single();
+            return Math.Abs(text.TranslatePoint(new Point(), ribbonMenu).Y - referenceLabel.TranslatePoint(new Point(), ribbonMenu).Y) < 0.1;
+        }), "menu and ribbon captions share the same vertical text position");
         var ribbonBitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(1180, 760, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
         ribbonBitmap.Render(notebookFrame);
         var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(ribbonBitmap));

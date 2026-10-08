@@ -44,7 +44,7 @@ internal static class RibbonVisualRegression
         Click(ribbon, "Układ"); Save(ribbon, System.IO.Path.Combine(fixture, "ribbon-collapsed.png"), 1180, 128);
         Check(!ribbon.IsExpanded && ribbon.DesiredSize.Height <= 29 && expandedHeight > ribbon.DesiredSize.Height,
             "active ribbon tab collapses all tools without leaving an empty row");
-        Check(Descendants<MenuBar>(ribbon).Single().ActualHeight == 28 && Button(ribbon, "Wstawianie").ActualHeight == 28,
+        Check(Descendants<MenuBar>(ribbon).All(menu => menu.ActualHeight == 28) && Button(ribbon, "Wstawianie").ActualHeight == 28,
             "collapsed ribbon retains shared menu and all tab buttons");
         Click(ribbon, "Układ");
         ribbon.UpdateLayout();

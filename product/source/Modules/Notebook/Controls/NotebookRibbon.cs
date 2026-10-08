@@ -31,9 +31,17 @@ public sealed class NotebookRibbon : Border
         BorderBrush = UiPolicy.Brush("#414141"); BorderThickness = new Thickness(0, 0, 0, 1);
         var root = new StackPanel(); Child = root;
         var header = new DockPanel { Margin = new Thickness(8, 0, 8, 0), LastChildFill = true }; root.Children.Add(header);
+        MenuBar? helpMenu = null;
         if (mainMenu is not null)
         {
-            mainMenu.Height = 28; mainMenu.Background = System.Windows.Media.Brushes.Transparent;
+            var help = mainMenu.Items.OfType<MenuItem>().FirstOrDefault(item => item.Header?.ToString() == "_Help");
+            if (help is not null)
+            {
+                mainMenu.Items.Remove(help);
+                helpMenu = new MenuBar { FontSize = mainMenu.FontSize }; helpMenu.Items.Add(help);
+                AlignMenu(helpMenu);
+            }
+            AlignMenu(mainMenu);
             DockPanel.SetDock(mainMenu, Dock.Left); header.Children.Add(mainMenu);
         }
         var shortcuts = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
@@ -44,16 +52,27 @@ public sealed class NotebookRibbon : Border
         foreach (var tab in new[] { "Układ", "Wstawianie", "Odwołania", "Obiekty" })
         {
             var button = Button(tab, () => ActivateTab(tab)); button.FontSize = 12; _tabs[tab] = button;
-            var label = new StackPanel(); label.Children.Add(new TextBlock { Text = tab, Margin = new Thickness(0, 1, 0, 4) });
-            var line = new Border { Height = 2, Background = System.Windows.Media.Brushes.Transparent }; label.Children.Add(line); _tabLines[tab] = line;
+            button.VerticalContentAlignment = VerticalAlignment.Stretch;
+            var label = new Grid(); label.Children.Add(new AccessText { Text = tab, VerticalAlignment = VerticalAlignment.Center });
+            var line = new Border { Height = 2, VerticalAlignment = VerticalAlignment.Bottom, Background = System.Windows.Media.Brushes.Transparent }; label.Children.Add(line); _tabLines[tab] = line;
             button.Content = label; tabs.Children.Add(button);
         }
+        if (helpMenu is not null) tabs.Children.Add(helpMenu);
         root.Children.Add(_body);
         _body.Children.Add(new ScrollViewer { Content = _groups, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Disabled });
         _body.Children.Add(_error);
         _editor.SelectionChanged += (_, _) => Refresh();
         _editor.RibbonError += (_, message) => _error.Text = message;
         Select("Układ");
+    }
+    private static void AlignMenu(MenuBar menu)
+    {
+        menu.Height = 28; menu.Background = System.Windows.Media.Brushes.Transparent;
+        menu.Loaded += (_, _) => {
+            foreach (var button in menu.Surface.Children.OfType<ActionButton>()) {
+                button.Height = 28; button.VerticalContentAlignment = VerticalAlignment.Center;
+            }
+        };
     }
     private static ActionButton Button(string label, Action action)
     {
