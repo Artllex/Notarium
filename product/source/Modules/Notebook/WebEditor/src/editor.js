@@ -122,6 +122,18 @@ const editor = new Editor({
     NumberedMath.configure({ katexOptions: { displayMode: true, throwOnError: false, trust: false, maxExpand: 1000 } })],
   content: '<p></p>',
   editorProps: {
+    handleDoubleClick(view, pos, event) {
+      if (!event.target.closest?.('.object-container') || event.target.closest('button,input,select,.container-type-tools,.container-add-tools')) return false;
+      pos = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos ?? pos;
+      const $pos = view.state.doc.resolve(pos);
+      if (!$pos.parent.isTextblock) return false;
+      const start = $pos.start(), end = $pos.end(), top = view.coordsAtPos(pos).top;
+      let from = pos, to = pos;
+      while (from > start && Math.abs(view.coordsAtPos(from - 1).top - top) < 1) from--;
+      while (to < end && Math.abs(view.coordsAtPos(to + 1).top - top) < 1) to++;
+      view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, from, to)));
+      return true;
+    },
     handleTripleClick(view, _pos, event) {
       const host = event.target.closest?.('.object-container');
       const start = host?.containerView?.props.getPos();
@@ -160,6 +172,22 @@ const editor = new Editor({
       return true;
     },
     handleClick(_view, _pos, event) {
+      if (event.ctrlKey && event.target.closest?.('.object-container')) {
+        const $pos = _view.state.doc.resolve(_pos);
+        if ($pos.parent.isTextblock) {
+          const text = $pos.parent.textBetween(0, $pos.parent.content.size, '\n', '\ufffc');
+          let from = $pos.parentOffset, to = from;
+          const word = char => Boolean(char && /[\p{L}\p{N}_]/u.test(char));
+          if (!word(text[from]) && from > 0 && word(text[from - 1])) from--;
+          to = from;
+          while (from > 0 && word(text[from - 1])) from--;
+          while (to < text.length && word(text[to])) to++;
+          if (to > from) {
+            _view.dispatch(_view.state.tr.setSelection(TextSelection.create(_view.state.doc, $pos.start() + from, $pos.start() + to)));
+            return true;
+          }
+        }
+      }
       const link = event.target.closest('a');
       if (!link) return false;
       const url = link.getAttribute('href');
@@ -181,7 +209,11 @@ setupMedia(editor, () => noteId);
 const containerNavigation = setupContainers(editor, { editImage, openMath, editContainer, noteId: () => noteId, imageDialogOpen: () => document.querySelector('#image-dialog').open });
 new ContainerKeyboard(editor, containerNavigation);
 editor.view.dom.addEventListener('dblclick', event => {
-  const dom = event.target.closest('[data-type="inline-math"]');
+  const hit = editor.view.posAtCoords({ left: event.clientX, top: event.clientY });
+  if (hit && editor.options.editorProps.handleDoubleClick(editor.view, hit.pos, event)) {
+    event.preventDefault(); event.stopPropagation(); return;
+  }
+  const dom = event.target.closest?.('[data-type="inline-math"]');
   if (!dom) return;
   const pos = editor.view.posAtDOM(dom, 0), node = editor.state.doc.nodeAt(pos);
   if (node?.type.name === 'inlineMath') openMath(node, pos);

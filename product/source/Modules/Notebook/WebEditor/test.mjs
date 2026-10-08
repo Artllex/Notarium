@@ -32,6 +32,21 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Ctrl click selects a word and double click selects its line', async () => {
+    await open('click-policy', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [{ type: 'paragraph', content: [
+      { type: 'text', text: 'Pierwszy wyraz' }, { type: 'hardBreak' }, { type: 'text', text: 'Druga linia' }
+    ] }] } }));
+    await page.waitForTimeout(100);
+    const selected = () => page.evaluate(() => { const e = window.notatnik.editor; return e.state.doc.textBetween(e.state.selection.from,e.state.selection.to,'\n'); });
+    const point = await page.evaluate(() => window.notatnik.editor.view.coordsAtPos(5));
+    await page.keyboard.down('Control');
+    await page.mouse.click(point.left, (point.top + point.bottom) / 2);
+    await page.keyboard.up('Control');
+    assert.equal(await selected(), 'Pierwszy');
+    await page.waitForTimeout(600);
+    await page.mouse.dblclick(point.left, (point.top + point.bottom) / 2);
+    assert.equal(await selected(), 'Pierwszy wyraz', JSON.stringify(await page.evaluate(() => ({ from: window.notatnik.editor.state.selection.from, to: window.notatnik.editor.state.selection.to, doc: window.notatnik.editor.getJSON() }))));
+  });
   await check('Triple click selects every line and nested list in the owning container', async () => {
     const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
     await open('triple-container', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [

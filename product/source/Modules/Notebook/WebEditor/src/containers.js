@@ -431,6 +431,7 @@ export function setupContainers(editor, options) {
     const dom = event.target.closest?.('.object-container');
     if (!dom || !editor.view.dom.contains(dom) || event.button !== 0) return;
     if (!(event.ctrlKey || event.metaKey)) { clearMultiSelection(); return; }
+    if (event.target.closest('p,h1,h2,h3,h4,h5,h6,li') && event.target !== dom) return;
     if (event.target.closest('button,input,select,.container-resize,.container-resize-edge,.container-pair-resize,.container-gap-boundary')) return;
     event.preventDefault(); event.stopImmediatePropagation();
     if (event.type !== 'pointerdown') return;
