@@ -32,6 +32,27 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Pasting from a nested list caret inserts beside the owning container, never inside its text', async () => {
+    const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
+    await open('paste-owner', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      p('Source'), { type: 'blockGroup', attrs: { textFlow: true }, content: [p('Lista:'),
+        { type: 'orderedList', content: [{ type: 'listItem', content: [p('Item')] }] }] }, p('End')
+    ] } }));
+    await page.waitForTimeout(100);
+    await page.evaluate(() => {
+      const editor = window.notatnik.editor;
+      editor.commands.setNodeSelection(0);
+      const data = new DataTransfer();
+      editor.view.dom.dispatchEvent(new ClipboardEvent('copy', { clipboardData: data, bubbles: true, cancelable: true }));
+      let item; editor.state.doc.descendants((node, pos) => { if (node.type.name === 'paragraph' && node.textContent === 'Item') item = pos; });
+      editor.commands.setTextSelection(item + 1);
+      editor.view.dom.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
+    });
+    const doc = await json();
+    assert.equal(doc.content[1].type, 'blockGroup');
+    assert.equal(doc.content[1].content.length, 2);
+    assert.equal(doc.content[2].content[0].text, 'Source');
+  });
   await check('Dragging the last list line cannot extract a list from a text-flow container', async () => {
     await open('no-list-extraction', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
       { type: 'blockGroup', attrs: { textFlow: true }, content: [

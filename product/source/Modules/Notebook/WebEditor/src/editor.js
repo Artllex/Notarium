@@ -23,6 +23,7 @@ import { ContainerAttributes, LayoutRow, BlockGroup, setupContainers, alignConta
 import { editContainer, dismissContainer } from './container-dialog.js';
 import { textTarget, clearTextTarget } from './rich-label.js';
 import { ContainerKeyboard } from './container-keyboard.js';
+import { isContainerAt } from './container-types.js';
 import { setupPageLayout, normalizeLayout, paragraphFields, paragraphFormatTransaction } from './page-layout.js';
 import { listClipboardText } from './list-clipboard.js';
 let pageLayout;
@@ -41,9 +42,10 @@ const textFlowSelection = Extension.create({
   addProseMirrorPlugins() {
     return [new Plugin({ appendTransaction(_transactions, _oldState, state) {
       if (!(state.selection instanceof NodeSelection)) return null;
+      if (isContainerAt(state.doc, state.selection.from)) return null;
       const $from = state.selection.$from;
-      for (let depth = 1; depth <= $from.depth; depth++) {
-        if ($from.node(depth).type.name === 'blockGroup' && $from.node(depth).attrs.textFlow)
+      for (let depth = $from.depth; depth > 0; depth--) {
+        if (isContainerAt(state.doc, $from.before(depth)))
           return state.tr.setSelection(NodeSelection.create(state.doc, $from.before(depth)));
       }
       return null;

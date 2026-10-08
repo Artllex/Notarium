@@ -149,6 +149,8 @@ Okno Notatnika udostępnia slot nawigacji `IModuleNavigationHost`. Shell wypełn
 
 ### Układ dokumentu
 
+Tożsamość kontenera jest ustalana wspólnie przez `isContainerAt` w `container-types.js`, na podstawie typu i położenia w drzewie dokumentu. Elementy wewnątrz tekstowego `blockGroup.textFlow`, list, cytatów i innych struktur tekstowych nie są samodzielnymi kontenerami. Widoki, zaznaczenie węzłów, kopiowanie/wklejanie, wyrównanie i operacje przenoszenia korzystają z tej reguły. Zwykły `blockGroup` pozostaje jawną grupą kontenerów; `textFlow` jest pojedynczym kontenerem tekstowym.
+
 Wcięcia i odstępy mają dwa poziomy: wartości domyślne w `doc.pageLayout` oraz opcjonalne nadpisania `indentLeft`, `indentRight` (mm), `before`, `after` (pt) przy węzłach `paragraph` i `heading`. `null` oznacza dziedziczenie. Układ domyślnie formatuje akapity objęte zaznaczeniem lub bieżący akapit; zaznaczenie kontenera obejmuje jego akapity. Osobna opcja ustawia domyślne wartości notatki bez usuwania lokalnych nadpisań. Wybór zachowuje zaznaczenie sprzed otwarcia dialogu; zapis i cofanie korzystają z historii dokumentu. Lokalna zmiana nie włącza sama globalnego układu strony. JSON zachowuje nadpisania bezpośrednio.
 
 Przycisk Układ na pasku formatowania otwiera ustawienia przechowywane w atrybucie `doc.pageLayout`: tryb ciągły/strony, szerokość, format A3/A4/A5/Letter/Legal, orientację, kolor, marginesy, wcięcia, odstępy, stopkę, numerację i dzielenie wyrazów. Zmiana jest jedną operacją historii. JSON zachowuje atrybut bezpośrednio; Markdown przenosi go w zakodowanym komentarzu `notarium:page-layout`.

@@ -1,8 +1,9 @@
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import { closeHistory } from '@tiptap/pm/history';
-import { getContainerType } from './container-types.js';
+import { getContainerType, isContainerAt, isContainerParent } from './container-types.js';
 
 export function replaceEmpty(editor, from, targetPos) {
+  if (!isContainerAt(editor.state.doc, from) || !isContainerAt(editor.state.doc, targetPos)) return false;
   const source = editor.state.doc.nodeAt(from), empty = editor.state.doc.nodeAt(targetPos);
   if (!source || !empty || !getContainerType(empty).isEmpty ||
       targetPos >= from && targetPos < from + source.nodeSize ||
@@ -20,6 +21,7 @@ export function replaceEmpty(editor, from, targetPos) {
 
 // All top-level document nodes use the same move operation, including CodeMirror cells.
 export function moveBlock(editor, from, boundary) {
+  if (!isContainerAt(editor.state.doc, from) || !isContainerParent(editor.state.doc.resolve(boundary).parent)) return false;
   const node = editor.state.doc.nodeAt(from);
   if (!node || boundary >= from && boundary <= from + node.nodeSize) return false;
   const fromRow = editor.state.doc.resolve(from).parent.type.name === 'layoutRow';
@@ -48,6 +50,7 @@ export function collapseRows(tr) {
   }
 }
 export function canMoveBeside(editor, from, targetPos) {
+  if (!isContainerAt(editor.state.doc, from) || !isContainerAt(editor.state.doc, targetPos)) return false;
   const targetDom = editor.view.nodeDOM(targetPos), sourceDom = editor.view.nodeDOM(from);
   const row = targetDom?.parentElement;
   if (!row?.matches('.layout-row')) return true;
@@ -89,7 +92,7 @@ export function setupBlockMovement(editor, noteId) {
   const blocks = () => {
     const result = [];
     editor.state.doc.descendants((node, pos, parent) => {
-      if (!['doc', 'layoutRow', 'blockGroup'].includes(parent.type.name) || node.type.name === 'layoutRow') return true;
+      if (!isContainerAt(editor.state.doc, pos)) return node.type.name === 'layoutRow';
       const dom = editor.view.nodeDOM(pos);
       if (dom instanceof HTMLElement) result.push({ node, pos, dom, rect: dom.getBoundingClientRect() });
       return node.type.name === 'blockGroup' && !node.attrs.textFlow;
@@ -264,8 +267,9 @@ export function setupBlockMovement(editor, noteId) {
 }
 
 export function moveInto(editor, from, targetPos) {
+  if (!isContainerAt(editor.state.doc, from) || !isContainerAt(editor.state.doc, targetPos)) return false;
   const source = editor.state.doc.nodeAt(from), target = editor.state.doc.nodeAt(targetPos);
-  if (!source || target?.type.name !== 'blockGroup' || targetPos >= from && targetPos < from + source.nodeSize) return false;
+  if (!source || target?.type.name !== 'blockGroup' || target.attrs.textFlow || targetPos >= from && targetPos < from + source.nodeSize) return false;
   const tr = closeHistory(editor.state.tr).delete(from, from + source.nodeSize);
   const mapped = tr.mapping.map(targetPos), group = tr.doc.nodeAt(mapped);
   if (group?.type.name !== 'blockGroup') return false;

@@ -6,7 +6,7 @@ import { richAttribute } from './rich-label.js';
 import { ContainerInteractions } from './container-interactions.js';
 import { collapseRows, moveBlock } from './block-movement.js';
 import { ContainerVisual } from './container-visual.js';
-import { containerTypes, getContainerType } from './container-types.js';
+import { containerTypes, getContainerType, isContainerAt } from './container-types.js';
 import { lastLineStartSelection } from './container-keyboard.js';
 
 const types = Object.keys(containerTypes);
@@ -500,12 +500,10 @@ export function setupContainers(editor, options) {
       const $pos = view.state.doc.resolve(getPos());
       const inner = original[type]?.(node, view, getPos, decorations, innerDecorations) ||
         DOMSerializer.renderSpec(document, node.type.spec.toDOM(node));
-      if (!['doc', 'layoutRow', 'blockGroup'].includes($pos.parent.type.name)) return inner;
-      if ($pos.parent.type.name === 'blockGroup' && $pos.parent.attrs.textFlow) {
+      if (!isContainerAt(view.state.doc, getPos())) {
         const update = inner.update?.bind(inner);
         return { ...inner, update(nextNode, nextDecorations, nextInnerDecorations) {
-          const parent = view.state.doc.resolve(getPos()).parent;
-          if (parent.type.name !== 'blockGroup' || !parent.attrs.textFlow) return false;
+          if (isContainerAt(view.state.doc, getPos())) return false;
           return update ? update(nextNode, nextDecorations, nextInnerDecorations) : nextNode.sameMarkup(node);
         } };
       }
@@ -516,7 +514,7 @@ export function setupContainers(editor, options) {
   const containerFormat = 'application/x-notarium-container+json';
   const selectedContainer = () => {
     const selection = editor.state.selection;
-    return selection instanceof NodeSelection && types.includes(selection.node.type.name) ? selection : null;
+    return selection instanceof NodeSelection && isContainerAt(editor.state.doc, selection.from) ? selection : null;
   };
   const onCopy = event => {
     const selection = selectedContainer();
@@ -586,7 +584,7 @@ export function setupContainers(editor, options) {
     if (!selection && editor.state.selection.empty) {
       const $from = editor.state.selection.$from;
       for (let depth = $from.depth; depth > 0; depth--) {
-        if (types.includes($from.node(depth).type.name) && ['doc', 'layoutRow', 'blockGroup'].includes($from.node(depth - 1).type.name)) {
+        if (isContainerAt(editor.state.doc, $from.before(depth))) {
           selection = { from: $from.before(depth), to: $from.after(depth) };
           break;
         }
@@ -666,7 +664,7 @@ export function setupContainers(editor, options) {
   const onBoundaryComposition = () => { insertBoundaryText(''); };
   const emptyContainerSelection = event => {
     const selection = editor.state.selection;
-    if (selection instanceof NodeSelection && types.includes(selection.node.type.name)) return { from: selection.from, to: selection.to };
+    if (selection instanceof NodeSelection && isContainerAt(editor.state.doc, selection.from)) return { from: selection.from, to: selection.to };
     if (!selection.empty) return null;
     const $from = selection.$from;
     for (let depth = 1; depth <= $from.depth; depth++) {
@@ -674,7 +672,7 @@ export function setupContainers(editor, options) {
     }
     for (let depth = $from.depth; depth > 0; depth--) {
       const node = $from.node(depth), parent = $from.node(depth - 1);
-      if (['doc', 'layoutRow', 'blockGroup'].includes(parent.type.name) && types.includes(node.type.name) && !node.textContent)
+      if (isContainerAt(editor.state.doc, $from.before(depth)) && !node.textContent)
         return { from: $from.before(depth), to: $from.after(depth) };
     }
     const host = event.target.closest?.('.object-container');
@@ -958,7 +956,7 @@ export function alignContainer(editor, alignment) {
   const selection = editor.state.selection;
   if (!(selection instanceof NodeSelection)) return false;
   const node = selection.node;
-  if (!types.includes(node.type.name)) return false;
+  if (!isContainerAt(editor.state.doc, selection.from)) return false;
   const attrs = { ...node.attrs, boxAlign: alignment, ...(alignment === 'justify' ? { boxWidth: null, boxOffsetX: null } : {}) };
   editor.view.dispatch(closeHistory(editor.state.tr).setNodeMarkup(selection.from, undefined, getContainerType(node).copyAttrs(attrs)));
   return true;

@@ -70,4 +70,17 @@ export const containerTypes = Object.freeze({
   blockMath: new MathContainer(), table: new TableContainer(), blockGroup: new GroupContainer()
 });
 const empty = new EmptyTextContainer();
+// Node type describes content; only structural position defines a Notarium container.
+export function isContainerParent(node) {
+  return node.type.name === 'doc' || node.type.name === 'layoutRow' ||
+    node.type.name === 'blockGroup' && !node.attrs.textFlow;
+}
+export function isContainerAt(doc, pos) {
+  if (!Number.isInteger(pos) || pos < 0 || pos >= doc.content.size) return false;
+  const $pos = doc.resolve(pos), node = doc.nodeAt(pos);
+  if (!node || !containerTypes[node.type.name] || !isContainerParent($pos.parent)) return false;
+  for (let depth = 1; depth <= $pos.depth; depth++)
+    if ($pos.node(depth).type.name === 'blockGroup' && $pos.node(depth).attrs.textFlow) return false;
+  return true;
+}
 export const getContainerType = node => node.type.name === 'paragraph' && node.attrs.boxEmpty && !node.textContent ? empty : containerTypes[node.type.name];
