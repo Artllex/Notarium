@@ -223,6 +223,16 @@ internal static class MouseInputRegression
         Check((await Read("notatnik.editor.getJSON().attrs.pageLayout.left")).GetDouble() == 12.7 &&
               (await Read("notatnik.editor.getJSON().attrs.pageLayout.bottom")).GetDouble() == 12.7,
               "native illustrated margin preset changes all four document margins");
+        Check((await Read("CSS.supports('column-wrap','wrap') && CSS.supports('column-height','100px')")).GetBoolean(),
+              "installed WebView2 supports editable wrapped pages");
+        await Open("Array.from({length:5},(_,i)=>({type:'blockGroup',attrs:{textFlow:true,boxHeight:960},content:[p('Page '+i)]}))");
+        await core.ExecuteScriptAsync("notatnik.editor.view.dispatch(notatnik.editor.state.tr.setDocAttribute('pageLayout',{paged:true,size:'A4',color:'#ffffff',top:20,bottom:20,left:20,right:20,numbering:true}));window.pageViewBefore=JSON.stringify(notatnik.editor.getJSON())");
+        editor.Execute("pageView", "{\"direction\":\"down\",\"pages\":2}"); await Task.Delay(150);
+        Check((await Read("document.querySelectorAll('.layout-paper')[1].offsetTop===0 && document.querySelectorAll('.layout-paper')[2].offsetTop>1000")).GetBoolean(),
+              "native page view wraps editable A4 pages in pairs");
+        editor.Execute("pageView", "{\"direction\":\"across\",\"pages\":2}"); await Task.Delay(150);
+        Check((await Read("[...document.querySelectorAll('.layout-paper')].every(p=>p.offsetTop===0) && JSON.stringify(notatnik.editor.getJSON())===pageViewBefore")).GetBoolean(),
+              "native horizontal page view preserves the entire document");
         return passed;
     }
 }

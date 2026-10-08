@@ -38,6 +38,7 @@ public sealed class WebEditorControl : UserControl, IDisposable
     public string? CurrentHighlightColor { get; private set; }
     public int CurrentContentWidth { get; private set; }
     public JsonElement? CurrentLayout { get; private set; }
+    public JsonElement? CurrentPageView { get; private set; }
     public bool CanUndoContent { get; private set; }
     public bool CanRedoContent { get; private set; }
     public bool IsCodeFocused { get; private set; }
@@ -134,6 +135,7 @@ public sealed class WebEditorControl : UserControl, IDisposable
                     if (_flushes.Remove(message.GetProperty("requestId").GetString()!, out var waiter)) waiter.TrySetResult(true);
                     break;
                 case "selection":
+                    CurrentPageView = message.TryGetProperty("pageView", out var pageView) ? pageView.Clone() : null;
                     CurrentLayout = message.TryGetProperty("layout", out var layout) ? layout.Clone() : null;
                     CurrentFont = message.GetProperty("font").GetString() ?? "Segoe UI";
                     CurrentTextColor = message.TryGetProperty("color", out var color) && color.ValueKind == JsonValueKind.String ? color.GetString() : null;

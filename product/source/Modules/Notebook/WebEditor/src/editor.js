@@ -349,7 +349,7 @@ function publishSelection() {
   post({ type: 'selection', noteId, font: textTarget(editor).getAttributes('textStyle').fontFamily || 'Segoe UI',
     color: textTarget(editor).getAttributes('textStyle').color || null,
     highlight: textTarget(editor).getAttributes('highlight').color || null,
-    contentWidth: width, layout, canUndo: editor.can().undo(), canRedo: editor.can().redo(), inCode: editor.isActive('codeCell') });
+    contentWidth: width, layout, pageView: pageLayout?.view, canUndo: editor.can().undo(), canRedo: editor.can().redo(), inCode: editor.isActive('codeCell') });
 }
 
 const resolvedContentWidth = doc => doc.attrs.contentWidth ?? (doc.attrs.layout === 'article' ? 790 : 0);
@@ -404,6 +404,11 @@ function insertionBoundary() {
 function command(message) {
   if (!noteId) return;
   const action = message.action, value = message.value;
+  if (action === 'pageView') {
+    try { pageLayout.setView(typeof value === 'string' ? JSON.parse(value) : value); publishSelection(); }
+    catch (error) { post({ type: 'ribbonError', message: error.message }); }
+    return;
+  }
   if (action === 'workspacePanel') { workspacePanels.show(value); return; }
   if (action === 'layoutFields') {
     const fields = typeof value === 'string' ? JSON.parse(value) : value;

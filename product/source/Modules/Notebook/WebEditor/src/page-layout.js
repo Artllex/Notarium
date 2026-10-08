@@ -2,6 +2,12 @@ import { Dialog } from '../../../../Shared/Web/UI/components.js';
 import { closeHistory } from '@tiptap/pm/history';
 
 const mm = value => value * 96 / 25.4;
+export function normalizePageView(input = {}) {
+  const direction = input.direction ?? 'down', pages = Number(input.pages ?? 1);
+  if (!['down', 'across'].includes(direction) || !Number.isInteger(pages) || pages < 1 || pages > 100)
+    throw new Error('Układ stron: wybierz kierunek i liczbę od 1 do 100.');
+  return { direction, pages };
+}
 export const paragraphFields = ['indentLeft', 'indentRight', 'before', 'after'];
 export function paragraphFormatTransaction(editor, values, selection = editor.state.selection, tr = editor.state.tr) {
   const { from, to, empty } = selection;
@@ -64,7 +70,9 @@ export function setupPageLayout(editor) {
   const field = name => dialog.querySelector(`[name="${name}"]`);
   const papers = document.createElement('div'); papers.className = 'layout-papers'; papers.setAttribute('aria-hidden', 'true');
   editor.view.dom.parentElement.prepend(papers);
-  let current = layoutDefaults, frame = 0;
+  let current = layoutDefaults, frame = 0, pageView = normalizePageView();
+  try { pageView = normalizePageView(JSON.parse(localStorage.getItem('notarium.pageView') || '{}')); } catch { /* Invalid preferences do not prevent opening a document. */ }
+  if (!CSS.supports('column-wrap', 'wrap')) pageView.direction = 'across';
   let paragraphSelection = null;
   const fillParagraphFields = () => {
     const defaults = normalizeLayout(editor.state.doc.attrs.pageLayout || {});
@@ -80,17 +88,30 @@ export function setupPageLayout(editor) {
     if (!current.paged) { papers.replaceChildren(); return; }
     const dimensions = sizes[current.size], width = mm(dimensions[current.landscape ? 1 : 0]), height = mm(dimensions[current.landscape ? 0 : 1]);
     const content = width - mm(current.left + current.right), stride = width + 24;
+    // Measure the same fragments in one row, then wrap the actual editable DOM.
+    // No cloned editors, document transactions or changes to the export/history.
+    const root = editor.view.dom, host = root.parentElement;
+    root.style.columnWrap = 'nowrap';
+    root.style.width = `${content}px`; root.style.columnCount = '1';
     const count = Math.max(1, Math.ceil((editor.view.dom.scrollWidth + mm(current.left + current.right) + 24) / stride));
+    const columns = pageView.direction === 'down' ? Math.min(count, pageView.pages) : count;
+    root.style.columnWrap = pageView.direction === 'down' ? 'wrap' : 'nowrap';
+    root.style.width = `${columns * content + (columns - 1) * (mm(current.left + current.right) + 24)}px`;
+    root.style.columnCount = String(columns);
+    const rows = Math.ceil(count / columns);
+    host.style.width = `${columns * stride - 24}px`;
+    host.style.minHeight = `${rows * (height + 24) - 24}px`;
     papers.replaceChildren();
     for (let index = 0; index < count; index++) {
       const paper = document.createElement('div'); paper.className = 'layout-paper';
-      Object.assign(paper.style, { left: `${index * stride}px`, width: `${width}px`, height: `${height}px`, background: current.color });
+      Object.assign(paper.style, { left: `${(index % columns) * stride}px`, top: `${Math.floor(index / columns) * (height + 24)}px`, width: `${width}px`, height: `${height}px`, background: current.color });
       const footer = document.createElement('div'); footer.className = 'layout-footer';
       footer.textContent = [current.footer, current.numbering ? String(current.start + index) : ''].filter(Boolean).join(' · ');
       Object.assign(footer.style, { bottom: `${mm(current.footerDistance)}px`, left: `${mm(current.left)}px`, width: `${content}px` });
       paper.append(footer); papers.append(paper);
     }
-    papers.style.width = `${count * stride - 24}px`;
+    papers.style.width = `${columns * stride - 24}px`;
+    papers.style.height = `${rows * (height + 24) - 24}px`;
   };
   const refresh = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(drawPapers); };
   const apply = doc => {
@@ -98,6 +119,10 @@ export function setupPageLayout(editor) {
     const host = editor.view.dom.parentElement, root = editor.view.dom;
     host.classList.toggle('document-layout-enabled', Boolean(value));
     host.classList.toggle('document-paged', Boolean(value?.paged));
+    if (!value?.paged) {
+      for (const key of ['width', 'column-count', 'column-wrap']) root.style.removeProperty(key);
+      host.style.removeProperty('width'); host.style.removeProperty('min-height');
+    }
     if (!value) { current = layoutDefaults; cancelAnimationFrame(frame); papers.replaceChildren(); root.style.removeProperty('column-width'); root.style.removeProperty('hyphens'); root.style.removeProperty('color'); return; }
     current = normalizeLayout(value);
     const dimensions = sizes[current.size], width = mm(dimensions[current.landscape ? 1 : 0]), height = mm(dimensions[current.landscape ? 0 : 1]);
@@ -136,7 +161,14 @@ export function setupPageLayout(editor) {
   editor.view.dom.addEventListener('load', refresh, true);
   document.fonts?.ready.then(refresh);
   window.addEventListener('resize', refresh);
-  return { apply, open() {
+  return { apply, get view() { return { ...pageView }; }, setView(value) {
+    const next = normalizePageView(value);
+    if (next.direction === 'down' && !CSS.supports('column-wrap', 'wrap'))
+      throw new Error('Widok stron w dół wymaga aktualnego Microsoft Edge WebView2 (145 lub nowszego).');
+    pageView = next;
+    try { localStorage.setItem('notarium.pageView', JSON.stringify(pageView)); } catch { /* View still works without storage. */ }
+    refresh();
+  }, open() {
     paragraphSelection = editor.state.selection;
     const value = normalizeLayout({ ...layoutDefaults, width: editor.state.doc.attrs.contentWidth || 0, ...editor.state.doc.attrs.pageLayout });
     for (const [name, val] of Object.entries(value)) { if (field(name).type === 'checkbox') field(name).checked = val; else field(name).value = val; }

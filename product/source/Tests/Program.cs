@@ -86,6 +86,10 @@ internal static class Program
         var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(ribbonBitmap));
         using (var image = File.Create(Path.Combine(fixture, "ribbon.png"))) encoder.Save(image);
         _passed += RibbonVisualRegression.Run(ribbonMenu!, fixture);
+        var viewDefinition = (MenuItem)window.FindName("ViewMenuItem");
+        var pagination = viewDefinition.Items.OfType<MenuItem>().Single(i => i.Header?.ToString() == "Paginacja");
+        Check(pagination.Items.OfType<MenuItem>().Take(2).Select(i => i.Header?.ToString()).SequenceEqual(new[] { "Strony w dół", "Strony w bok" }) &&
+              window.FindName("PageCountInput") is TextBox, "View exposes pagination direction and custom pages per row");
         Check(notebookFrame?.Status.Content == window.FindName("NotebookStatusBar") &&
               notebookFrame.Workspace.Content is Grid notebookWorkspace && notebookWorkspace.RowDefinitions.Count == 4,
             "notebook status content uses the shared frame without a duplicate workspace row");

@@ -37,6 +37,8 @@ try {
             if ($LASTEXITCODE) { throw 'Budowanie edytora nie powiodło się.' }
             node workspace-test.mjs
             if ($LASTEXITCODE) { throw 'Testy wstążki i paneli nie przeszły.' }
+            node page-view-test.mjs
+            if ($LASTEXITCODE) { throw 'Testy układu stron nie przeszły.' }
             node ui-test.mjs
             if ($LASTEXITCODE) { throw 'Testy komponentów nie przeszły.' }
             npm.cmd test
