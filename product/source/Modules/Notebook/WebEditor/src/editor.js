@@ -122,6 +122,16 @@ const editor = new Editor({
     NumberedMath.configure({ katexOptions: { displayMode: true, throwOnError: false, trust: false, maxExpand: 1000 } })],
   content: '<p></p>',
   editorProps: {
+    handleTripleClick(view, _pos, event) {
+      const host = event.target.closest?.('.object-container');
+      const start = host?.containerView?.props.getPos();
+      if (typeof start !== 'number' || event.target.closest('button,input,select,.container-type-tools,.container-add-tools')) return false;
+      const node = view.state.doc.nodeAt(start);
+      if (!node || !isContainerAt(view.state.doc, start)) return false;
+      view.dispatch(view.state.tr.setSelection(TextSelection.between(
+        view.state.doc.resolve(start + 1), view.state.doc.resolve(start + node.nodeSize - 1))));
+      return true;
+    },
     attributes: { spellcheck: 'true', 'aria-label': 'Edytor notatki' },
     clipboardTextSerializer(slice, view) {
       return listClipboardText(slice, view.state) ?? slice.content.textBetween(0, slice.content.size, '\n\n', '\n');

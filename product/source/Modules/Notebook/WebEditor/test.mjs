@@ -32,6 +32,18 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Triple click selects every line and nested list in the owning container', async () => {
+    const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
+    await open('triple-container', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'blockGroup', attrs: { textFlow: true }, content: [p('Lista:'),
+        { type: 'orderedList', content: ['First', 'Last'].map(text => ({ type: 'listItem', content: [p(text)] })) }] }, p('Outside')
+    ] } }));
+    await page.waitForTimeout(100);
+    await page.locator('.text-flow-content li p').last().click({ clickCount: 3 });
+    const selected = await page.evaluate(() => { const editor = window.notatnik.editor, {from,to} = editor.state.selection; return editor.state.doc.textBetween(from,to,'|'); });
+    assert.ok(selected.includes('Lista:') && selected.includes('First') && selected.includes('Last'));
+    assert.ok(!selected.includes('Outside'));
+  });
   await check('Pasting from a nested list caret inserts beside the owning container, never inside its text', async () => {
     const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
     await open('paste-owner', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [

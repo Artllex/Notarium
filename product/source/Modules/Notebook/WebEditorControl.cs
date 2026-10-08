@@ -82,7 +82,7 @@ public sealed class WebEditorControl : UserControl, IDisposable
             await _web.EnsureCoreWebView2Async(environment);
             if (_disposed) return;
             var core = _web.CoreWebView2;
-            core.Settings.AreDefaultContextMenusEnabled = false;
+            core.Settings.AreDefaultContextMenusEnabled = true;
             core.Settings.IsStatusBarEnabled = false;
             core.Settings.AreDevToolsEnabled = false;
             core.Settings.IsZoomControlEnabled = false;
