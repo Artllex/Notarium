@@ -24,10 +24,21 @@ import { editContainer, dismissContainer } from './container-dialog.js';
 import { textTarget, clearTextTarget } from './rich-label.js';
 import { ContainerKeyboard } from './container-keyboard.js';
 import { isContainerAt } from './container-types.js';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { setupPageLayout, normalizeLayout, paragraphFields, paragraphFormatTransaction } from './page-layout.js';
 import { listClipboardText } from './list-clipboard.js';
 let pageLayout;
 const lineListUndoKey = new PluginKey('lineListUndo');
+const wordSelectionKey = new PluginKey('wordSelection');
+const wordSelections = Extension.create({
+  name: 'wordSelections',
+  addProseMirrorPlugins() { return [new Plugin({ key: wordSelectionKey,
+    state: { init: () => [], apply: (tr, ranges) => tr.getMeta(wordSelectionKey) ??
+      (tr.docChanged ? [] : ranges) },
+    props: { decorations(state) { return DecorationSet.create(state.doc, wordSelectionKey.getState(state).map(range =>
+      Decoration.inline(range.from, range.to, { class: 'word-multi-selection', style: 'background:#31547a;color:inherit' }))); } }
+  })]; }
+});
 // Text-flow groups are editable to their end, just like paragraphs.
 const containerTrailingNode = TrailingNode.extend({
   addProseMirrorPlugins() {
@@ -115,7 +126,7 @@ const editor = new Editor({
       lineSpacing: { default: null, parseHTML: el => Number(el.style.lineHeight) || null,
         renderHTML: attrs => attrs.lineSpacing ? { style: `line-height:${attrs.lineSpacing}` } : {} }
     } }] }),
-    TaskList, TaskItem.configure({ nested: true }), CodeCell, CodeBlockSurface, ContainerAttributes, LayoutRow, BlockGroup, autoEmptyAfterRow, lineListUndo,
+    TaskList, TaskItem.configure({ nested: true }), CodeCell, CodeBlockSurface, ContainerAttributes, LayoutRow, BlockGroup, autoEmptyAfterRow, lineListUndo, wordSelections,
     CaptionImage.configure({ allowBase64: true, onEdit: editImage }),
     TableKit.configure({ table: { resizable: true } }),
     InlineMath.configure({ katexOptions: { throwOnError: false, trust: false, maxExpand: 1000 } }),
@@ -135,6 +146,7 @@ const editor = new Editor({
       return true;
     },
     handleTripleClick(view, _pos, event) {
+      if (event.detail !== 3) return editor.options.editorProps.handleDoubleClick(view, _pos, event);
       const host = event.target.closest?.('.object-container');
       const start = host?.containerView?.props.getPos();
       if (typeof start !== 'number' || event.target.closest('button,input,select,.container-type-tools,.container-add-tools')) return false;
@@ -183,7 +195,11 @@ const editor = new Editor({
           while (from > 0 && word(text[from - 1])) from--;
           while (to < text.length && word(text[to])) to++;
           if (to > from) {
-            _view.dispatch(_view.state.tr.setSelection(TextSelection.create(_view.state.doc, $pos.start() + from, $pos.start() + to)));
+            const range = { from: $pos.start() + from, to: $pos.start() + to };
+            const ranges = wordSelectionKey.getState(_view.state);
+            const next = ranges.some(item => item.from === range.from && item.to === range.to) ?
+              ranges.filter(item => item.from !== range.from || item.to !== range.to) : [...ranges, range].sort((a,b) => a.from - b.from);
+            _view.dispatch(_view.state.tr.setMeta(wordSelectionKey, next).setSelection(TextSelection.create(_view.state.doc, range.from, range.to)));
             return true;
           }
         }
@@ -208,6 +224,25 @@ pageLayout = setupPageLayout(editor);
 setupMedia(editor, () => noteId);
 const containerNavigation = setupContainers(editor, { editImage, openMath, editContainer, noteId: () => noteId, imageDialogOpen: () => document.querySelector('#image-dialog').open });
 new ContainerKeyboard(editor, containerNavigation);
+editor.view.dom.addEventListener('mousedown', event => {
+  if (!event.ctrlKey && wordSelectionKey.getState(editor.state).length)
+    editor.view.dispatch(editor.state.tr.setMeta(wordSelectionKey, []));
+}, true);
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && wordSelectionKey.getState(editor.state).length)
+    editor.view.dispatch(editor.state.tr.setMeta(wordSelectionKey, []));
+}, true);
+for (const type of ['copy', 'cut']) editor.view.dom.addEventListener(type, event => {
+  const ranges = wordSelectionKey.getState(editor.state);
+  if (!ranges.length || !event.clipboardData) return;
+  event.preventDefault(); event.stopImmediatePropagation();
+  event.clipboardData.setData('text/plain', ranges.map(range => editor.state.doc.textBetween(range.from, range.to)).join(' '));
+  if (type === 'cut') {
+    const tr = closeHistory(editor.state.tr);
+    for (const range of [...ranges].reverse()) tr.delete(range.from, range.to);
+    editor.view.dispatch(tr.setMeta(wordSelectionKey, []));
+  }
+}, true);
 editor.view.dom.addEventListener('dblclick', event => {
   const hit = editor.view.posAtCoords({ left: event.clientX, top: event.clientY });
   if (hit && editor.options.editorProps.handleDoubleClick(editor.view, hit.pos, event)) {

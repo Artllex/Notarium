@@ -32,6 +32,33 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Ctrl clicks retain multiple words and double click on a list selects only that item', async () => {
+    await open('multi-words', 'Alpha Beta Gamma');
+    await page.waitForTimeout(100);
+    await page.keyboard.down('Control');
+    for (const pos of [3, 14]) {
+      const point = await page.evaluate(pos => window.notatnik.editor.view.coordsAtPos(pos), pos);
+      await page.mouse.click(point.left, (point.top + point.bottom) / 2);
+      await page.waitForTimeout(600);
+    }
+    await page.keyboard.up('Control');
+    assert.equal(await page.locator('.word-multi-selection').count(), 2);
+    const copied = await page.evaluate(() => {
+      const data = new DataTransfer();
+      window.notatnik.editor.view.dom.dispatchEvent(new ClipboardEvent('copy', { bubbles: true, cancelable: true, clipboardData: data }));
+      return data.getData('text/plain');
+    });
+    assert.equal(copied, 'Alpha Gamma');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('.word-multi-selection').count(), 0);
+    const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
+    await open('double-list-line', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'blockGroup', attrs: { textFlow: true }, content: [p('Lista:'), { type: 'orderedList', content: ['One', 'Last item'].map(text => ({ type: 'listItem', content: [p(text)] })) }] }
+    ] } }));
+    await page.waitForTimeout(100);
+    await page.locator('li p').last().dblclick();
+    assert.equal(await page.evaluate(() => { const e = window.notatnik.editor; return e.state.doc.textBetween(e.state.selection.from,e.state.selection.to,'|'); }), 'Last item');
+  });
   await check('Ctrl click selects a word and double click selects its line', async () => {
     await open('click-policy', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [{ type: 'paragraph', content: [
       { type: 'text', text: 'Pierwszy wyraz' }, { type: 'hardBreak' }, { type: 'text', text: 'Druga linia' }
@@ -42,7 +69,7 @@ try {
     await page.keyboard.down('Control');
     await page.mouse.click(point.left, (point.top + point.bottom) / 2);
     await page.keyboard.up('Control');
-    assert.equal(await selected(), 'Pierwszy');
+    assert.equal(await page.locator('.word-multi-selection').textContent(), 'Pierwszy');
     await page.waitForTimeout(600);
     await page.mouse.dblclick(point.left, (point.top + point.bottom) / 2);
     assert.equal(await selected(), 'Pierwszy wyraz', JSON.stringify(await page.evaluate(() => ({ from: window.notatnik.editor.state.selection.from, to: window.notatnik.editor.state.selection.to, doc: window.notatnik.editor.getJSON() }))));
