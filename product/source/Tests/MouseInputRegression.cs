@@ -163,6 +163,34 @@ internal static class MouseInputRegression
         Check((await Read("mouseSelected()")).GetString()!.Length > 0, "native mouse drag still selects text");
         Check((await Read("JSON.stringify(notatnik.editor.getJSON())")).GetString() == before, "native text selection drag does not move or change containers");
         Check((await Read("mouseErrors.length")).GetInt32() == 0, "native mouse regression has no JavaScript errors");
+        await Open("[p('First line'),p('Other paragraph')]");
+        await core.ExecuteScriptAsync("notatnik.editor.commands.setTextSelection(1);notatnik.editor.view.focus()");
+        async Task Tab(bool backwards = false)
+        {
+            await core.ExecuteScriptAsync("notatnik.editor.view.dom.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',code:'Tab',shiftKey:" + (backwards ? "true" : "false") + ",bubbles:true,cancelable:true}))");
+            await Task.Delay(50);
+        }
+        await Tab();
+        Check((await Read("notatnik.editor.getJSON().content[0].attrs.firstLineIndent")).GetDouble() == 12.7, "native editor Tab indents only the first text line");
+        await Tab(true);
+        Check((await Read("notatnik.editor.getJSON().content[0].attrs.firstLineIndent")).GetDouble() == 0, "native editor Shift Tab reverses first-line indent without changing containers");
+        await core.ExecuteScriptAsync("notatnik.editor.commands.setTextSelection({from:1,to:13})");
+        await Tab();
+        Check((await Read("notatnik.editor.getJSON().content[0].attrs.indentLeft")).GetDouble() == 12.7, "native editor Tab indents selected text as a paragraph");
+        Check((await Read("notatnik.editor.getJSON().content[1].attrs.indentLeft")).ValueKind == JsonValueKind.Null, "native text indent leaves unselected paragraphs unchanged");
+        await Open("[{type:'blockGroup',attrs:{textFlow:true},content:[p('Lista:'),{type:'orderedList',content:[item(p('One')),item(p('Two'))]}]},p('Outside')]");
+        await core.ExecuteScriptAsync("window.tabPositions={};notatnik.editor.state.doc.descendants((n,p)=>{if(n.type.name==='paragraph')tabPositions[n.textContent]=p+1});notatnik.editor.commands.setTextSelection(tabPositions.Two);notatnik.editor.view.focus()");
+        await Tab();
+        Check((await Read("notatnik.editor.getJSON().content[0].content[1].content[0].content[1].attrs.listStyleType")).GetString() == "lower-alpha", "native editor Tab nests a list item with letter numbering");
+        await Tab(true);
+        Check((await Read("notatnik.editor.getJSON().content[0].content[1].content.length")).GetInt32() == 2, "native editor Shift Tab restores the original list level");
+        await core.ExecuteScriptAsync("notatnik.editor.commands.setTextSelection({from:tabPositions.One,to:tabPositions.Two+3})");
+        await Tab();
+        Check((await Read("notatnik.editor.getJSON().content[0].content[1].attrs.listIndent")).GetDouble() == 12.7, "native editor Tab moves a whole selected list without nesting its items");
+        await Tab(true);
+        Check((await Read("notatnik.editor.getJSON().content[0].content[1].attrs.listIndent")).GetDouble() == 0, "native editor Shift Tab reverses the whole-list indent");
+        Check((await Read("document.querySelectorAll('.object-container').length")).GetInt32() == 2, "native Tab gestures preserve the owning text containers");
+        Check((await Read("mouseErrors.length")).GetInt32() == 0, "native Tab gestures have no JavaScript errors");
         return passed;
     }
 }

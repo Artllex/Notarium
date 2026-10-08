@@ -27,6 +27,7 @@ import { isContainerAt } from './container-types.js';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { setupPageLayout, normalizeLayout, paragraphFields, paragraphFormatTransaction } from './page-layout.js';
 import { listClipboardText } from './list-clipboard.js';
+import { indentText } from './indentation.js';
 let pageLayout;
 const lineListUndoKey = new PluginKey('lineListUndo');
 const wordSelectionKey = new PluginKey('wordSelection');
@@ -136,6 +137,23 @@ const editor = new Editor({
       lineSpacing: { default: null, parseHTML: el => Number(el.style.lineHeight) || null,
         renderHTML: attrs => attrs.lineSpacing ? { style: `line-height:${attrs.lineSpacing}` } : {} }
     } }] }),
+    Extension.create({ name: 'tabIndentation', addGlobalAttributes: () => [
+      ...[['firstLineIndent', ['paragraph', 'heading'], 'text-indent'],
+        ['listIndent', ['orderedList', 'bulletList', 'taskList'], 'margin-left'],
+        ['itemIndent', ['listItem', 'taskItem'], 'margin-left']].map(([key, types, style]) => ({ types,
+          attributes: { [key]: { default: null,
+            parseHTML: el => el.hasAttribute(`data-${key}`) ? Number(el.getAttribute(`data-${key}`)) : null,
+            renderHTML: attrs => attrs[key] == null ? {} : { [`data-${key}`]: attrs[key], style: `${style}:${attrs[key] * 96 / 25.4}px` }
+          } } })),
+      { types: ['orderedList'], attributes: { listStyleType: { default: null,
+        parseHTML: el => el.style.listStyleType || null,
+        renderHTML: attrs => ['decimal', 'lower-alpha', 'lower-roman'].includes(attrs.listStyleType) ? { style: `list-style-type:${attrs.listStyleType}` } : {}
+      } } },
+      { types: ['listItem'], attributes: { itemStyleType: { default: null,
+        parseHTML: el => el.style.listStyleType || null,
+        renderHTML: attrs => ['decimal', 'lower-alpha', 'lower-roman'].includes(attrs.itemStyleType) ? { style: `list-style-type:${attrs.itemStyleType}` } : {}
+      } } }
+    ] }),
     TaskList, TaskItem.configure({ nested: true }), CodeCell, CodeBlockSurface, ContainerAttributes, LayoutRow, BlockGroup, autoEmptyAfterRow, lineListUndo, wordSelections,
     CaptionImage.configure({ allowBase64: true, onEdit: editImage }),
     TableKit.configure({ table: { resizable: true } }),
@@ -231,7 +249,8 @@ const movement = setupBlockMovement(editor, () => noteId);
 pageLayout = setupPageLayout(editor);
 setupMedia(editor, () => noteId);
 const containerNavigation = setupContainers(editor, { editImage, openMath, editContainer, noteId: () => noteId, imageDialogOpen: () => document.querySelector('#image-dialog').open });
-new ContainerKeyboard(editor, containerNavigation);
+new ContainerKeyboard(editor, { ...containerNavigation,
+  indentText: backwards => indentText(editor, backwards, wordSelectionKey.getState(editor.state), wordSelectionKey) });
 // Use the browser's click detail, not ProseMirror's independent click counter.
 // Capture before its mousedown handler can promote a double click to a triple.
 for (const eventType of ['mousedown', 'mouseup']) editor.view.dom.addEventListener(eventType, event => {

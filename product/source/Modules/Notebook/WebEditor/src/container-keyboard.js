@@ -25,14 +25,20 @@ export class ContainerKeyboard {
   }
   handle(event) {
     if (event.isComposing || !this.editor.isEditable || event.altKey || event.target.closest('input,textarea,select,button')) return;
+    if (event.key === 'Tab' && !event.ctrlKey && !event.metaKey) {
+      if (!event.target.closest('.cm-editor,.rich-label,td,th') &&
+          !this.editor.state.selection.$from.parent.type.spec.code && this.navigation.indentText?.(event.shiftKey)) {
+        event.preventDefault(); event.stopImmediatePropagation();
+      }
+      return;
+    }
     if (!event.ctrlKey && !event.metaKey && !event.shiftKey &&
         !event.target.closest('.cm-editor,.rich-label') && this.navigateArrow(event.key)) {
       event.preventDefault(); event.stopImmediatePropagation(); return;
     }
     const create = event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !event.shiftKey;
-    const next = event.key === 'Tab' && event.shiftKey && !event.ctrlKey && !event.metaKey;
     const newline = event.key === 'Enter' && !event.ctrlKey && !event.metaKey && !event.shiftKey;
-    if (!create && !next && !newline) return;
+    if (!create && !newline) return;
     if (newline && event.target.closest('.cm-editor,.rich-label')) return;
     if (newline && (this.editor.isActive('listItem') || this.editor.isActive('taskItem'))) return;
     event.preventDefault(); event.stopImmediatePropagation();
@@ -50,7 +56,6 @@ export class ContainerKeyboard {
     const pos = wrapper?.containerView?.props.getPos();
     if (typeof pos !== 'number') return;
     if (create) this.createAfter(pos);
-    else this.focusNext(wrapper);
   }
   navigateArrow(key) {
     if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return false;

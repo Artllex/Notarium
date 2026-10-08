@@ -103,6 +103,8 @@ Tiptap/ProseMirror obsługuje dokument i transakcje. CodeMirror obsługuje kod; 
 
 Ctrl+klik dodaje zaznaczenia wyrazów; Ctrl+dwuklik dodaje całe wiersze wizualne, również nieprzylegające i w różnych kontenerach. Drugi klik rozszerza zaznaczenie wyrazu z pierwszego kliknięcia do wiersza bez pozostawiania nakładających się zakresów. Powtórzenie Ctrl+dwukliku na zaznaczonym wierszu nie dubluje zakresu. Zaznaczone wiersze są kopiowane z podziałami linii; ESC i zwykłe kliknięcie usuwają dodatkowe zakresy.
 
+`indentation.js` odpowiada za Tab/Shift+Tab w tekście. Krok wynosi 12,7 mm: na początku akapitu Tab zmienia wcięcie pierwszej linii, w środku tekstu wstawia tabulator, a przy zaznaczeniu zmienia lokalne wcięcie wybranych akapitów. Cała zaznaczona lista przesuwa się jako lista, wybrane elementy zmieniają poziom zagnieżdżenia; element bez poprzednika otrzymuje własne wcięcie bez tworzenia sztucznego pustego elementu. Nowe poziomy numeracji stosują cyfry, litery i liczby rzymskie. Shift+Tab cofa operację i nie przechodzi już do następnego kontenera. Wcięcia są atrybutami JSON, obsługują undo/redo i ponowne otwarcie. Kod, etykiety i tabele zachowują własną obsługę Tab.
+
 | Plik WebEditor/src | Odpowiedzialność |
 |---|---|
 | container-types.js | Klasy typów, etykiety, minima wymiarów, początkowa treść i atrybuty kopiowania |

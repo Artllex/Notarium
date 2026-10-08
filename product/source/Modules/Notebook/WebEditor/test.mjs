@@ -32,6 +32,68 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Word Tab gestures indent first line, selected paragraphs and list levels locally', async () => {
+    const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
+    const selection = (from, to = from) => page.evaluate(({ from, to }) => {
+      const editor = window.notatnik.editor;
+      editor.commands.setTextSelection({ from, to }); editor.view.focus();
+    }, { from, to });
+    await open('tab-first-line', 'First line\n\nOther paragraph');
+    await selection(1);
+    await page.keyboard.press('Tab');
+    assert.equal((await json()).content[0].attrs.firstLineIndent, 12.7);
+    assert.equal((await json()).content[1].attrs.firstLineIndent, null);
+    await page.keyboard.press('Shift+Tab');
+    assert.equal((await json()).content[0].attrs.firstLineIndent, 0);
+    await selection(3);
+    await page.keyboard.press('Tab');
+    assert.equal((await json()).content[0].content[0].text, 'Fi\trst line');
+    await page.keyboard.press('Shift+Tab');
+    assert.equal((await json()).content[0].content[0].text, 'First line');
+    await open('tab-paragraphs', 'One\n\nTwo\n\nKeep');
+    await selection(1, 9);
+    await page.keyboard.press('Tab');
+    let doc = await json();
+    assert.equal(doc.content[0].attrs.indentLeft, 12.7);
+    assert.equal(doc.content[1].attrs.indentLeft, 12.7);
+    assert.equal(doc.content[2].attrs.indentLeft, null);
+    await page.keyboard.press('Shift+Tab');
+    doc = await json();
+    assert.equal(doc.content[0].attrs.indentLeft, 0);
+    assert.equal(doc.content[1].attrs.indentLeft, 0);
+    for (const type of ['orderedList', 'bulletList']) {
+      await open('tab-list-' + type, '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+        { type: 'blockGroup', attrs: { textFlow: true }, content: [p('Lista:'), { type, content: ['One', 'Two', 'Three'].map(text => ({ type: 'listItem', content: [p(text)] })) }] }, p('Outside')
+      ] } }));
+      const positions = await page.evaluate(() => {
+        const result = {}; window.notatnik.editor.state.doc.descendants((node, pos) => { if (node.type.name === 'paragraph') result[node.textContent] = pos + 1; }); return result;
+      });
+      await selection(positions.Two);
+      await page.keyboard.press('Tab');
+      doc = await json();
+      const list = doc.content[0].content[1];
+      assert.equal(list.content.length, 2);
+      assert.equal(list.content[0].content[1].content[0].content[0].content[0].text, 'Two');
+      if (type === 'orderedList') assert.equal(list.content[0].content[1].attrs.listStyleType, 'lower-alpha');
+      await page.keyboard.press('Shift+Tab');
+      doc = await json();
+      assert.equal(doc.content[0].content[1].content.length, 3);
+      await selection(positions.One, positions.Three + 5);
+      await page.keyboard.press('Tab');
+      doc = await json();
+      assert.equal(doc.content[0].content[1].attrs.listIndent, 12.7);
+      assert.equal(doc.content[0].content[1].content.length, 3);
+      assert.equal(doc.content[0].content[0].attrs.indentLeft, null);
+      assert.equal(doc.content[1].attrs.indentLeft, null);
+      await page.keyboard.press('Shift+Tab');
+      assert.equal((await json()).content[0].content[1].attrs.listIndent, 0);
+      await command('undo');
+      assert.equal((await json()).content[0].content[1].attrs.listIndent, 12.7);
+      const saved = await json();
+      await open('tab-reloaded-' + type, '', JSON.stringify({ version: 1, doc: saved }));
+      assert.equal((await json()).content[0].content[1].attrs.listIndent, 12.7);
+    }
+  });
   await check('Ctrl double clicks accumulate nonadjacent lines without first-click word fragments', async () => {
     const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
     await open('multi-lines', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
@@ -838,7 +900,7 @@ try {
     assert.match(await page.locator('.tiptap').textContent(), /zielony/);
     assert.doesNotMatch(await page.locator('.tiptap').textContent(), /<span|cell:python/);
   });
-  await check('Enter stays in a container; Ctrl+Enter creates a sibling; Shift+Tab moves forward', async () => {
+  await check('Enter stays in a container; Ctrl+Enter creates a sibling; Shift+Tab stays in text', async () => {
     await open('typing'); await page.locator('.tiptap').click();
     await page.keyboard.type('# Heading'); await page.keyboard.press('Control+Enter');
     await page.keyboard.type('1. first'); await page.keyboard.press('Enter'); await page.keyboard.type('second');
@@ -849,9 +911,9 @@ try {
     assert.equal((await json()).content.filter(node => node.content?.length).length, 3);
     await page.evaluate(() => window.notatnik.editor.commands.setTextSelection(1));
     await page.keyboard.press('Shift+Tab');
-    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'firstsecond');
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'Heading');
     await page.keyboard.press('Shift+Tab');
-    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'third');
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'Heading');
   });
   await check('ArrowUp from a new empty container enters the preceding container', async () => {
     await open('arrow-up-containers', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
@@ -979,7 +1041,8 @@ try {
     await page.keyboard.press('Control+Enter'); await page.keyboard.type('after code');
     assert.match((await json()).content.find(n => n.type === 'blockGroup').content.map(n => JSON.stringify(n)).join(''), /after code/);
     await page.locator('.cm-content').click(); await page.keyboard.press('Shift+Tab');
-    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.$from.parent.textContent), 'after code');
+    assert.equal(await page.locator('.cm-focused').count(), 1);
+    assert.equal(await page.locator('.code-cell').evaluate(el => el.codeMirror.state.doc.toString()), 'x\ny');
   });
   await check('Formatting stored as marks and undo/redo', async () => {
     await open('marks', 'hello');
