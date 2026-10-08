@@ -141,7 +141,7 @@ body.persistent-container-highlights .layout-row>.object-container:not(:last-chi
 
 /* Native fragmentation retains a single editable document and its history. */
 #editor.document-layout-enabled{position:relative;background:var(--page-color)}
-.document-layout-enabled .tiptap p{padding-left:var(--indent-left);padding-right:var(--indent-right);margin-top:var(--paragraph-before);margin-bottom:var(--paragraph-after)}
+.document-layout-enabled .tiptap :is(p,h1,h2,h3,h4,h5,h6){padding-left:var(--indent-left);padding-right:var(--indent-right);margin-top:var(--paragraph-before);margin-bottom:var(--paragraph-after)}
 #editor.document-paged{background:transparent;padding:var(--page-top) var(--page-right) var(--page-bottom) var(--page-left);min-height:var(--page-height);width:max-content;margin:24px auto;box-sizing:border-box}
 .document-paged>.tiptap{position:relative;z-index:1;width:var(--page-content-width);max-width:none!important;margin:0!important;min-height:0!important;height:var(--page-content-height);column-fill:auto;column-gap:calc(var(--page-left) + var(--page-right) + 24px);overflow:visible}
 .document-paged .object-container{break-inside:auto}

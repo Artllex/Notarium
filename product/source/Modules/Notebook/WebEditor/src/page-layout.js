@@ -2,6 +2,16 @@ import { Dialog } from '../../../../Shared/Web/UI/components.js';
 import { closeHistory } from '@tiptap/pm/history';
 
 const mm = value => value * 96 / 25.4;
+export const paragraphFields = ['indentLeft', 'indentRight', 'before', 'after'];
+export function paragraphFormatTransaction(editor, values, selection = editor.state.selection, tr = editor.state.tr) {
+  const { from, to, empty } = selection;
+  editor.state.doc.nodesBetween(from, to, (node, pos) => {
+    if (!['paragraph', 'heading'].includes(node.type.name)) return;
+    if (!empty && (pos + node.nodeSize <= from || pos >= to)) return;
+    tr.setNodeMarkup(pos, undefined, { ...node.attrs, ...Object.fromEntries(paragraphFields.map(key => [key, values[key]])) });
+  });
+  return tr;
+}
 export const layoutDefaults = { paged: false, width: 0, size: 'A4', landscape: false, color: '#202020',
   top: 20, bottom: 20, left: 20, right: 20, indentLeft: 0, indentRight: 0,
   before: 0, after: 8, footer: '', footerDistance: 10, numbering: false, start: 1, hyphenation: false };
@@ -39,11 +49,13 @@ export function setupPageLayout(editor) {
     <label>Rozmiar strony<select name="size">${Object.keys(sizes).map(size => `<option>${size}</option>`).join('')}</select></label>
     <label><input name="landscape" type="checkbox">Orientacja pozioma</label>
     <label>Kolor strony<input name="color" type="color"></label></fieldset>
-    <fieldset><legend>Marginesy i wcięcia</legend>${number('top', 'Górny margines', 'mm')}${number('bottom', 'Dolny margines', 'mm')}
+    <fieldset><legend>Marginesy strony</legend>${number('top', 'Górny margines', 'mm')}${number('bottom', 'Dolny margines', 'mm')}
     ${number('left', 'Lewy margines', 'mm')}${number('right', 'Prawy margines', 'mm')}
-    ${number('indentLeft', 'Wcięcie z lewej', 'mm')}${number('indentRight', 'Wcięcie z prawej', 'mm')}</fieldset>
-    <fieldset><legend>Odstępy i tekst</legend>${number('before', 'Przed akapitem', 'pt', 1000)}${number('after', 'Po akapicie', 'pt', 1000)}
-    <label><input name="hyphenation" type="checkbox">Automatyczne dzielenie wyrazów (polski)</label></fieldset>
+    </fieldset><fieldset><legend>Wcięcia i odstępy akapitów</legend>
+    <label>Zastosuj wcięcia i odstępy do<select name="paragraphScope"><option value="selection">Zaznaczonych akapitów / bieżącego akapitu</option><option value="defaults">Ustaw jako domyślne dla notatki</option></select></label>
+    ${number('indentLeft', 'Wcięcie z lewej', 'mm')}${number('indentRight', 'Wcięcie z prawej', 'mm')}
+    ${number('before', 'Przed akapitem', 'pt', 1000)}${number('after', 'Po akapicie', 'pt', 1000)}</fieldset>
+    <fieldset><legend>Tekst</legend><label><input name="hyphenation" type="checkbox">Automatyczne dzielenie wyrazów (polski)</label></fieldset>
     <fieldset><legend>Stopka i numeracja</legend><label>Tekst stopki<input name="footer" maxlength="500"></label>
     ${number('footerDistance', 'Odległość stopki od dołu strony', 'mm')}
     <label><input name="numbering" type="checkbox">Numeruj strony</label>${number('start', 'Numer początkowy', 'nr', 1000)}</fieldset>
@@ -53,6 +65,17 @@ export function setupPageLayout(editor) {
   const papers = document.createElement('div'); papers.className = 'layout-papers'; papers.setAttribute('aria-hidden', 'true');
   editor.view.dom.parentElement.prepend(papers);
   let current = layoutDefaults, frame = 0;
+  let paragraphSelection = null;
+  const fillParagraphFields = () => {
+    const defaults = normalizeLayout(editor.state.doc.attrs.pageLayout || {});
+    let attrs = null;
+    if (field('paragraphScope').value === 'selection' && paragraphSelection)
+      editor.state.doc.nodesBetween(paragraphSelection.from, paragraphSelection.to, node => {
+        if (!attrs && ['paragraph', 'heading'].includes(node.type.name)) attrs = node.attrs;
+      });
+    for (const key of paragraphFields) field(key).value = attrs?.[key] ?? defaults[key];
+  };
+  field('paragraphScope').addEventListener('change', fillParagraphFields);
   const drawPapers = () => {
     if (!current.paged) { papers.replaceChildren(); return; }
     const dimensions = sizes[current.size], width = mm(dimensions[current.landscape ? 1 : 0]), height = mm(dimensions[current.landscape ? 0 : 1]);
@@ -97,7 +120,15 @@ export function setupPageLayout(editor) {
     try {
       const value = Object.fromEntries(Object.keys(layoutDefaults).map(name => [name, field(name).type === 'checkbox' ? field(name).checked : field(name).value]));
       const layout = normalizeLayout(value);
-      editor.view.dispatch(closeHistory(editor.state.tr).setDocAttribute('pageLayout', layout).setDocAttribute('contentWidth', layout.width));
+      const local = field('paragraphScope').value === 'selection';
+      const defaults = normalizeLayout(editor.state.doc.attrs.pageLayout || {});
+      const documentLayout = local ? { ...layout, ...Object.fromEntries(paragraphFields.map(key => [key, defaults[key]])) } : layout;
+      let tr = closeHistory(editor.state.tr);
+      const globalChanged = Object.keys(layoutDefaults).some(key => !paragraphFields.includes(key) && layout[key] !== defaults[key]);
+      if (!local || editor.state.doc.attrs.pageLayout || globalChanged)
+        tr = tr.setDocAttribute('pageLayout', documentLayout).setDocAttribute('contentWidth', layout.width);
+      if (local) tr = paragraphFormatTransaction(editor, layout, paragraphSelection, tr);
+      editor.view.dispatch(tr);
       editor.view.dispatch(closeHistory(editor.state.tr)); dialog.close(); editor.view.focus();
     } catch (error) { dialog.querySelector('.layout-error').textContent = error.message; }
   });
@@ -106,8 +137,10 @@ export function setupPageLayout(editor) {
   document.fonts?.ready.then(refresh);
   window.addEventListener('resize', refresh);
   return { apply, open() {
+    paragraphSelection = editor.state.selection;
     const value = normalizeLayout({ ...layoutDefaults, width: editor.state.doc.attrs.contentWidth || 0, ...editor.state.doc.attrs.pageLayout });
     for (const [name, val] of Object.entries(value)) { if (field(name).type === 'checkbox') field(name).checked = val; else field(name).value = val; }
+    field('paragraphScope').value = 'selection'; fillParagraphFields();
     dialog.querySelector('.layout-error').textContent = ''; Dialog.for(dialog).open();
   }, dismiss() { if (dialog.open) dialog.close(); } };
 }

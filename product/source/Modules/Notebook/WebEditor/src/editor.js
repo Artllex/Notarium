@@ -23,7 +23,7 @@ import { ContainerAttributes, LayoutRow, BlockGroup, setupContainers, alignConta
 import { editContainer, dismissContainer } from './container-dialog.js';
 import { textTarget, clearTextTarget } from './rich-label.js';
 import { ContainerKeyboard } from './container-keyboard.js';
-import { setupPageLayout, normalizeLayout } from './page-layout.js';
+import { setupPageLayout, normalizeLayout, paragraphFields, paragraphFormatTransaction } from './page-layout.js';
 import { listClipboardText } from './list-clipboard.js';
 let pageLayout;
 const lineListUndoKey = new PluginKey('lineListUndo');
@@ -105,6 +105,11 @@ const editor = new Editor({
   extensions: [Extension.create({ name: 'documentLayout', addGlobalAttributes: () => [{ types: ['doc'], attributes: { layout: { default: 'note' }, contentWidth: { default: null }, pageLayout: { default: null } } }] }), StarterKit.configure({ codeBlock: false, trailingNode: false, link: { openOnClick: false, autolink: true } }), containerTrailingNode, textFlowSelection, TextStyle, Color, FontFamily,
     Highlight.configure({ multicolor: true }), TextAlign.configure({ types: ['heading', 'paragraph'] }),
     Extension.create({ name: 'paragraphLineSpacing', addGlobalAttributes: () => [{ types: ['paragraph', 'heading'], attributes: {
+      ...Object.fromEntries(paragraphFields.map(key => [key, { default: null,
+        parseHTML: el => el.hasAttribute(`data-paragraph-${key}`) ? Number(el.getAttribute(`data-paragraph-${key}`)) : null,
+        renderHTML: attrs => attrs[key] == null ? {} : { [`data-paragraph-${key}`]: attrs[key],
+          style: `${({ indentLeft: 'padding-left', indentRight: 'padding-right', before: 'margin-top', after: 'margin-bottom' })[key]}:${attrs[key] * (key.startsWith('indent') ? 96 / 25.4 : 96 / 72)}px` }
+      }])),
       lineSpacing: { default: null, parseHTML: el => Number(el.style.lineHeight) || null,
         renderHTML: attrs => attrs.lineSpacing ? { style: `line-height:${attrs.lineSpacing}` } : {} }
     } }] }),
@@ -258,6 +263,12 @@ function command(message) {
   }
   if (action === 'undo') { editor.commands.undo(); return; }
   if (action === 'redo') { editor.commands.redo(); return; }
+  if (action === 'paragraphFormat') {
+    const values = normalizeLayout(typeof value === 'string' ? JSON.parse(value) : value);
+    editor.view.dispatch(paragraphFormatTransaction(editor, values, editor.state.selection, closeHistory(editor.state.tr)));
+    editor.view.dispatch(closeHistory(editor.state.tr));
+    return;
+  }
   if (action === 'lineSpacing') {
     const spacing = Number(value);
     if (!Number.isFinite(spacing) || spacing < 1 || spacing > 2) return;

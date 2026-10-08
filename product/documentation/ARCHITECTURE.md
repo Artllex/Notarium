@@ -149,6 +149,8 @@ Okno Notatnika udostępnia slot nawigacji `IModuleNavigationHost`. Shell wypełn
 
 ### Układ dokumentu
 
+Wcięcia i odstępy mają dwa poziomy: wartości domyślne w `doc.pageLayout` oraz opcjonalne nadpisania `indentLeft`, `indentRight` (mm), `before`, `after` (pt) przy węzłach `paragraph` i `heading`. `null` oznacza dziedziczenie. Układ domyślnie formatuje akapity objęte zaznaczeniem lub bieżący akapit; zaznaczenie kontenera obejmuje jego akapity. Osobna opcja ustawia domyślne wartości notatki bez usuwania lokalnych nadpisań. Wybór zachowuje zaznaczenie sprzed otwarcia dialogu; zapis i cofanie korzystają z historii dokumentu. Lokalna zmiana nie włącza sama globalnego układu strony. JSON zachowuje nadpisania bezpośrednio.
+
 Przycisk Układ na pasku formatowania otwiera ustawienia przechowywane w atrybucie `doc.pageLayout`: tryb ciągły/strony, szerokość, format A3/A4/A5/Letter/Legal, orientację, kolor, marginesy, wcięcia, odstępy, stopkę, numerację i dzielenie wyrazów. Zmiana jest jedną operacją historii. JSON zachowuje atrybut bezpośrednio; Markdown przenosi go w zakodowanym komentarzu `notarium:page-layout`.
 
 Widok stron wykorzystuje natywny przepływ CSS: kolejne strony są obok siebie i mają wspólny edytowalny dokument. Tekst może przechodzić między stronami bez tworzenia sztucznych kontenerów ani zmiany treści. Wiersze wielokolumnowe i obiekty mają unikać rozdzielania. Obiekt wyższy od dostępnej wysokości strony wymaga osobnego rozwiązania skalowania/fragmentacji; nie jest automatycznie zmniejszany. Stopki i numery są warstwą prezentacji, nie węzłami dokumentu. Dzielenie wyrazów jest realizowane przez słownik przeglądarki dla języka polskiego.

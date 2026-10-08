@@ -32,6 +32,41 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Paragraph layout is local, persisted, undoable and has explicit document defaults', async () => {
+    await open('paragraph-local', 'First\n\nSecond\n\nThird');
+    await page.waitForTimeout(100);
+    const before = await json();
+    await page.evaluate(() => {
+      const editor = window.notatnik.editor;
+      let pos; editor.state.doc.descendants((node, offset) => { if (node.textContent === 'Second' && node.type.name === 'paragraph') pos = offset; });
+      editor.commands.setTextSelection({ from: pos + 1, to: pos + 7 });
+    });
+    await command('pageLayout');
+    await page.locator('#page-layout-dialog [name=indentLeft]').fill('10');
+    await page.locator('#page-layout-dialog [name=indentRight]').fill('5');
+    await page.locator('#page-layout-dialog [name=before]').fill('6');
+    await page.locator('#page-layout-dialog [name=after]').fill('12');
+    await page.locator('#page-layout-dialog button[value=save]').click();
+    const formatted = await json();
+    assert.equal(formatted.attrs.pageLayout, null);
+    assert.equal(formatted.content[0].attrs.indentLeft, null);
+    assert.equal(formatted.content[1].attrs.indentLeft, 10);
+    assert.equal(formatted.content[1].attrs.after, 12);
+    assert.equal(formatted.content[2].attrs.after, null);
+    const styles = await page.locator('.tiptap p').nth(1).evaluate(p => ({ left: parseFloat(getComputedStyle(p).paddingLeft), after: parseFloat(getComputedStyle(p).marginBottom) }));
+    assert.ok(Math.abs(styles.left - 10 * 96 / 25.4) < 0.02);
+    assert.equal(styles.after, 16);
+    await command('undo'); assert.deepEqual(await json(), before);
+    await command('redo'); assert.deepEqual(await json(), formatted);
+    await open('paragraph-reloaded', '', JSON.stringify({ version: 1, doc: formatted }));
+    await command('pageLayout');
+    await page.locator('#page-layout-dialog [name=paragraphScope]').evaluate(select => { select.value = 'defaults'; select.dispatchEvent(new Event('change', { bubbles: true })); });
+    await page.locator('#page-layout-dialog [name=indentLeft]').fill('3');
+    await page.locator('#page-layout-dialog button[value=save]').click();
+    const defaults = await json();
+    assert.equal(defaults.attrs.pageLayout.indentLeft, 3);
+    assert.equal(defaults.content[1].attrs.indentLeft, 10);
+  });
   await check('Line spacing formats only selected list paragraphs and supports undo', async () => {
     await open('selected-spacing', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
       { type: 'paragraph', content: [{ type: 'text', text: 'Lista:' }] },
