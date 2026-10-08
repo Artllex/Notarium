@@ -207,6 +207,22 @@ internal static class MouseInputRegression
         editor.Execute("workspacePanel", "math"); await Task.Delay(100);
         Check((await Read("document.body.classList.contains('top-panel-open') && document.querySelector('#math-dialog').open && !document.querySelector('dialog:modal')")).GetBoolean(),
               "native ribbon command opens non-modal Math panel in packaged web host");
+        await Open("[p('Table target')]");
+        await core.ExecuteScriptAsync("notatnik.editor.commands.setTextSelection(1)");
+        RibbonVisualRegression.Click(ribbon, "Wstawianie");
+        var tableMenu = RibbonVisualRegression.OpenMenu(ribbon, "Tabela");
+        var tableView = tableMenu.View; tableView.Measure(new System.Windows.Size(310, 280)); tableView.Arrange(new System.Windows.Rect(0, 0, 310, 280)); tableView.UpdateLayout();
+        RibbonVisualRegression.Click(tableView, "Tabela 4 kolumn 2 wierszy"); await Task.Delay(150);
+        Check((await Read("notatnik.editor.getJSON().content[0].content.length")).GetInt32() == 2 &&
+              (await Read("notatnik.editor.getJSON().content[0].content[0].content.length")).GetInt32() == 4,
+              "native table grid click inserts exact dimensions through the real bridge");
+        await Open("[p('Margin target')]"); RibbonVisualRegression.Click(ribbon, "Układ"); await Task.Delay(100);
+        var marginMenu = RibbonVisualRegression.OpenMenu(ribbon, "Marginesy");
+        var marginView = marginMenu.View; marginView.Measure(new System.Windows.Size(310, 490)); marginView.Arrange(new System.Windows.Rect(0, 0, 310, 490)); marginView.UpdateLayout();
+        RibbonVisualRegression.Click(marginView, "Wąskie"); await Task.Delay(100);
+        Check((await Read("notatnik.editor.getJSON().attrs.pageLayout.left")).GetDouble() == 12.7 &&
+              (await Read("notatnik.editor.getJSON().attrs.pageLayout.bottom")).GetDouble() == 12.7,
+              "native illustrated margin preset changes all four document margins");
         return passed;
     }
 }

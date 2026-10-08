@@ -111,5 +111,17 @@ try {
     await page.locator('.top-panel .panel-close').click(); assert.equal(await page.locator('body.right-panel-open').count(), 1);
     await page.locator('.right-panel .panel-close').click(); assert.equal(await page.locator('body.right-panel-open').count(), 0);
   });
+  await check('Ribbon margin preset is one undoable change and leaves paragraph settings alone', async () => {
+    await open('margin-preset'); await command('layoutField', JSON.stringify({ key: 'indentLeft', value: 8 }));
+    const before = await doc(); await command('layoutFields', JSON.stringify({ top: 12.7, bottom: 12.7, left: 12.7, right: 12.7 }));
+    const data = await doc(); assert.equal(data.attrs.pageLayout.top, 12.7); assert.equal(data.attrs.pageLayout.right, 12.7); assert.equal(data.content[0].attrs.indentLeft, 8);
+    await command('undo'); assert.deepEqual(await doc(), before);
+  });
+  await check('Ribbon table grid inserts selected dimensions; block equation opens matching layout', async () => {
+    await open('grid-table'); await select(1); await command('tableSize', JSON.stringify({ rows: 2, cols: 4 }));
+    const table = (await doc()).content[0]; assert.equal(table.type, 'table'); assert.equal(table.content.length, 2); assert.equal(table.content[0].content.length, 4);
+    await command('mathBlock'); assert.equal(await page.locator('#math-layout').inputValue(), 'blockMath');
+    await page.keyboard.press('Escape');
+  });
   console.log(`TOTAL ${checks} workspace checks; screenshots: ${reports}`);
 } finally { await browser.close(); }

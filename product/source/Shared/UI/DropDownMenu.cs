@@ -160,7 +160,8 @@ public sealed class DropDownMenu
                 IsEnabled = item.IsEnabled
             };
             button.Template = RowTemplate();
-            System.Windows.Automation.AutomationProperties.SetName(button, item.Header?.ToString()?.Replace("_", "") ?? (header as TextBlock)?.Text ?? "Menu option");
+            var accessibleHeader = System.Windows.Automation.AutomationProperties.GetName(header);
+            System.Windows.Automation.AutomationProperties.SetName(button, !string.IsNullOrWhiteSpace(accessibleHeader) ? accessibleHeader : item.Header?.ToString()?.Replace("_", "") ?? (header as TextBlock)?.Text ?? "Menu option");
             button.Click += (_, _) =>
             {
                 if (item.HasItems)

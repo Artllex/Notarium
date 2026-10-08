@@ -13,7 +13,8 @@ Poza nimi: systemowe otwieranie/zapis pliku i wybór dowolnego koloru RGB; komun
 
 ## Nowy podział
 
-- Natywna `NotebookRibbon` pod menu File/Edit: Układ, Wstawianie, Odwołania, Obiekty. Polecenia wykonuje silnik Tiptap, nie kopia dokumentu w WPF.
+- Natywna `NotebookRibbon` pod menu File/Edit: Układ, Wstawianie, Odwołania, Obiekty. Duże przyciski mają jednolite ikony wektorowe i podpisy, małe polecenia układ dwu-/trzyrzędowy, a zakładka aktywna jest podkreślona. Polecenia wykonuje silnik Tiptap, nie kopia dokumentu w WPF.
+- Rozbudowane wspólne menu: Marginesy (presety z podglądem i podmenu osobnych krawędzi), Orientacja, Rozmiar (formaty z wymiarami), Obszar (tryb/strony, presety i własna szerokość), Kolor strony (próbki), Obrazy, Równanie i Wyrównaj. Bieżące ustawienia mają zaznaczenia. Tabela zawiera interaktywną siatkę 10 × 8 z podświetlaniem wybieranego rozmiaru i dostępem do dalszych operacji.
 - Układ: bezpośrednie pola rozmiaru/orientacji/podziału stron, szerokości, marginesów, lokalnych wcięć i odstępów, koloru i dzielenia wyrazów. Zaawansowany formularz pozostaje pod jawnym przyciskiem „Zaawansowany układ…”, w tym zmiana domyślnych ustawień akapitów.
 - Panel prawy: Komentarze, Numeracje, Ustawienia kontenera, Fragmenty robocze, Link, Obraz, Tabela. Numeracje obsługuje stopkę i numerację stron. Istniejące formularze używają dotychczasowych walidatorów i zapisów bez modalnej zasłony.
 - Panel górny: AI, Math. Math działa z podglądem, wstawianiem/edycją i automatyczną numeracją wzorów.

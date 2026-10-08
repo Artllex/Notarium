@@ -93,11 +93,11 @@ export function setupMedia(instance, noteId) {
   }, true);
 }
 
-export function openMath(node = null, pos = null) {
+export function openMath(node = null, pos = null, preferredLayout = 'inlineMath') {
   if (!editor?.isEditable || !getNoteId()) return;
   mathContext = { ...capture(), pos, type: node?.type.name };
   source.value = node?.attrs.latex || '';
-  layout.value = node?.type.name || 'inlineMath'; layout.disabled = Boolean(node);
+  layout.value = node?.type.name || preferredLayout; layout.disabled = Boolean(node);
   numbered.checked = Boolean(node?.attrs.numbered); numbered.disabled = layout.value !== 'blockMath';
   save.textContent = node ? 'Zapisz' : 'Wstaw';
   renderPreview(); Dialog.for(dialog).open(); source.focus({ preventScroll: true });

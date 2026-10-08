@@ -28,6 +28,7 @@ internal static class Program
         Check(visualHeader.Parent is Grid, "shared menu rebuild preserves visual headers");
         var fixture = Path.Combine(Environment.GetEnvironmentVariable("NOTARIUM_TEST_ROOT") ?? Path.GetTempPath(), "Notarium-refactor-tests-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(fixture);
+        Console.WriteLine("Test fixture: " + fixture);
         var library = new NotebookLibrary(new NoteStore(Path.Combine(fixture, "notes.json")));
         library.Load(); var first = library.Create(); library.Rename(first, "  Pierwsza  ");
         Check(first.Title == "Pierwsza", "library owns title normalization");
@@ -71,6 +72,7 @@ internal static class Program
         ribbonBitmap.Render(notebookFrame);
         var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(ribbonBitmap));
         using (var image = File.Create(Path.Combine(fixture, "ribbon.png"))) encoder.Save(image);
+        _passed += RibbonVisualRegression.Run((NotebookRibbon)ribbonMenu.Children[1], fixture);
         Check(notebookFrame?.Status.Content == window.FindName("NotebookStatusBar") &&
               notebookFrame.Workspace.Content is Grid notebookWorkspace && notebookWorkspace.RowDefinitions.Count == 4,
             "notebook status content uses the shared frame without a duplicate workspace row");

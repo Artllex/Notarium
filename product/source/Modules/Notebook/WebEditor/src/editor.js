@@ -405,6 +405,20 @@ function command(message) {
   if (!noteId) return;
   const action = message.action, value = message.value;
   if (action === 'workspacePanel') { workspacePanels.show(value); return; }
+  if (action === 'layoutFields') {
+    const fields = typeof value === 'string' ? JSON.parse(value) : value;
+    if (!fields || Object.keys(fields).some(key => !['top', 'bottom', 'left', 'right'].includes(key))) return;
+    const settings = normalizeLayout({ width: resolvedContentWidth(editor.state.doc), ...editor.state.doc.attrs.pageLayout, ...fields });
+    editor.view.dispatch(closeHistory(editor.state.tr).setDocAttribute('pageLayout', settings).setDocAttribute('contentWidth', settings.width));
+    editor.view.dispatch(closeHistory(editor.state.tr)); post({ type: 'ribbonError', message: '' }); return;
+  }
+  if (action === 'tableSize') {
+    const { rows, cols } = typeof value === 'string' ? JSON.parse(value) : value;
+    if (![rows, cols].every(number => Number.isInteger(number) && number >= 1 && number <= 20)) return;
+    editor.view.dispatch(closeHistory(editor.state.tr));
+    editor.chain().focus().insertTable({ rows, cols, withHeaderRow: true }).run(); return;
+  }
+  if (action === 'mathBlock') { openMath(null, null, 'blockMath'); return; }
   if (action === 'layoutField') {
     const { key, value: fieldValue } = typeof value === 'string' ? JSON.parse(value) : value;
     const settings = normalizeLayout({ width: resolvedContentWidth(editor.state.doc), ...editor.state.doc.attrs.pageLayout, [key]: fieldValue });
@@ -544,7 +558,7 @@ function receive(message) {
       case 'flush': post({ type: 'flushed', requestId: message.requestId, noteId, changed: dirty.has(noteId), ...snapshot(editor) }); break;
     }
   } catch (error) {
-    if (message.type === 'command' && message.action === 'layoutField') {
+    if (message.type === 'command' && ['layoutField', 'layoutFields'].includes(message.action)) {
       post({ type: 'ribbonError', message: String(error.message || error) }); return;
     }
     if (message.type === 'open') editor.setEditable(false);
