@@ -101,6 +101,8 @@ NotebookWebView przekazuje każde naciśnięcie lewego przycisku myszy dokładni
 
 Tiptap/ProseMirror obsługuje dokument i transakcje. CodeMirror obsługuje kod; jego zmiany trafiają do wspólnej historii dokumentu. Cropper obsługuje kadrowanie, KaTeX matematykę. Elementy wewnętrzne tych silników pozostają ich własnością.
 
+Ctrl+klik dodaje zaznaczenia wyrazów; Ctrl+dwuklik dodaje całe wiersze wizualne, również nieprzylegające i w różnych kontenerach. Drugi klik rozszerza zaznaczenie wyrazu z pierwszego kliknięcia do wiersza bez pozostawiania nakładających się zakresów. Powtórzenie Ctrl+dwukliku na zaznaczonym wierszu nie dubluje zakresu. Zaznaczone wiersze są kopiowane z podziałami linii; ESC i zwykłe kliknięcie usuwają dodatkowe zakresy.
+
 | Plik WebEditor/src | Odpowiedzialność |
 |---|---|
 | container-types.js | Klasy typów, etykiety, minima wymiarów, początkowa treść i atrybuty kopiowania |

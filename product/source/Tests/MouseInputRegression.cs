@@ -115,6 +115,41 @@ internal static class MouseInputRegression
         }
         Check((await Read("[...document.querySelectorAll('.word-multi-selection')].map(e=>e.textContent).join('|')")).GetString() == "Alpha|Gamma", "native Ctrl clicks preserve two selected words");
 
+        await Open("[{type:'blockGroup',attrs:{textFlow:true},content:[p('First line'),{type:'orderedList',content:[item(p('Skip this')),item(p('Last item'))]}]},p('Other container')]");
+        foreach (var selector in new[] { ".text-flow-content > p", ".text-flow-content li:last-child p", ".object-container:last-child p" })
+        {
+            var point = await Point(selector);
+            for (var click = 0; click < 2; click++)
+            {
+                Input(CoreWebView2MouseEventKind.LeftButtonDown, CoreWebView2MouseEventVirtualKeys.Control | CoreWebView2MouseEventVirtualKeys.LeftButton, point);
+                await Task.Delay(30);
+                Input(CoreWebView2MouseEventKind.LeftButtonUp, CoreWebView2MouseEventVirtualKeys.Control, point);
+                await Task.Delay(50);
+            }
+            await Task.Delay(650);
+        }
+        Check((await Read("[...document.querySelectorAll('.word-multi-selection')].map(e=>e.textContent).join('|')")).GetString() == "First line|Last item|Other container", "native Ctrl double clicks accumulate three whole nonadjacent lines across containers");
+        var copiedLines = await Read(@"(() => {const data=new DataTransfer();notatnik.editor.view.dom.dispatchEvent(new ClipboardEvent('copy',{bubbles:true,cancelable:true,clipboardData:data}));return data.getData('text/plain')})()");
+        Check(copiedLines.GetString() == "First line\nLast item\nOther container", "native multi-line copy keeps line breaks without leftover word fragments");
+        await core.ExecuteScriptAsync("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))");
+        Check((await Read("document.querySelectorAll('.word-multi-selection').length")).GetInt32() == 0, "Escape clears accumulated line selections");
+        Check((await Read("notatnik.editor.state.selection.empty")).GetBoolean(), "Escape clears the last native text selection too");
+
+        await Open("[{type:'blockGroup',attrs:{textFlow:true},content:[p('Lista:'),{type:'orderedList',content:[item(p('One')),item(p('Two'))]}]}]");
+        foreach (var selector in new[] { ".text-flow-content li:first-child p", ".text-flow-content li:last-child p" })
+        {
+            var point = await Point(selector, 1);
+            for (var click = 0; click < 2; click++)
+            {
+                Input(CoreWebView2MouseEventKind.LeftButtonDown, CoreWebView2MouseEventVirtualKeys.Control | CoreWebView2MouseEventVirtualKeys.LeftButton, point);
+                await Task.Delay(30);
+                Input(CoreWebView2MouseEventKind.LeftButtonUp, CoreWebView2MouseEventVirtualKeys.Control, point);
+                await Task.Delay(50);
+            }
+            await Task.Delay(650);
+        }
+        Check((await Read(@"(() => {const data=new DataTransfer();notatnik.editor.view.dom.dispatchEvent(new ClipboardEvent('copy',{bubbles:true,cancelable:true,clipboardData:data}));return data.getData('text/plain')})()")).GetString() == "1. One\n2. Two", "native Ctrl double-click copy retains list numbers and one-word line breaks");
+
         await Open("[p('Alpha Beta Gamma'),p('Outside')]");
         var dragFrom = await Point(".object-container p", 1);
         var dragTo = await Point(".object-container p", 13);

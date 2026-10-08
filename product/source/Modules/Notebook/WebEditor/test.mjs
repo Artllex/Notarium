@@ -32,6 +32,49 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Ctrl double clicks accumulate nonadjacent lines without first-click word fragments', async () => {
+    const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
+    await open('multi-lines', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'blockGroup', attrs: { textFlow: true }, content: [p('First line'),
+        { type: 'orderedList', content: ['Skip this', 'Last item'].map(text => ({ type: 'listItem', content: [p(text)] })) }] }, p('Other container')
+    ] } }));
+    await page.waitForTimeout(100);
+    await page.keyboard.down('Control');
+    for (const selector of ['.text-flow-content > p', '.text-flow-content li:last-child p', '.object-container:last-child p']) {
+      await page.locator(selector).dblclick();
+      await page.waitForTimeout(650);
+    }
+    await page.keyboard.up('Control');
+    const ranges = () => page.locator('.word-multi-selection').allTextContents();
+    assert.deepEqual(await ranges(), ['First line', 'Last item', 'Other container']);
+    await page.keyboard.down('Control');
+    await page.locator('.text-flow-content > p').dblclick();
+    await page.keyboard.up('Control');
+    assert.deepEqual(await ranges(), ['First line', 'Last item', 'Other container']);
+    const copied = await page.evaluate(() => {
+      const data = new DataTransfer();
+      window.notatnik.editor.view.dom.dispatchEvent(new ClipboardEvent('copy', { bubbles: true, cancelable: true, clipboardData: data }));
+      return data.getData('text/plain');
+    });
+    assert.equal(copied, 'First line\nLast item\nOther container');
+    await page.keyboard.press('Escape');
+    assert.deepEqual(await ranges(), []);
+    assert.equal(await page.evaluate(() => window.notatnik.editor.state.selection.empty), true);
+    await open('multi-single-word-lines', 'One\n\nTwo');
+    await page.waitForTimeout(650);
+    await page.keyboard.down('Control');
+    for (const paragraph of [page.locator('.object-container p').first(), page.locator('.object-container p').nth(1)]) {
+      await paragraph.dblclick();
+      await page.waitForTimeout(650);
+    }
+    await page.keyboard.up('Control');
+    const copiedSingleWords = await page.evaluate(() => {
+      const data = new DataTransfer();
+      window.notatnik.editor.view.dom.dispatchEvent(new ClipboardEvent('copy', { bubbles: true, cancelable: true, clipboardData: data }));
+      return data.getData('text/plain');
+    });
+    assert.equal(copiedSingleWords, 'One\nTwo');
+  });
   await check('Ctrl clicks retain multiple words and double click on a list selects only that item', async () => {
     await open('multi-words', 'Alpha Beta Gamma');
     await page.waitForTimeout(100);
