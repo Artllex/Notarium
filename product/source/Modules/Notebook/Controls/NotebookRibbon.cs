@@ -8,11 +8,13 @@ using Notarium.UI;
 
 namespace Notatnik;
 
-// Native ribbon, immediately below the menu. The web editor owns all data/history.
+// Native ribbon with one shared menu/tab row. The web editor owns all data/history.
 public sealed class NotebookRibbon : Border
 {
     private readonly WebEditorControl _editor;
     private readonly StackPanel _groups = new() { Orientation = Orientation.Horizontal };
+    private readonly StackPanel _body = new();
+    public bool IsExpanded => _body.Visibility == Visibility.Visible;
     private readonly Dictionary<string, FrameworkElement> _fields = new();
     private readonly Dictionary<string, ActionButton> _tabs = new();
     private readonly Dictionary<string, Border> _tabLines = new();
@@ -22,30 +24,33 @@ public sealed class NotebookRibbon : Border
     private string _active = "Układ";
     private bool _sync;
 
-    public NotebookRibbon(WebEditorControl editor)
+    public NotebookRibbon(WebEditorControl editor, MenuBar? mainMenu = null)
     {
         _editor = editor;
         Background = UiPolicy.Brush("#262626");
         BorderBrush = UiPolicy.Brush("#414141"); BorderThickness = new Thickness(0, 0, 0, 1);
         var root = new StackPanel(); Child = root;
         var header = new DockPanel { Margin = new Thickness(8, 0, 8, 0), LastChildFill = true }; root.Children.Add(header);
+        if (mainMenu is not null)
+        {
+            mainMenu.Height = 28; mainMenu.Background = System.Windows.Media.Brushes.Transparent;
+            DockPanel.SetDock(mainMenu, Dock.Left); header.Children.Add(mainMenu);
+        }
         var shortcuts = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
         DockPanel.SetDock(shortcuts, Dock.Right); header.Children.Add(shortcuts);
         foreach (var (label, icon, command) in new[] { ("Panel prawy", "panel", "comments"), ("AI", "ai", "ai"), ("Math", "math", "math") })
             shortcuts.Children.Add(SmallTool(label, icon, () => _editor.Execute("workspacePanel", command)));
-        var collapse = Button("", () => _groups.Visibility = _groups.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible);
-        collapse.Content = RibbonIcon.Create("down", 16); collapse.Width = 28; collapse.ToolTip = "Zwiń / rozwiń wstążkę";
-        System.Windows.Automation.AutomationProperties.SetName(collapse, "Zwiń / rozwiń wstążkę"); shortcuts.Children.Add(collapse);
         var tabs = new StackPanel { Orientation = Orientation.Horizontal }; header.Children.Add(tabs);
         foreach (var tab in new[] { "Układ", "Wstawianie", "Odwołania", "Obiekty" })
         {
-            var button = Button(tab, () => Select(tab)); _tabs[tab] = button;
+            var button = Button(tab, () => ActivateTab(tab)); button.FontSize = 12; _tabs[tab] = button;
             var label = new StackPanel(); label.Children.Add(new TextBlock { Text = tab, Margin = new Thickness(0, 1, 0, 4) });
             var line = new Border { Height = 2, Background = System.Windows.Media.Brushes.Transparent }; label.Children.Add(line); _tabLines[tab] = line;
             button.Content = label; tabs.Children.Add(button);
         }
-        root.Children.Add(new ScrollViewer { Content = _groups, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Disabled });
-        root.Children.Add(_error);
+        root.Children.Add(_body);
+        _body.Children.Add(new ScrollViewer { Content = _groups, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Disabled });
+        _body.Children.Add(_error);
         _editor.SelectionChanged += (_, _) => Refresh();
         _editor.RibbonError += (_, message) => _error.Text = message;
         Select("Układ");
@@ -218,7 +223,7 @@ public sealed class NotebookRibbon : Border
     private void Select(string tab)
     {
         _openMenu?.Close();
-        _active = tab; _groups.Children.Clear(); _fields.Clear(); _groups.Visibility = Visibility.Visible; _error.Text = "";
+        _active = tab; _groups.Children.Clear(); _fields.Clear(); _body.Visibility = Visibility.Visible; _error.Text = "";
         foreach (var (name, button) in _tabs) { button.Foreground = UiPolicy.Current.TextBrush; _tabLines[name].Background = name == tab ? UiPolicy.Current.AccentBrush : System.Windows.Media.Brushes.Transparent; }
         if (tab == "Układ")
         {
@@ -270,6 +275,13 @@ public sealed class NotebookRibbon : Border
             AddDropdown(Group("Wzory"), "Równanie", "math", MathMenu);
         }
         Refresh();
+    }
+    private void ActivateTab(string tab)
+    {
+        _openMenu?.Close();
+        if (_active != tab) { Select(tab); return; }
+        _body.Visibility = IsExpanded ? Visibility.Collapsed : Visibility.Visible;
+        if (IsExpanded) Refresh();
     }
     private void Refresh()
     {

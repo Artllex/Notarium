@@ -70,10 +70,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged, Notarium.Contr
             }), DispatcherPriority.Loaded);
         };
         TabsView.SidebarRestoreRequested += (_, _) => frame.ToggleSidebar();
-        var menuAndRibbon = new StackPanel();
-        MainMenu.Height = 25;
-        menuAndRibbon.Children.Add(MainMenu);
-        menuAndRibbon.Children.Add(new NotebookRibbon(Editor));
+        var menuAndRibbon = new NotebookRibbon(Editor, MainMenu);
         frame.RowDefinitions[1].Height = GridLength.Auto;
         frame.Sidebar.Content = LibraryView; frame.Menu.Content = menuAndRibbon; frame.Workspace.Content = workspace; frame.Status.Content = NotebookStatusBar;
         LibraryView.SidebarToggleRequested += (_, _) => frame.ToggleSidebar();
