@@ -28,7 +28,9 @@ import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { setupPageLayout, normalizeLayout, paragraphFields, paragraphFormatTransaction } from './page-layout.js';
 import { listClipboardText } from './list-clipboard.js';
 import { indentText } from './indentation.js';
+import { setupWorkspacePanels } from './workspace-panels.js';
 let pageLayout;
+let workspacePanels;
 const lineListUndoKey = new PluginKey('lineListUndo');
 const wordSelectionKey = new PluginKey('wordSelection');
 function selectTextRange(view, range, toggle = false) {
@@ -248,6 +250,7 @@ const editor = new Editor({
 const movement = setupBlockMovement(editor, () => noteId);
 pageLayout = setupPageLayout(editor);
 setupMedia(editor, () => noteId);
+workspacePanels = setupWorkspacePanels(editor, () => noteId);
 const containerNavigation = setupContainers(editor, { editImage, openMath, editContainer, noteId: () => noteId, imageDialogOpen: () => document.querySelector('#image-dialog').open });
 new ContainerKeyboard(editor, { ...containerNavigation,
   indentText: backwards => indentText(editor, backwards, wordSelectionKey.getState(editor.state), wordSelectionKey) });
@@ -337,10 +340,16 @@ document.querySelector('#editor').addEventListener('mousedown', event => {
 });
 function publishSelection() {
   const width = resolvedContentWidth(editor.state.doc);
+  const layout = normalizeLayout({ width, ...editor.state.doc.attrs.pageLayout });
+  let paragraph = null;
+  editor.state.doc.nodesBetween(editor.state.selection.from, editor.state.selection.to, node => {
+    if (!paragraph && ['paragraph', 'heading'].includes(node.type.name)) paragraph = node.attrs;
+  });
+  for (const key of paragraphFields) if (paragraph?.[key] != null) layout[key] = paragraph[key];
   post({ type: 'selection', noteId, font: textTarget(editor).getAttributes('textStyle').fontFamily || 'Segoe UI',
     color: textTarget(editor).getAttributes('textStyle').color || null,
     highlight: textTarget(editor).getAttributes('highlight').color || null,
-    contentWidth: width, canUndo: editor.can().undo(), canRedo: editor.can().redo(), inCode: editor.isActive('codeCell') });
+    contentWidth: width, layout, canUndo: editor.can().undo(), canRedo: editor.can().redo(), inCode: editor.isActive('codeCell') });
 }
 
 const resolvedContentWidth = doc => doc.attrs.contentWidth ?? (doc.attrs.layout === 'article' ? 790 : 0);
@@ -353,6 +362,7 @@ function applyDocumentLayout(doc) {
 }
 
 function open(message) {
+  workspacePanels?.dismiss();
   pageLayout.dismiss();
   clearTextTarget();
   movement.cancel();
@@ -394,6 +404,27 @@ function insertionBoundary() {
 function command(message) {
   if (!noteId) return;
   const action = message.action, value = message.value;
+  if (action === 'workspacePanel') { workspacePanels.show(value); return; }
+  if (action === 'layoutField') {
+    const { key, value: fieldValue } = typeof value === 'string' ? JSON.parse(value) : value;
+    const settings = normalizeLayout({ width: resolvedContentWidth(editor.state.doc), ...editor.state.doc.attrs.pageLayout, [key]: fieldValue });
+    if (!(key in settings)) return;
+    let tr = closeHistory(editor.state.tr);
+    if (paragraphFields.includes(key)) {
+      const ranges = wordSelectionKey.getState(editor.state) || [];
+      for (const range of ranges.length ? ranges : [editor.state.selection]) editor.state.doc.nodesBetween(range.from, range.to, (node, pos) => {
+        if (!['paragraph', 'heading'].includes(node.type.name)) return;
+        if (range.from !== range.to && (pos + 1 >= range.to || pos + node.nodeSize - 1 <= range.from)) return;
+        const current = tr.doc.nodeAt(pos);
+        if (current.attrs[key] !== settings[key]) tr.setNodeMarkup(pos, undefined, { ...current.attrs, [key]: settings[key] });
+      });
+    } else {
+      const previous = normalizeLayout({ width: resolvedContentWidth(editor.state.doc), ...editor.state.doc.attrs.pageLayout });
+      if (previous[key] !== settings[key]) tr = tr.setDocAttribute('pageLayout', settings).setDocAttribute('contentWidth', settings.width);
+    }
+    if (tr.docChanged) { editor.view.dispatch(tr); editor.view.dispatch(closeHistory(editor.state.tr)); }
+    post({ type: 'ribbonError', message: '' }); return;
+  }
   if (action === 'pageLayout') { pageLayout.open(); return; }
   if (action === 'setPageLayout') {
     const settings = normalizeLayout(typeof value === 'string' ? JSON.parse(value) : value);
@@ -473,17 +504,19 @@ function command(message) {
   }
 }
 
-let linkTarget;
+let linkTarget, linkSelection;
 function showLinkDialog() {
   linkTarget = textTarget(editor);
+  linkSelection = linkTarget.state.selection;
   const dialog = document.querySelector('#link-dialog');
   const input = document.querySelector('#link-url');
   input.value = linkTarget.getAttributes('link').href || 'https://';
-  Dialog.for(dialog).open(); input.focus(); input.select();
+  Dialog.for(dialog).open(); input.focus({ preventScroll: true }); input.select();
 }
 document.querySelector('#link-dialog').addEventListener('close', event => {
   const target = linkTarget && !linkTarget.isDestroyed ? linkTarget : editor;
   if (event.target.returnValue !== 'save') { target.commands.focus(); return; }
+  if (linkSelection) target.view.dispatch(target.state.tr.setSelection(linkSelection));
   const href = document.querySelector('#link-url').value.trim();
   if (!/^(https?:\/\/|mailto:)/i.test(href)) return;
   if (target.state.selection.empty) target.chain().focus().insertContent({ type: 'text', text: href, marks: [{ type: 'link', attrs: { href } }] }).run();
@@ -511,6 +544,9 @@ function receive(message) {
       case 'flush': post({ type: 'flushed', requestId: message.requestId, noteId, changed: dirty.has(noteId), ...snapshot(editor) }); break;
     }
   } catch (error) {
+    if (message.type === 'command' && message.action === 'layoutField') {
+      post({ type: 'ribbonError', message: String(error.message || error) }); return;
+    }
     if (message.type === 'open') editor.setEditable(false);
     post({ type: 'error', message: String(error.message || error), noteId: message.noteId || noteId });
   }

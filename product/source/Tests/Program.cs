@@ -60,6 +60,17 @@ internal static class Program
         Check(window.FindName("LibraryView") is NotebookLibraryPanel && window.FindName("TabsView") is NotebookTabsPanel, "notebook composes independent library and tab views");
         Check(window.FindName("MainMenu") is MenuBar, "menu bar uses shared menu component");
         var notebookFrame = window.Content as ApplicationFrame;
+        var ribbonMenu = notebookFrame?.Menu.Content as StackPanel;
+        Check(ribbonMenu?.Children.Count == 2 && ribbonMenu.Children[0] == window.FindName("MainMenu") && ribbonMenu.Children[1] is NotebookRibbon,
+            "native ribbon is directly below File Edit menu, not inside the document");
+        notebookFrame!.Measure(new Size(1180, 760)); notebookFrame.Arrange(new Rect(0, 0, 1180, 760)); notebookFrame.UpdateLayout();
+        var menuBottom = ((FrameworkElement)ribbonMenu!.Children[0]).TranslatePoint(new Point(0, 25), notebookFrame).Y;
+        var ribbonTop = ((FrameworkElement)ribbonMenu.Children[1]).TranslatePoint(new Point(0, 0), notebookFrame).Y;
+        Check(Math.Abs(menuBottom - ribbonTop) < 1, "ribbon geometry has no intervening tabs or toolbar row");
+        var ribbonBitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(1180, 760, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+        ribbonBitmap.Render(notebookFrame);
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(ribbonBitmap));
+        using (var image = File.Create(Path.Combine(fixture, "ribbon.png"))) encoder.Save(image);
         Check(notebookFrame?.Status.Content == window.FindName("NotebookStatusBar") &&
               notebookFrame.Workspace.Content is Grid notebookWorkspace && notebookWorkspace.RowDefinitions.Count == 4,
             "notebook status content uses the shared frame without a duplicate workspace row");

@@ -4,7 +4,7 @@ import katex from 'katex';
 import { closeHistory } from '@tiptap/pm/history';
 import { startInlineCrop, cancelInlineCrop } from './image-crop.js';
 
-let editor, getNoteId, mathContext, imageContext, imageEditContext;
+let editor, getNoteId, mathContext, imageContext, imageEditContext, tableContext;
 const dialog = document.querySelector('#math-dialog');
 const source = document.querySelector('#math-source');
 const layout = document.querySelector('#math-layout');
@@ -33,6 +33,7 @@ export function setupMedia(instance, noteId) {
       if (node?.type.name !== mathContext.type) return;
       editor.view.dispatch(editor.state.tr.setNodeMarkup(mathContext.pos, undefined, { ...node.attrs, latex, ...(mathContext.type === 'blockMath' ? { numbered: numbered.checked } : {}) }));
     } else {
+      editor.commands.setTextSelection(mathContext.selection);
       editor.commands.insertContent({ type: layout.value, attrs: { latex, numbered: numbered.checked } });
     }
     dialog.close(); editor.commands.focus();
@@ -60,12 +61,16 @@ export function setupMedia(instance, noteId) {
   tableDialog.querySelector('form').addEventListener('submit', event => {
     if (event.submitter?.value !== 'insert') return;
     event.preventDefault();
+    if (!tableContext || tableContext.noteId !== getNoteId()) return;
     const rows = Number(document.querySelector('#table-rows').value), cols = Number(document.querySelector('#table-cols').value);
     if (![rows, cols].every(n => Number.isInteger(n) && n >= 1 && n <= 20)) return;
     editor.view.dispatch(closeHistory(editor.state.tr));
+    editor.commands.setTextSelection(tableContext.selection);
     editor.chain().focus().insertTable({ rows, cols, withHeaderRow: true }).run(); tableDialog.close();
   });
   tableDialog.querySelectorAll('[data-table-command]').forEach(button => button.addEventListener('click', () => {
+    if (!tableContext || tableContext.noteId !== getNoteId()) return;
+    editor.commands.setTextSelection(tableContext.selection);
     editor.view.dispatch(closeHistory(editor.state.tr));
     editor.chain().focus()[button.dataset.tableCommand]().run(); tableDialog.close();
   }));
@@ -95,7 +100,7 @@ export function openMath(node = null, pos = null) {
   layout.value = node?.type.name || 'inlineMath'; layout.disabled = Boolean(node);
   numbered.checked = Boolean(node?.attrs.numbered); numbered.disabled = layout.value !== 'blockMath';
   save.textContent = node ? 'Zapisz' : 'Wstaw';
-  renderPreview(); Dialog.for(dialog).open(); source.focus();
+  renderPreview(); Dialog.for(dialog).open(); source.focus({ preventScroll: true });
 }
 
 function renderPreview() {
@@ -125,6 +130,7 @@ export function editImage(node, pos) {
 
 export function openTable() {
   if (!editor.isEditable || !getNoteId()) return;
+  tableContext = capture();
   tableDialog.querySelectorAll('[data-table-command]').forEach(button => { button.disabled = !editor.can()[button.dataset.tableCommand](); });
   Dialog.for(tableDialog).open();
 }
@@ -135,7 +141,7 @@ export function dismissMedia() {
   if (dialog.open) dialog.close();
   if (imageDialog.open) imageDialog.close();
   if (tableDialog.open) tableDialog.close();
-  mathContext = null; imageContext = null; imageEditContext = null;
+  mathContext = null; imageContext = null; imageEditContext = null; tableContext = null;
 }
 
 function setupMediaPointerActions() {

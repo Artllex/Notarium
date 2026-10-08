@@ -35,7 +35,6 @@
                     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <StackPanel Orientation="Horizontal" Margin="15,0" VerticalAlignment="Center">
                         <StackPanel.Resources><Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Height" Value="26" /><Setter Property="Padding" Value="7,1" /></Style></StackPanel.Resources>
-                        <ui:ActionButton Content="Układ" ToolTip="Strony, rozmiar, marginesy, stopka i numeracja" Tag="pageLayout" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" />
                         <ui:ActionButton Content="↶" ToolTip="Cofnij" Tag="undo" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="17" />
                         <ui:ActionButton Content="↷" ToolTip="Ponów" Tag="redo" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="17" />
                         <Border Width="1" Height="17" Background="#505050" Margin="5,0" />

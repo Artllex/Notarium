@@ -1,0 +1,30 @@
+html{height:100%;overflow:hidden}
+body{height:100vh;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) 0;grid-template-rows:0 minmax(0,1fr);transition:grid-template-columns .18s ease,grid-template-rows .18s ease}
+body.top-panel-open{grid-template-rows:min(260px,38vh) minmax(0,1fr)}
+body.right-panel-open{grid-template-columns:minmax(0,1fr) min(360px,42vw)}
+.document-viewport{grid-column:1;grid-row:2;min-width:0;overflow:auto}
+.workspace-panel{background:#262626;color:var(--ui-menu-text,#eee);min-width:0;min-height:0;overflow:hidden;font:13px 'Segoe UI',sans-serif}
+.right-panel{grid-column:2;grid-row:1 / 3;border-left:1px solid #414141;display:flex;flex-direction:column;visibility:hidden;transform:translateX(18px);transition:transform .18s ease,visibility .18s}
+.right-panel-open .right-panel{visibility:visible;transform:none}
+.top-panel{grid-column:1;grid-row:1;visibility:hidden;display:flex;flex-direction:column;transform:translateY(-10px);transition:transform .18s ease;border-bottom:0 solid #414141}
+.top-panel-open .top-panel{visibility:visible;transform:none;border-bottom-width:1px}
+.panel-tabs{display:flex;flex-wrap:wrap;align-items:center;gap:3px;padding:6px;border-bottom:1px solid #414141;flex:none}
+.workspace-panel button{background:transparent;color:inherit;border:0;border-radius:3px;padding:7px 9px;cursor:pointer;font:inherit}
+.workspace-panel button:hover{background:#353535}.workspace-panel button[aria-pressed=true]{color:#75b7ff;background:#303030}
+.workspace-panel .panel-close{margin-left:auto;font-size:20px;line-height:16px}
+.panel-content{padding:12px;overflow:auto;min-height:0}
+.workspace-panel h3{font-size:15px;margin:0 0 12px}.workspace-panel p{color:#aaa;line-height:1.5}
+.workspace-panel .docked-form{position:static;inset:auto;width:100%!important;min-width:0;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:inherit;box-shadow:none;overflow:visible}
+.workspace-panel [hidden]{display:none!important}
+.workspace-panel label{display:grid;gap:5px;margin:8px 0;font-size:12px}
+.workspace-panel label.check{display:flex;align-items:center;gap:8px;white-space:normal}
+.workspace-panel input,.workspace-panel textarea{width:100%;min-width:0;color:#eee;background:#202020;border:1px solid #555;padding:7px;font:inherit}
+.workspace-panel input[type=checkbox]{width:auto}.workspace-panel input[type=color]{width:60px;height:30px}
+.workspace-panel form>div:not(.math-options):not(#math-preview){display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin-top:10px}
+.workspace-panel form>div button,.workspace-panel .panel-actions button{background:#353535}
+.top-panel #math-dialog form{display:grid;grid-template-columns:minmax(200px,1fr) minmax(220px,1fr);gap:4px 18px}
+.top-panel #math-dialog form>label{grid-column:1;grid-row:1 / 3}.top-panel #math-dialog #math-preview{grid-column:2;grid-row:1}
+.top-panel #math-dialog .math-options{grid-column:2;grid-row:2;flex-wrap:wrap;gap:8px}.top-panel #math-dialog #math-error{grid-column:1 / 3;margin:0}
+.panel-error{color:#ff9b9b!important}.panel-empty{max-width:680px}
+@media(max-width:800px){.top-panel #math-dialog form{display:block}.workspace-panel .math-options label{white-space:normal}}
+@media(prefers-reduced-motion:reduce){body,.workspace-panel{transition:none}}

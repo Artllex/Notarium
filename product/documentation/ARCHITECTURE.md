@@ -180,3 +180,6 @@ Kanoniczne repozytorium jest w C:/NOTARIUM. Historia zaczyna się od poprzednich
 - Push jest osobną operacją. Lokalny commit nie oznacza wysłania zmian na GitHub.
 
 Starsze raporty zawierają historyczne ścieżki sprawdzonych pakietów; po porządkowaniu nie są one bieżącym miejscem uruchamiania. Aktualny workflow jest opisany tutaj i w AGENTS.md.
+# Wstążka i panele ustawień
+
+`NotebookRibbon` jest natywną wstążką złożoną z `MainMenu` w wierszu menu ramy aplikacji. Wysyła `layoutField`/`workspacePanel`, a wartości odświeża z `selection.layout`. Nie zapisuje osobnego modelu dokumentu. `workspace-panels.js` dokuje formularze Link/Math/Obraz/Tabela/Kontener jako niemodalne sekcje, zachowując ich walidację i historię. Panel Numeracje zmienia stopkę i numerację stron. Inwentaryzacja i zasady anulowania: `EDITOR-SETTINGS.md`.

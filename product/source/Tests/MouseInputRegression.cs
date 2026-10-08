@@ -191,6 +191,22 @@ internal static class MouseInputRegression
         Check((await Read("notatnik.editor.getJSON().content[0].content[1].attrs.listIndent")).GetDouble() == 0, "native editor Shift Tab reverses the whole-list indent");
         Check((await Read("document.querySelectorAll('.object-container').length")).GetInt32() == 2, "native Tab gestures preserve the owning text containers");
         Check((await Read("mouseErrors.length")).GetInt32() == 0, "native Tab gestures have no JavaScript errors");
+        var ribbon = new NotebookRibbon(editor);
+        await Open("[p('Selected'),p('Unchanged')]");
+        await core.ExecuteScriptAsync("notatnik.editor.commands.setTextSelection(1)");
+        await Task.Delay(100);
+        Check(editor.CurrentLayout?.GetProperty("size").GetString() == "A4", "native ribbon receives active document layout through the real bridge");
+        var fields = (Dictionary<string, System.Windows.FrameworkElement>)typeof(NotebookRibbon).GetField("_fields", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(ribbon)!;
+        var indentField = (System.Windows.Controls.TextBox)fields["indentLeft"];
+        indentField.Text = "7.5";
+        indentField.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, System.Windows.PresentationSource.FromVisual(web), Environment.TickCount, Key.Enter) { RoutedEvent = Keyboard.KeyDownEvent });
+        await Task.Delay(100);
+        Check((await Read("notatnik.editor.getJSON().content[0].attrs.indentLeft")).GetDouble() == 7.5 &&
+              (await Read("notatnik.editor.getJSON().content[1].attrs.indentLeft")).ValueKind == JsonValueKind.Null,
+              "native ribbon field submits only the selected paragraph through WebView2");
+        editor.Execute("workspacePanel", "math"); await Task.Delay(100);
+        Check((await Read("document.body.classList.contains('top-panel-open') && document.querySelector('#math-dialog').open && !document.querySelector('dialog:modal')")).GetBoolean(),
+              "native ribbon command opens non-modal Math panel in packaged web host");
         return passed;
     }
 }
