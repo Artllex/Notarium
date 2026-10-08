@@ -92,7 +92,7 @@ export function setupBlockMovement(editor, noteId) {
       if (!['doc', 'layoutRow', 'blockGroup'].includes(parent.type.name) || node.type.name === 'layoutRow') return true;
       const dom = editor.view.nodeDOM(pos);
       if (dom instanceof HTMLElement) result.push({ node, pos, dom, rect: dom.getBoundingClientRect() });
-      return node.type.name === 'blockGroup';
+      return node.type.name === 'blockGroup' && !node.attrs.textFlow;
     });
     return result;
   };

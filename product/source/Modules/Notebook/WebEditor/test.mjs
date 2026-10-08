@@ -32,6 +32,25 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
+  await check('Dragging the last list line cannot extract a list from a text-flow container', async () => {
+    await open('no-list-extraction', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
+      { type: 'blockGroup', attrs: { textFlow: true }, content: [
+        { type: 'paragraph', content: [{ type: 'text', text: 'Lista:' }] },
+        { type: 'orderedList', content: [{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Last item' }] }] }] }
+      ] }, { type: 'paragraph', content: [{ type: 'text', text: 'Below' }] }
+    ] } }));
+    await page.waitForTimeout(100);
+    const before = await json();
+    const item = page.locator('.text-flow-content li p');
+    await item.dblclick();
+    const box = await item.boundingBox();
+    await page.mouse.move(box.x + 35, box.y + box.height - 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 35, box.y + box.height + 70, { steps: 8 });
+    assert.equal(await page.locator('.moving-block').count(), 0);
+    await page.mouse.up();
+    assert.deepEqual(await json(), before);
+  });
   await check('Paragraph layout is local, persisted, undoable and has explicit document defaults', async () => {
     await open('paragraph-local', 'First\n\nSecond\n\nThird');
     await page.waitForTimeout(100);
