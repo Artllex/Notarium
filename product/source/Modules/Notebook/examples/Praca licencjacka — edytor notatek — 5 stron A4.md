@@ -1,13 +1,13 @@
 <!-- notarium:page-layout %7B%22paged%22%3Atrue%2C%22width%22%3A0%2C%22size%22%3A%22A4%22%2C%22landscape%22%3Afalse%2C%22color%22%3A%22%23ffffff%22%2C%22top%22%3A20%2C%22bottom%22%3A20%2C%22left%22%3A25%2C%22right%22%3A20%2C%22indentLeft%22%3A0%2C%22indentRight%22%3A0%2C%22before%22%3A0%2C%22after%22%3A6%2C%22footer%22%3A%22Przyk%C5%82ad%20pracy%20licencjackiej%20%C2%B7%20Notarium%22%2C%22footerDistance%22%3A10%2C%22numbering%22%3Atrue%2C%22start%22%3A1%2C%22hyphenation%22%3Afalse%7D -->
 
 <section data-block-group="true" data-text-flow="true" data-boxheight="970" data-boxwidth="610">
-<p style="text-align:center;line-height:1.5" data-paragraph-before="30"><span style="font-family:Times New Roman">[Nazwa uczelni]<br>[Wydział i kierunek studiów]</span></p>
-<p style="text-align:center;line-height:1.5" data-paragraph-before="45"><span style="font-family:Times New Roman">[Imię i nazwisko autora]</span></p>
+<p style="text-align:center;line-height:1.5" data-paragraph-before="30"><span style="font-family:Times New Roman">Uniwersytet Gdański<br>Wydział Matematyki, Fizyki i Informatyki<br>Kierunek: Informatyka</span></p>
+<p style="text-align:center;line-height:1.5" data-paragraph-before="45"><span style="font-family:Times New Roman">Jan Kowalski</span></p>
 <h1 style="text-align:center;line-height:1.25" data-paragraph-before="40"><span style="font-family:Times New Roman">Projekt lokalnego edytora notatek o strukturze blokowej</span></h1>
 <p style="text-align:center;line-height:1.5" data-paragraph-before="20"><span style="font-family:Times New Roman"><strong>Przykład skróconej pracy licencjackiej</strong></span></p>
-<p style="text-align:right;line-height:1.5" data-paragraph-before="45"><span style="font-family:Times New Roman">Promotor: [tytuł, imię i nazwisko]</span></p>
-<p style="text-align:center;line-height:1.5" data-paragraph-before="50"><span style="font-family:Times New Roman">[Miejscowość], 2026</span></p>
-<p style="text-align:center;line-height:1.5" data-paragraph-before="30"><span style="font-family:Times New Roman"><em>Dokument demonstracyjny. Dane personalne pozostawiono jako pola do uzupełnienia. Tekst nie przedstawia rzeczywistych badań ani gotowej pracy do złożenia.</em></span></p>
+<p style="text-align:right;line-height:1.5" data-paragraph-before="45"><span style="font-family:Times New Roman">Promotor: dr Anna Nowak</span></p>
+<p style="text-align:center;line-height:1.5" data-paragraph-before="50"><span style="font-family:Times New Roman">Gdańsk, 2026</span></p>
+<p style="text-align:center;line-height:1.5" data-paragraph-before="30"><span style="font-family:Times New Roman"><em>Dokument demonstracyjny. Dane personalne są fikcyjne. Tekst nie przedstawia rzeczywistych badań ani gotowej pracy do złożenia.</em></span></p>
 </section>
 
 <section data-block-group="true" data-text-flow="true" data-boxwidth="610">
