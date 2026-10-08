@@ -49,12 +49,6 @@ public sealed class WebEditorControl : UserControl, IDisposable
         var grid = new Grid(); grid.Children.Add(_web); grid.Children.Add(_status); Content = grid;
         SizeChanged += (_, _) => RefreshViewport();
         Loaded += async (_, _) => await InitializeAsync();
-        _web.PreviewMouseLeftButtonDown += (_, e) =>
-        {
-            if (e.ClickCount != 2 || !_ready || _web.ActualWidth <= 0 || _web.ActualHeight <= 0) return;
-            var point = e.GetPosition(_web);
-            Send(new { type = "doubleClick", x = point.X / _web.ActualWidth, y = point.Y / _web.ActualHeight });
-        };
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Undo, (_, _) => Execute("undo"), (_, e) => e.CanExecute = CanUndoContent));
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Redo, (_, _) => Execute("redo"), (_, e) => e.CanExecute = CanRedoContent));
     }

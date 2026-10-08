@@ -224,6 +224,19 @@ pageLayout = setupPageLayout(editor);
 setupMedia(editor, () => noteId);
 const containerNavigation = setupContainers(editor, { editImage, openMath, editContainer, noteId: () => noteId, imageDialogOpen: () => document.querySelector('#image-dialog').open });
 new ContainerKeyboard(editor, containerNavigation);
+// Use the browser's click detail, not ProseMirror's independent click counter.
+// Capture before its mousedown handler can promote a double click to a triple.
+for (const eventType of ['mousedown', 'mouseup']) editor.view.dom.addEventListener(eventType, event => {
+  if (event.button !== 0 || event.ctrlKey || event.metaKey || event.detail < 2) return;
+  if (!event.target.closest?.('.object-container') || event.target.closest('button,input,select,.container-type-tools,.container-add-tools,.container-resize,.container-resize-edge,.container-select-edge')) return;
+  const hit = editor.view.posAtCoords({ left: event.clientX, top: event.clientY });
+  if (!hit) return;
+  const handler = event.detail === 3 ? editor.options.editorProps.handleTripleClick : editor.options.editorProps.handleDoubleClick;
+  if (handler(editor.view, hit.pos, event)) {
+    event.preventDefault(); event.stopImmediatePropagation();
+    if (eventType === 'mouseup') requestAnimationFrame(() => handler(editor.view, hit.pos, event));
+  }
+}, true);
 editor.view.dom.addEventListener('mousedown', event => {
   if (!event.ctrlKey && wordSelectionKey.getState(editor.state).length)
     editor.view.dispatch(editor.state.tr.setMeta(wordSelectionKey, []));
