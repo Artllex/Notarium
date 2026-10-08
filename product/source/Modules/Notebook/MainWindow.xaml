@@ -69,7 +69,11 @@
                         <Border Width="1" Height="17" Background="#505050" Margin="5,0" />
                         <ui:ActionButton Content="⌁" ToolTip="Link" Tag="link" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="17" />
                         <ui:ActionButton Content="&lt;/&gt;" ToolTip="Kod w tekście" Tag="code" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontFamily="Consolas" />
-                        <ui:ActionButton Content="∑" ToolTip="Wstaw wzór LaTeX" Tag="math" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="16" />
+                        <ui:ActionButton ToolTip="Wstaw wzór LaTeX" Tag="math" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="16">
+                            <TextBlock Text="∑" RenderTransformOrigin="0,0.15">
+                                <TextBlock.RenderTransform><ScaleTransform ScaleY="0.8" /></TextBlock.RenderTransform>
+                            </TextBlock>
+                        </ui:ActionButton>
                         <ui:ActionButton Content="" FontFamily="Segoe MDL2 Assets" ToolTip="Wstaw obraz" Tag="image" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="14" />
                         <ui:ActionButton Content="▦" ToolTip="Wstaw lub edytuj tabelę" Tag="table" Click="MarkdownButton_Click" Foreground="{StaticResource Accent}" FontSize="16" />
                         <Border Width="1" Height="17" Background="#505050" Margin="5,0" />
