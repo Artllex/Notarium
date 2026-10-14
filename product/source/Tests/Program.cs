@@ -50,6 +50,21 @@ internal static class Program
         recentFiles.Record(sampleFile, first.Id);
         Check(recentFiles.Load().Count == 1 && recentFiles.Load()[0].NoteId == first.Id, "recent file history deduplicates paths and persists note links");
         library.Remove(first); Check(library.Notes.Count == 1, "deleting last note retains established library behavior");
+        var pinStore = new NoteStore(Path.Combine(fixture, "pinned-tabs.json"));
+        var pinned = new Note { Content = "Pinned", IsTabPinned = true };
+        pinStore.Save(new[] { pinned, new Note { Content = "Unpinned" } });
+        var pinWindow = new MainWindow(pinStore, false, new RecentFilesStore(Path.Combine(fixture, "pin-recent.json")));
+        Check(pinWindow.OpenNotes.Count == 1 && pinWindow.OpenNotes[0].Note.Id == pinned.Id, "restart opens only pinned notes");        var route = typeof(MainWindow).GetMethod("RouteViewAction", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        var pinAction = new ActionButton { Tag = pinWindow.OpenNotes[0] };
+        route.Invoke(pinWindow, new object[] { "ToggleTabPin_Click", pinAction, new RoutedEventArgs(Button.ClickEvent) });
+        Check(!pinWindow.OpenNotes[0].Note.IsTabPinned, "tab action routes unpin to notebook state");
+        route.Invoke(pinWindow, new object[] { "ToggleTabPin_Click", pinAction, new RoutedEventArgs(Button.ClickEvent) });
+        Check(pinWindow.OpenNotes[0].Note.IsTabPinned, "tab action routes pin to notebook state");
+        var pinNotes = pinStore.Load();
+        pinNotes.Single(note => note.Id == pinned.Id).IsTabPinned = false;
+        pinStore.Save(pinNotes);
+        var unpinWindow = new MainWindow(pinStore, false, new RecentFilesStore(Path.Combine(fixture, "unpin-recent.json")));
+        Check(unpinWindow.OpenNotes.Count == 0, "unpin persists and restart opens no tabs");
         var tabs = new NotebookTabs();
         for (var i = 0; i < 12; i++) tabs.Activate(new Note());
         tabs.Refresh(500); Check(tabs.Visible.Count < tabs.Open.Count && tabs.CanGoNext, "tabs paginate independently of window");
@@ -93,7 +108,7 @@ internal static class Program
         Check(notebookFrame?.Status.Content == window.FindName("NotebookStatusBar") &&
               notebookFrame.Workspace.Content is Grid notebookWorkspace && notebookWorkspace.RowDefinitions.Count == 4,
             "notebook status content uses the shared frame without a duplicate workspace row");
-        Check(window.Notes.Count == 1 && window.OpenNotes.Count == 1, "notebook composition preserves startup state");
+        Check(window.Notes.Count == 1 && window.OpenNotes.Count == 0, "notebook starts without unpinned tabs");
         Check(window.OpenRecentFile(sampleFile) && window.OpenRecentFile(sampleFile) && window.Notes.Count == 2 &&
               window.ActiveNote?.Content == "external note", "reopening a recent file selects its existing note instead of importing a duplicate");
         NotebookRuntime.Configure(); NotebookRuntime.Configure();

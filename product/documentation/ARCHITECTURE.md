@@ -183,3 +183,6 @@ Starsze raporty zawierają historyczne ścieżki sprawdzonych pakietów; po porz
 # Wstążka i panele ustawień
 
 `NotebookRibbon` jest natywną wstążką złożoną z `MainMenu` w wierszu menu ramy aplikacji. Wysyła `layoutField`/`workspacePanel`, a wartości odświeża z `selection.layout`. Nie zapisuje osobnego modelu dokumentu. `workspace-panels.js` dokuje formularze Link/Math/Obraz/Tabela/Kontener jako niemodalne sekcje, zachowując ich walidację i historię. Panel Numeracje zmienia stopkę i numerację stron. Inwentaryzacja i zasady anulowania: `EDITOR-SETTINGS.md`.
+
+## Przypięte karty
+Notatki zapisują IsTabPinned (domyślnie false dla starszych danych). Przy starcie modułu otwierane są tylko przypięte notatki. Przycisk pinezki na karcie zmienia ten stan i uruchamia zapis. Zamknięcie karty nie usuwa przypięcia: wróci po restarcie, dopóki użytkownik jej nie odepnie. Ulubione pozostają niezależne od przypinania kart.

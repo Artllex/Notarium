@@ -118,7 +118,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged, Notarium.Contr
         }
         if (Notes.Count == 0) Notes.Add(new Note());
 
-        OpenNote(example ?? Notes[0], false);
+        foreach (var note in Notes.Where(note => note.IsTabPinned).ToArray()) OpenNote(note, false);
+        if (OpenNotes.Count == 0) Editor.Clear();
         Editor.Focus();
     }
 

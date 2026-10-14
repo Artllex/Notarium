@@ -81,6 +81,14 @@ public partial class MainWindow
         else OpenNote(tab.Note);
     }
 
+    private void ToggleTabPin_Click(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        if (sender is not Button { Tag: OpenNote tab }) return;
+        tab.Note.IsTabPinned = !tab.Note.IsTabPinned;
+        ScheduleSave();
+    }
+
     private void CloseTab_Click(object sender, RoutedEventArgs e)
     {
         e.Handled = true;

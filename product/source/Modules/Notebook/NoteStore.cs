@@ -23,6 +23,7 @@ public sealed class NoteStore
             DocumentJson = item.DocumentJson,
             CustomTitle = item.CustomTitle,
             IsFavorite = item.IsFavorite,
+            IsTabPinned = item.IsTabPinned,
             CreatedAtUtc = item.CreatedAtUtc,
             SavedAtUtc = item.SavedAtUtc,
             UpdatedAtUtc = item.UpdatedAtUtc,
@@ -50,6 +51,7 @@ public sealed class NoteStore
                     DocumentJson = note.DocumentJson,
                     CustomTitle = note.CustomTitle,
                     IsFavorite = note.IsFavorite,
+                    IsTabPinned = note.IsTabPinned,
                     CreatedAtUtc = note.CreatedAtUtc,
                     SavedAtUtc = savedAt,
                     UpdatedAtUtc = note.UpdatedAtUtc,
@@ -75,6 +77,7 @@ public sealed class NoteStore
         public string? DocumentJson { get; set; }
         public string? CustomTitle { get; set; }
         public bool IsFavorite { get; set; }
+        public bool IsTabPinned { get; set; }
         public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
         public DateTime? SavedAtUtc { get; set; }

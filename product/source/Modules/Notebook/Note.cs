@@ -10,6 +10,7 @@ public sealed class Note : INotifyPropertyChanged
     private string? _displayText;
     private string? _documentJson;
     private bool _isFavorite;
+    private bool _isTabPinned;
     private string? _title;
     private bool _isRenamingInSidebar;
     private bool _isRenamingInTab;
@@ -28,6 +29,13 @@ public sealed class Note : INotifyPropertyChanged
     public bool IsRenamingInTab { get => _isRenamingInTab; set { if (_isRenamingInTab == value) return; _isRenamingInTab = value; OnPropertyChanged(); } }
     [JsonIgnore]
     public bool IsRenaming => IsRenamingInSidebar || IsRenamingInTab;
+
+    public bool IsTabPinned
+    {
+        get => _isTabPinned;
+        set { if (_isTabPinned == value) return; _isTabPinned = value; OnPropertyChanged(); OnPropertyChanged(nameof(TabPinHint)); }
+    }
+    [JsonIgnore] public string TabPinHint => IsTabPinned ? "Odepnij kartę — nie otwieraj po restarcie" : "Przypnij kartę — otwieraj po restarcie";
 
     public bool IsFavorite
     {

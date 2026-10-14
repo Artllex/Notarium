@@ -19,6 +19,7 @@ public partial class MainWindow {
             case "SidebarFavoriteButton_Click": SidebarFavoriteButton_Click(sender, (RoutedEventArgs)e); break;
             case "TabsHost_SizeChanged": TabsHost_SizeChanged(sender, (SizeChangedEventArgs)e); break;
             case "InlineTitle_LostFocus": InlineTitle_LostFocus(sender, (RoutedEventArgs)e); break;
+            case "ToggleTabPin_Click": ToggleTabPin_Click(sender, e); break;
             case "CloseTab_Click": CloseTab_Click(sender, (RoutedEventArgs)e); break;
             case "TitleBar_MouseLeftButtonDown": TitleBar_MouseLeftButtonDown(sender, (MouseButtonEventArgs)e); break;
             case "TabTitle_MouseLeftButtonDown": TabTitle_MouseLeftButtonDown(sender, (MouseButtonEventArgs)e); break;
