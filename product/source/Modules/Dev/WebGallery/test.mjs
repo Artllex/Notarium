@@ -2,6 +2,8 @@ import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
+import { readFile } from 'node:fs/promises';
+const policy = JSON.parse(await readFile(new URL('../../../Shared/UI/ui-policy.json', import.meta.url), 'utf8'));
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const page = await browser.newPage({ viewport: { width: 1050, height: 900 } });
 const errors = []; page.on('pageerror', error => errors.push(error.message));
@@ -17,7 +19,7 @@ try {
   await check('dropdown keyboard, disabled item and anchor', async () => {
     const trigger = page.getByRole('button', { name: 'Otwórz dropdown', exact: true }); await trigger.click();
     const style = await page.locator('.ui-dropdown').evaluate(el => { const s = getComputedStyle(el); return [s.borderRadius, s.boxShadow, s.padding, s.fontSize]; });
-    assert.deepEqual(style, ['0px', 'none', '2px', '14px']);
+    assert.deepEqual(style, ['0px', 'none', '2px', `${policy.fontSize}px`]);
     const anchor = await trigger.boundingBox(), box = await page.locator('.ui-dropdown').boundingBox(); assert.ok(Math.abs(anchor.x - box.x) < 1); assert.ok(Math.abs(anchor.y + anchor.height - box.y) < 1);
     assert.equal(await page.getByRole('menuitem', { name: 'Opcja wyłączona' }).isEnabled(), false);
     await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter'); assert.match(await page.locator('#result').textContent(), /zaznaczona opcja/);
