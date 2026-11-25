@@ -22,14 +22,22 @@ try {
     await open('white-default');
     await command('layoutField', JSON.stringify({ key: 'paged', value: true }));
     assert.equal((await doc()).attrs.pageLayout.color, '#ffffff');
+    const defaults = (await doc()).attrs.pageLayout;
+    assert.deepEqual(Object.fromEntries(['size','top','bottom','left','right','indentLeft','indentRight','before','after','footerDistance','width','start'].map(key => [key,defaults[key]])),
+      {size:'A4',top:25,bottom:25,left:30,right:25,indentLeft:0,indentRight:0,before:0,after:0,footerDistance:12.5,width:0,start:1});
+    assert.equal(await page.locator('.tiptap').evaluate(el => getComputedStyle(el).lineHeight), '24px');
     await command('undo'); assert.equal((await doc()).attrs.pageLayout, null);
     await command('setPageLayout', JSON.stringify({ paged: true, color: '#202020' }));
     await command('layoutField', JSON.stringify({ key: 'paged', value: false }));
     await command('layoutField', JSON.stringify({ key: 'paged', value: true }));
     assert.equal((await doc()).attrs.pageLayout.color, '#202020');
-    await open('cream-saved', 'Saved', {version:1, doc:{type:'doc',attrs:{pageLayout:{paged:true,color:'#fff8e7'}},content:[{type:'paragraph',content:[{type:'text',text:'Saved'}]}]}});
+    await open('cream-saved', 'Saved', {version:1, doc:{type:'doc',attrs:{pageLayout:{paged:true,color:'#fff8e7',top:20,bottom:20,left:20,right:20,after:8,footerDistance:10}},content:[{type:'paragraph',attrs:{lineSpacing:1.25},content:[{type:'text',text:'Saved'}]}]}});
     await command('layoutField', JSON.stringify({ key: 'size', value: 'A5' }));
     assert.equal((await doc()).attrs.pageLayout.color, '#fff8e7');
+    assert.equal((await doc()).attrs.pageLayout.left, 20);
+    assert.equal((await doc()).attrs.pageLayout.after, 8);
+    assert.equal((await doc()).attrs.pageLayout.footerDistance, 10);
+    assert.equal((await doc()).content[0].attrs.lineSpacing, 1.25);
     await command('undo'); assert.equal((await doc()).attrs.pageLayout.color, '#fff8e7');
   });
   await check('Ribbon field changes only selected paragraph attribute and supports undo', async () => {

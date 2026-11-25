@@ -1,6 +1,7 @@
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import { closeHistory } from '@tiptap/pm/history';
 import { getContainerType, isContainerAt, isContainerParent } from './container-types.js';
+import { targetElement } from './dom-target.js';
 
 export function replaceEmpty(editor, from, targetPos) {
   if (!isContainerAt(editor.state.doc, from) || !isContainerAt(editor.state.doc, targetPos)) return false;
@@ -229,13 +230,14 @@ export function setupBlockMovement(editor, noteId) {
   }
   function pointerDown(event) {
     if (event.ctrlKey || event.metaKey) return;
-    if (event.button !== 0 || event.target.closest('button,input,select,.inline-crop,.inline-crop-tools,.image-title,figcaption,.container-title,.container-caption,.container-resize,.container-resize-edge,.container-select-edge,.container-pair-resize,.container-gap-boundary,.image-resize,.column-resize-handle')) return;
-    const block = locate(event.target);
+    const element = targetElement(event.target);
+    if (!element || event.button !== 0 || element.closest('button,input,select,.inline-crop,.inline-crop-tools,.image-title,figcaption,.container-title,.container-caption,.container-resize,.container-resize-edge,.container-select-edge,.container-pair-resize,.container-gap-boundary,.image-resize,.column-resize-handle')) return;
+    const block = locate(element);
     if (!block) return;
     const edge =
       (event.clientX < block.rect.left + 7 || event.clientX > block.rect.right - 7 || event.clientY < block.rect.top + 7 || event.clientY > block.rect.bottom - 7);
-    const emptySurface = block.dom.classList.contains('container-empty') && event.target.closest('.object-container') === block.dom;
-    if (!edge && !emptySurface && !event.target.closest('.image-drag,.image-viewport,.container-type-label,[data-type=block-math] .katex') && !event.target.matches('.cell-tools')) return;
+    const emptySurface = block.dom.classList.contains('container-empty') && element.closest('.object-container') === block.dom;
+    if (!edge && !emptySurface && !element.closest('.image-drag,.image-viewport,.container-type-label,[data-type=block-math] .katex') && !element.matches('.cell-tools')) return;
     event.preventDefault();
     if (emptySurface) event.stopPropagation();
     else event.stopImmediatePropagation();

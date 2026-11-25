@@ -22,7 +22,7 @@ public sealed class WebEditorControl : UserControl, IDisposable
     private readonly Dictionary<string, TaskCompletionSource<bool>> _flushes = new();
     private object? _pendingDocument;
     private bool _starting, _ready, _disposed;
-    private double _spacing = 1.25;
+    private double _spacing = 1.5;
     private int _zoom = 100;
     private readonly TaskCompletionSource<bool> _readyCompletion = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public static readonly DependencyProperty HoveredContainerStatusProperty = DependencyProperty.Register(

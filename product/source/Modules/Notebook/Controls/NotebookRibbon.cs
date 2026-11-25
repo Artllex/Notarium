@@ -182,7 +182,7 @@ public sealed class NotebookRibbon : Border
     private void MarginsMenu(DropDownMenu menu)
     {
         foreach (var (label, top, bottom, left, right) in new[] {
-            ("Standardowe", 20d, 20d, 20d, 20d), ("Wąskie", 12.7, 12.7, 12.7, 12.7),
+            ("Standardowe", 25d, 25d, 30d, 25d), ("Wąskie", 12.7, 12.7, 12.7, 12.7),
             ("Umiarkowane", 25.4, 25.4, 19.05, 19.05), ("Szerokie", 25.4, 25.4, 40d, 40d) })
         {
             var detail = $"Góra/dół: {top:0.##} mm · Lewo/prawo: {left:0.##} mm";

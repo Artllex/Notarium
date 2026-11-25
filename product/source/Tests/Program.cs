@@ -115,6 +115,7 @@ internal static class Program
         Check(File.Exists(Path.Combine(NotebookRuntime.LoaderFolder, "WebView2Loader.dll")), "native runtime resolves from module and supports repeated opening");
         (window.FindName("Editor") as WebEditorControl)?.Dispose();
         var nativeEditor = new WebEditorControl { DataDirectory = Path.Combine(fixture, "web-runtime") };
+        Check(nativeEditor.LineSpacingFactor == 1.5, "native editor defaults to thesis line spacing");
         string? nativeError = null;
         nativeEditor.EditorError += (_, message) => nativeError = message;
         var nativeHost = new Window { Content = nativeEditor, Width = 800, Height = 500, Opacity = 0, ShowInTaskbar = false };

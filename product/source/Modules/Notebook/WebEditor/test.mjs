@@ -16,7 +16,12 @@ await page.goto(pathToFileURL(resolve('dist/index.html')).href);
 await page.waitForFunction(() => window.notatnik);
 await mkdir(reportDirectory, { recursive: true });
 let passed = 0;
-const open = (id, markdown = '', documentJson = null) => page.evaluate(message => window.notatnik.receive(message), { type: 'open', noteId: id, markdown, documentJson });
+const open = async (id, markdown = '', documentJson = null) => {
+  await page.evaluate(message => window.notatnik.receive(message), { type: 'open', noteId: id, markdown, documentJson });
+  // Independent fixtures must not inherit Chromium's multi-click sequence from
+  // the previous note (the native WPF fixture uses the same 650 ms boundary).
+  await page.waitForTimeout(650);
+};
 const command = (action, value) => page.evaluate(message => window.notatnik.receive(message), { type: 'command', action, value });
 const json = () => page.evaluate(() => window.notatnik.editor.getJSON());
 async function revealTypeTools(container) {
@@ -231,6 +236,24 @@ try {
     await page.mouse.up();
     assert.deepEqual(await json(), before);
   });
+  await check('Native Text-node drag events are canceled for ordered and bullet list text without changing their owner', async () => {
+    for (const type of ['orderedList', 'bulletList']) {
+      await open('text-node-drag-' + type, '', JSON.stringify({version:1,doc:{type:'doc',content:[
+        {type:'blockGroup',attrs:{textFlow:true},content:[
+          {type:'paragraph',content:[{type:'text',text:'Introduction'}]},
+          {type,content:[{type:'listItem',content:[{type:'paragraph',content:[{type:'text',text:'Keep this line'}]}]}]}
+        ]}, {type:'paragraph',content:[{type:'text',text:'Below'}]}
+      ]}}));
+      const before = await json();
+      const cancelled = await page.evaluate(() => {
+        const text = document.querySelector('.text-flow-content li p').firstChild;
+        const event = new DragEvent('dragstart', {bubbles:true,cancelable:true,dataTransfer:new DataTransfer()});
+        return !text.dispatchEvent(event) && event.defaultPrevented;
+      });
+      assert.equal(cancelled, true);
+      assert.deepEqual(await json(), before);
+    }
+  });
   await check('Paragraph layout is local, persisted, undoable and has explicit document defaults', async () => {
     await open('paragraph-local', 'First\n\nSecond\n\nThird');
     await page.waitForTimeout(100);
@@ -297,8 +320,9 @@ try {
     assert.equal(await page.evaluate(() => Boolean(window.notatnik.editor.state.selection.node)), false);
     assert.equal(await page.locator('.container-selected').count(), 0);
     await page.keyboard.down('Control');
-    await first.click();
-    await page.locator('.object-container').nth(1).click();
+    // Structural selection targets the container edge, not a word in its text.
+    await first.click({ position: { x: 1, y: 1 } });
+    await page.locator('.object-container').nth(1).click({ position: { x: 1, y: 1 } });
     await page.keyboard.up('Control');
     assert.ok(await page.locator('.container-multi-selected').count());
     await page.mouse.click(box.x - 30, box.y + 10);
@@ -323,6 +347,8 @@ try {
       await open('single-list-container-' + marker, 'Lista:');
       await page.waitForTimeout(100);
       await page.locator('.tiptap p').click();
+      // Let click-selection settle before emulating the next keyboard gesture.
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       await page.keyboard.press('End');
       await page.keyboard.press('Enter');
       await page.keyboard.type(marker + ' ');
@@ -357,7 +383,8 @@ try {
       { type: 'layoutRow', content: [p('A1'), p('X'), p('B')] },
       { type: 'layoutRow', content: [p('C'), p('A'), p('D')] }
     ] } }));
-    await page.evaluate(() => { window.notatnik.editor.view.dom.style.width = '901.5px'; });
+    // Use the persisted width command: a one-off DOM style is discarded by layout refresh.
+    await command('layoutField', JSON.stringify({ key: 'width', value: 901.5 }));
     const row = page.locator('.layout-row').nth(1);
     const before = await row.boundingBox();
     await page.evaluate(() => {
@@ -373,7 +400,7 @@ try {
     assert.equal(after.x, before.x);
     const last = await row.locator(':scope > .object-container').last().boundingBox();
     assert.ok(Math.abs(last.x + last.width - before.x - before.width) < 0.05, 'Paste must preserve the precise right edge, without integer rounding');
-    await page.evaluate(() => { window.notatnik.editor.view.dom.style.width = ''; });
+    await command('layoutField', JSON.stringify({ key: 'width', value: 0 }));
   });
   await check('The visible top frame selects containers in every row rather than the row gap', async () => {
     const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });

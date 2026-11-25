@@ -29,6 +29,7 @@ import { setupPageLayout, normalizeLayout, paragraphFields, paragraphFormatTrans
 import { listClipboardText } from './list-clipboard.js';
 import { indentText } from './indentation.js';
 import { setupWorkspacePanels } from './workspace-panels.js';
+import { targetElement } from './dom-target.js';
 let pageLayout;
 let workspacePanels;
 const lineListUndoKey = new PluginKey('lineListUndo');
@@ -163,6 +164,16 @@ const editor = new Editor({
     NumberedMath.configure({ katexOptions: { displayMode: true, throwOnError: false, trust: false, maxExpand: 1000 } })],
   content: '<p></p>',
   editorProps: {
+    handleDOMEvents: {
+      dragstart(view, event) {
+        const text = targetElement(event.target)?.closest('p,h1,h2,h3,h4,h5,h6,li');
+        if (!text || !view.dom.contains(text)) return false;
+        // Selecting or dragging a line is not permission to extract its list.
+        // Containers move through the shared pointer/handle path, not HTML DnD.
+        event.preventDefault();
+        return true;
+      }
+    },
     handleDoubleClick(view, pos, event) {
       if (!event.target.closest?.('.object-container') || event.target.closest('button,input,select,.container-type-tools,.container-add-tools')) return false;
       pos = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos ?? pos;
@@ -232,7 +243,7 @@ const editor = new Editor({
           }
         }
       }
-      const link = event.target.closest('a');
+      const link = targetElement(event.target)?.closest('a');
       if (!link) return false;
       const url = link.getAttribute('href');
       if (/^(https?:|mailto:)/i.test(url || '')) post({ type: 'openLink', url });

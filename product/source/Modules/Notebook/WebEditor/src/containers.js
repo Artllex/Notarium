@@ -6,6 +6,7 @@ import { richAttribute } from './rich-label.js';
 import { ContainerInteractions } from './container-interactions.js';
 import { collapseRows, moveBlock } from './block-movement.js';
 import { ContainerVisual } from './container-visual.js';
+import { targetElement } from './dom-target.js';
 import { containerTypes, getContainerType, isContainerAt } from './container-types.js';
 import { lastLineStartSelection } from './container-keyboard.js';
 
@@ -363,7 +364,7 @@ export class ContainerView {
     if (this.inner.update && !this.inner.update(node, ...args)) return false;
     this.node = node; this.paint(); return true;
   }
-  stopEvent(event) { return !!event.target.closest('.container-type-tools,.container-tools,.container-add-tools,.container-title,.container-caption,.container-resize,.container-resize-edge,.container-select-edge,.container-pair-resize,.container-gap-boundary') || !!this.inner.stopEvent?.(event); }
+  stopEvent(event) { return !!targetElement(event.target)?.closest('.container-type-tools,.container-tools,.container-add-tools,.container-title,.container-caption,.container-resize,.container-resize-edge,.container-select-edge,.container-pair-resize,.container-gap-boundary') || !!this.inner.stopEvent?.(event); }
   ignoreMutation(mutation) {
     const target = mutation.target.nodeType === 1 ? mutation.target : mutation.target.parentElement;
     if (target?.closest('.rich-label')) return true;
