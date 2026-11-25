@@ -18,7 +18,7 @@ export function paragraphFormatTransaction(editor, values, selection = editor.st
   });
   return tr;
 }
-export const layoutDefaults = { paged: false, width: 0, size: 'A4', landscape: false, color: '#202020',
+export const layoutDefaults = { paged: false, width: 0, size: 'A4', landscape: false, color: '#ffffff',
   top: 20, bottom: 20, left: 20, right: 20, indentLeft: 0, indentRight: 0,
   before: 0, after: 8, footer: '', footerDistance: 10, numbering: false, start: 1, hyphenation: false };
 const sizes = { A3: [297, 420], A4: [210, 297], A5: [148, 210], Letter: [215.9, 279.4], Legal: [215.9, 355.6] };

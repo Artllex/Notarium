@@ -18,6 +18,20 @@ let checks = 0;
 async function check(name, run) { await run(); assert.deepEqual(errors, []); assert.deepEqual(await page.evaluate(() => bridgeMessages.filter(m => m.type === 'error')), []); console.log('PASS ' + name); checks++; }
 try {
   await page.goto(pathToFileURL(resolve('dist/index.html')).href); await page.waitForFunction(() => window.notatnik);
+  await check('New page areas default to white without recoloring saved documents', async () => {
+    await open('white-default');
+    await command('layoutField', JSON.stringify({ key: 'paged', value: true }));
+    assert.equal((await doc()).attrs.pageLayout.color, '#ffffff');
+    await command('undo'); assert.equal((await doc()).attrs.pageLayout, null);
+    await command('setPageLayout', JSON.stringify({ paged: true, color: '#202020' }));
+    await command('layoutField', JSON.stringify({ key: 'paged', value: false }));
+    await command('layoutField', JSON.stringify({ key: 'paged', value: true }));
+    assert.equal((await doc()).attrs.pageLayout.color, '#202020');
+    await open('cream-saved', 'Saved', {version:1, doc:{type:'doc',attrs:{pageLayout:{paged:true,color:'#fff8e7'}},content:[{type:'paragraph',content:[{type:'text',text:'Saved'}]}]}});
+    await command('layoutField', JSON.stringify({ key: 'size', value: 'A5' }));
+    assert.equal((await doc()).attrs.pageLayout.color, '#fff8e7');
+    await command('undo'); assert.equal((await doc()).attrs.pageLayout.color, '#fff8e7');
+  });
   await check('Ribbon field changes only selected paragraph attribute and supports undo', async () => {
     await open('layout-fields'); await select(1, 8);
     await command('layoutField', JSON.stringify({ key: 'indentLeft', value: 9 }));

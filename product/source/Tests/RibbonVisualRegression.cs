@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Notatnik;
@@ -57,11 +58,43 @@ internal static class RibbonVisualRegression
         Check(ribbon.IsExpanded && Button(ribbon, "Tabela").Visibility == Visibility.Visible && !Descendants<ActionButton>(ribbon).Any(button => AutomationProperties.GetName(button) == "Zwiń / rozwiń wstążkę"),
             "different tab opens its tools and no standalone collapse button remains");
         foreach (var tab in new[] { "Układ", "Wstawianie", "Odwołania", "Obiekty" }) {
-            SelectTab(ribbon, tab); Save(ribbon, System.IO.Path.Combine(fixture, "ribbon-" + tab + ".png"), 1180, 128);
+            SelectTab(ribbon, tab); ribbon.Measure(new Size(1180, double.PositiveInfinity));
+            Save(ribbon, System.IO.Path.Combine(fixture, "ribbon-" + tab + ".png"), 1180, Math.Ceiling(ribbon.DesiredSize.Height));
             var large = Descendants<ActionButton>(ribbon).Where(button => Equals(button.Tag, "ribbon-large-tool")).ToArray();
             Check(large.Length >= 4 && large.All(button => Descendants<Image>(button).Any(image => image.Width == 28)), "icon ribbon has uniform large vector tools: " + tab);
         }
         SelectTab(ribbon, "Układ");
+        ribbon.Measure(new Size(1180, double.PositiveInfinity));
+        Check(ribbon.DesiredSize.Height <= 117, "expanded ribbon is compact including the group captions");
+        var tools = Descendants<ActionButton>(ribbon).Where(button => Equals(button.Tag, "ribbon-large-tool")).Select(AutomationProperties.GetName).ToArray();
+        Check(tools.SequenceEqual(new[] { "Obszar", "Rozmiar", "Kolor", "Marginesy" }), "layout tools start with Area Size Color and margins share the paragraph group");
+        var paragraphGroup = VisualTreeHelper.GetParent(VisualTreeHelper.GetParent(Button(ribbon, "Marginesy")));
+        Check(Descendants<TextBox>(paragraphGroup).Count() == 4 && Descendants<TextBlock>(paragraphGroup).Any(label => label.Text == "Marginesy, wcięcia i odstępy"),
+            "margins indents and spacing occupy one named group");
+        ribbon.Arrange(new Rect(0, 0, 1180, ribbon.DesiredSize.Height)); ribbon.UpdateLayout();
+        var textTools = new[] { "Dzielenie wyrazów", "Stopka i numeracje", "Zaawansowany układ…" }.Select(name => Button(ribbon, name)).ToArray();
+        var iconX = textTools.Select(button => Descendants<Image>(button).Single().TranslatePoint(new Point(), ribbon).X).ToArray();
+        Check(iconX.Max() - iconX.Min() < 0.5 && textTools.All(button => button.Height == 24), "all Text icons share the same left axis in compact rows");
+        var area = OpenMenu(ribbon, "Obszar");
+        Check(area.Items.Count == 2 && area.Items.OfType<MenuItem>().Select(item => item.Header).Count() == 2, "Area dropdown contains exactly continuous and paged modes");
+        Save(area.View, System.IO.Path.Combine(fixture, "menu-area.png"), 310, 150); area.Close();
+        var sizeMenu = OpenMenu(ribbon, "Rozmiar");
+        Check(sizeMenu.Items.OfType<MenuItem>().Count() == 7 && !Descendants<ActionButton>(ribbon).Any(button => AutomationProperties.GetName(button) == "Orientacja"),
+            "Size dropdown includes five sizes and both orientations without a separate tool");
+        Save(sizeMenu.View, System.IO.Path.Combine(fixture, "menu-size.png"), 310, 450); sizeMenu.Close();
+        var fields = Descendants<TextBox>(ribbon).ToDictionary(AutomationProperties.GetName);
+        void Step(string name) => Descendants<RepeatButton>(ribbon).Single(button => AutomationProperties.GetName(button) == name).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        fields["Z lewej mm"].Text = "1,25"; Step("Zwiększ Z lewej");
+        Check(fields["Z lewej mm"].Text == "1,75", "indent arrows accept decimal comma and increment by half a millimetre");
+        Step("Zmniejsz Z lewej"); Check(fields["Z lewej mm"].Text == "1,25", "opposite arrow reverses the indent change");
+        fields["Przed pt"].Text = "8"; Step("Zwiększ Przed"); Check(fields["Przed pt"].Text == "9", "spacing arrows increment by one point");
+        fields["Po pt"].Text = "0"; Step("Zmniejsz Po"); Check(fields["Po pt"].Text == "0", "spacing arrows cannot produce negative spacing");
+        fields["Z prawej mm"].Text = "99,8"; Step("Zwiększ Z prawej"); Check(fields["Z prawej mm"].Text == "100", "indent arrows clamp to the supported maximum");
+        fields["Po pt"].Text = "1000"; Step("Zwiększ Po"); Check(fields["Po pt"].Text == "1000", "spacing arrows respect the upper boundary");
+        fields["Przed pt"].Text = "tekst"; Step("Zwiększ Przed"); Check(fields["Przed pt"].Text == "tekst", "invalid spinner input is not silently replaced");
+        fields["Przed pt"].Text = "0"; Step("Zwiększ Przed");
+        Check(Descendants<RepeatButton>(ribbon).Count() == 8 && Descendants<RepeatButton>(ribbon).All(button => !button.Focusable), "all four paragraph controls have non-focus-stealing up and down buttons");
+        SelectTab(ribbon, "Wstawianie"); SelectTab(ribbon, "Układ");
         var margins = OpenMenu(ribbon, "Marginesy");
         Check(margins.Items.OfType<MenuItem>().Count(item => item.HasItems) == 4 && margins.Items.OfType<MenuItem>().Count(item => item.IsCheckable) == 4,
             "margin menu includes four illustrated presets and four per-edge submenus");

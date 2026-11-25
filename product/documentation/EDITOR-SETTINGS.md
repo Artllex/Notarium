@@ -23,6 +23,11 @@ Poza nimi: systemowe otwieranie/zapis pliku i wybór dowolnego koloru RGB; komun
 
 ## Inwarianty
 
+- Karta Układ: pierwsza grupa zawiera Obszar, Rozmiar i Kolor. Obszar ma wyłącznie Obszar ciągły oraz Podział na strony; orientacja pionowa/pozioma jest w menu Rozmiar. Szerokość obszaru pozostaje dostępna w zaawansowanym układzie i na pasku formatowania.
+- Marginesy, wcięcia i odstępy są jedną grupą wstążki. Pola wcięć mają strzałki co 0,5 mm, a odstępów co 1 pkt, również pod klawiszami ↑/↓. Można wpisywać własne wartości, z przecinkiem lub kropką; granice to 0–100 mm i 0–1000 pkt. Strzałki nie przejmują fokusu od zaznaczenia dokumentu.
+- Nazwy grup mają zwarty pasek wysokości 12 px, a małe narzędzia Tekst wspólną lewą oś ikon. Puste pole błędu nie zajmuje dodatkowego wiersza.
+- Nowy obszar dokumentu domyślnie ma białe tło. Kolory jawnie zapisane w istniejących notatkach pozostają bez zmian, także po przełączeniu trybu obszaru.
+
 - Kolejność wspólnego paska: File, Edit, View, Układ, Wstawianie, Odwołania, Obiekty, Help. Napisy menu i kart są wyrównane pionowo; podkreślenie aktywnej karty nie przesuwa tekstu ani nie zwiększa wysokości paska.
 - Panele zmniejszają obszar dokumentu, nie zasłaniają go. Prawy i górny mogą być otwarte jednocześnie; mają własne zamknięcie i respektują ograniczenie animacji systemowych.
 - Przełączenie sekcji anuluje niezapisany szkic poprzedniej sekcji; przełączenie notatki zamyka oba panele. ESC zamyka ostatnio aktywny panel. Nie zapisuje formularzy.

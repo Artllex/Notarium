@@ -20,7 +20,7 @@ public sealed class NotebookRibbon : Border
     private readonly Dictionary<string, Border> _tabLines = new();
     private JsonElement? _values;
     private DropDownMenu? _openMenu;
-    private readonly TextBlock _error = new() { Foreground = UiPolicy.Brush("#E76F6F"), FontSize = 11 };
+    private readonly TextBlock _error = new() { Foreground = UiPolicy.Brush("#E76F6F"), FontSize = 11, Visibility = Visibility.Collapsed };
     private string _active = "Układ";
     private bool _sync;
 
@@ -62,7 +62,7 @@ public sealed class NotebookRibbon : Border
         _body.Children.Add(new ScrollViewer { Content = _groups, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, VerticalScrollBarVisibility = ScrollBarVisibility.Disabled });
         _body.Children.Add(_error);
         _editor.SelectionChanged += (_, _) => Refresh();
-        _editor.RibbonError += (_, message) => _error.Text = message;
+        _editor.RibbonError += (_, message) => SetError(message);
         Select("Układ");
     }
     private static void AlignMenu(MenuBar menu)
@@ -82,9 +82,9 @@ public sealed class NotebookRibbon : Border
     }
     private StackPanel Group(string title, bool horizontal = true)
     {
-        var content = new StackPanel { Orientation = horizontal ? Orientation.Horizontal : Orientation.Vertical, Height = 76, Margin = new Thickness(6, 4, 6, 2), VerticalAlignment = VerticalAlignment.Top };
+        var content = new StackPanel { Orientation = horizontal ? Orientation.Horizontal : Orientation.Vertical, Height = 72, Margin = new Thickness(6, 2, 6, 2), VerticalAlignment = VerticalAlignment.Top };
         var panel = new StackPanel(); panel.Children.Add(content);
-        panel.Children.Add(new TextBlock { Text = title, Foreground = UiPolicy.Brush("#aaaaaa"), FontSize = 10, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 3) });
+        panel.Children.Add(new TextBlock { Text = title, Foreground = UiPolicy.Brush("#aaaaaa"), FontSize = 9, Height = 12, HorizontalAlignment = HorizontalAlignment.Center });
         _groups.Children.Add(new Border { Child = panel, BorderBrush = UiPolicy.Brush("#505050"), BorderThickness = new Thickness(0, 0, 1, 0) }); return content;
     }
     private ActionButton Tool(string label, string icon, Action action, bool dropdown = false)
@@ -93,16 +93,18 @@ public sealed class NotebookRibbon : Border
         content.Children.Add(RibbonIcon.Create(icon));
         content.Children.Add(new TextBlock { Text = label, FontSize = 11, TextAlignment = TextAlignment.Center, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
         if (dropdown) content.Children.Add(new TextBlock { Text = "⌄", FontSize = 10, HorizontalAlignment = HorizontalAlignment.Center });
-        var button = Button(label, action); button.Content = content; button.Width = 74; button.Height = 74; button.Padding = new Thickness(5, 3, 5, 3); button.ToolTip = label;
+        var button = Button(label, action); button.Content = content; button.Width = 74; button.Height = 70; button.Padding = new Thickness(5, 2, 5, 2); button.ToolTip = label;
         button.Tag = "ribbon-large-tool"; return button;
     }
     private ActionButton SmallTool(string label, string icon, Action action, bool dropdown = false)
     {
         var content = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-        content.Children.Add(RibbonIcon.Create(icon, 17));
+        var image = RibbonIcon.Create(icon, 17); image.VerticalAlignment = VerticalAlignment.Center;
+        content.Children.Add(image);
         content.Children.Add(new TextBlock { Text = label + (dropdown ? "  ⌄" : ""), FontSize = 11, Margin = new Thickness(5, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center });
-        var button = Button(label, action); button.Content = content; button.Height = 25; button.Padding = new Thickness(5, 2, 5, 2); button.ToolTip = label; return button;
+        var button = Button(label, action); button.Content = content; button.Height = 24; button.Padding = new Thickness(5, 1, 5, 1); button.HorizontalContentAlignment = HorizontalAlignment.Left; button.ToolTip = label; return button;
     }
+    private void SetError(string message) { _error.Text = message; _error.Visibility = string.IsNullOrEmpty(message) ? Visibility.Collapsed : Visibility.Visible; }
     private void Number(StackPanel group, string key, string label, string unit)
     {
         var row = new StackPanel { Orientation = Orientation.Horizontal };
@@ -110,16 +112,43 @@ public sealed class NotebookRibbon : Border
         row.Children.Add(new TextBlock { Text = label, Width = 51, Margin = new Thickness(4, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, FontSize = 11 });
         var field = new TextBox { Width = 65, Height = 24, Margin = new Thickness(3, 1, 3, 1), Padding = new Thickness(4, 1, 4, 1), Background = UiPolicy.Brush("#202020"), Foreground = UiPolicy.Current.TextBrush, BorderBrush = UiPolicy.Brush("#555555"), BorderThickness = new Thickness(1) };
         _fields[key] = field; System.Windows.Automation.AutomationProperties.SetName(field, label + " " + unit);
+        var maximum = key == "width" ? 4000 : key is "before" or "after" ? 1000 : 100;
+        var step = key.StartsWith("indent", StringComparison.Ordinal) ? 0.5 : 1;
+        bool Read(out double value)
+        {
+            if (double.TryParse(field.Text.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out value) && double.IsFinite(value) && value >= 0 && value <= maximum) return true;
+            SetError("Nieprawidłowa wartość: " + label); return false;
+        }
         void Apply()
         {
             if (_sync) return;
-            if (!double.TryParse(field.Text.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) || !double.IsFinite(value) || value < 0 || value > (key == "width" ? 4000 : key is "before" or "after" ? 1000 : 100))
-            { _error.Text = "Nieprawidłowa wartość: " + label; return; }
-            _error.Text = ""; Set(key, value);
+            if (!Read(out var value)) return;
+            SetError(""); Set(key, value);
+        }
+        void Step(int direction)
+        {
+            if (_sync || !Read(out var value)) return;
+            var next = Math.Clamp(value + direction * step, 0, maximum);
+            SetError("");
+            if (next == value) return;
+            field.Text = next.ToString("0.########", CultureInfo.GetCultureInfo("pl-PL"));
+            Set(key, next);
         }
         field.LostKeyboardFocus += (_, _) => Apply();
-        field.KeyDown += (_, e) => { if (e.Key == Key.Enter) { Apply(); e.Handled = true; } };
-        row.Children.Add(field); row.Children.Add(new TextBlock { Text = unit, VerticalAlignment = VerticalAlignment.Center, FontSize = 10 }); group.Children.Add(row);
+        field.KeyDown += (_, e) => {
+            if (e.Key == Key.Enter) { Apply(); e.Handled = true; }
+            else if (e.Key is Key.Up or Key.Down) { Step(e.Key == Key.Up ? 1 : -1); e.Handled = true; }
+        };
+        row.Children.Add(field);
+        var arrows = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 4, 0) };
+        foreach (var (symbol, direction, name) in new[] { ("↑", 1, "Zwiększ "), ("↓", -1, "Zmniejsz ") }) {
+            var arrow = new RepeatButton { Content = symbol, Width = 18, Height = 12, Padding = new Thickness(0), FontSize = 9, Focusable = false,
+                Foreground = UiPolicy.Current.AccentBrush, Background = UiPolicy.Brush("#303030"), BorderThickness = new Thickness(0), Delay = 350, Interval = 100,
+                HorizontalContentAlignment = HorizontalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, ToolTip = name + label };
+            System.Windows.Automation.AutomationProperties.SetName(arrow, name + label);
+            arrow.Click += (_, _) => Step(direction); arrows.Children.Add(arrow);
+        }
+        row.Children.Add(arrows); row.Children.Add(new TextBlock { Text = unit, VerticalAlignment = VerticalAlignment.Center, FontSize = 10 }); group.Children.Add(row);
     }
     private bool Is(string key, object value) => _values is JsonElement layout && layout.TryGetProperty(key, out var current) && current.ToString().Equals(Convert.ToString(value, CultureInfo.InvariantCulture), StringComparison.OrdinalIgnoreCase);
     private void Menu(ActionButton anchor, Action<DropDownMenu> populate)
@@ -177,22 +206,14 @@ public sealed class NotebookRibbon : Border
     {
         menu.Items.Add(Item("Obszar ciągły", "width", () => Set("paged", false), Is("paged", false), "Notatka bez podziału na strony"));
         menu.Items.Add(Item("Podział na strony", "page", () => Set("paged", true), Is("paged", true), "Automatyczny przepływ treści"));
+    }
+    private void SizeMenu(DropDownMenu menu)
+    {
+        foreach (var (size, dimensions) in new[] { ("A3", "297 × 420 mm"), ("A4", "210 × 297 mm"), ("A5", "148 × 210 mm"), ("Letter", "215,9 × 279,4 mm"), ("Legal", "215,9 × 355,6 mm") })
+            menu.Items.Add(Item(size, "size", () => Set("size", size), Is("size", size), dimensions));
         menu.Items.Add(new Separator());
-        foreach (var (label, width) in new[] { ("Wąski", 650), ("Standardowy", 790), ("Szeroki", 960), ("Pełna szerokość", 0) })
-            menu.Items.Add(Item(label, "width", () => Set("width", width), Is("width", width), width == 0 ? "Dopasuj do okna" : width + " px"));
-        menu.Items.Add(new Separator());
-        var row = new StackPanel(); row.Children.Add(new TextBlock { Text = "Własna szerokość (px)", FontSize = 11 });
-        var controls = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 5, 0, 0) };
-        var input = new TextBox { Text = _values?.GetProperty("width").ToString() ?? "0", Width = 100, Height = 25, Padding = new Thickness(4, 1, 4, 1), Background = UiPolicy.Brush("#202020"), Foreground = UiPolicy.Current.TextBrush, BorderBrush = UiPolicy.Brush("#555555") };
-        System.Windows.Automation.AutomationProperties.SetName(input, "Własna szerokość px"); controls.Children.Add(input);
-        var apply = Button("Zastosuj", () => { }); apply.Height = 25; controls.Children.Add(apply); row.Children.Add(controls);
-        void Commit() {
-            if (int.TryParse(input.Text, out var value) && value >= 0 && value <= 4000) { menu.Close(); Set("width", value); }
-            else _error.Text = "Szerokość musi być liczbą od 0 do 4000 px.";
-        }
-        apply.Click += (_, e) => { e.Handled = true; Commit(); };
-        input.KeyDown += (_, e) => { if (e.Key == Key.Enter) { e.Handled = true; Commit(); } };
-        menu.Items.Add(new MenuItem { Header = row });
+        menu.Items.Add(Item("Pionowa", "page", () => Set("landscape", false), Is("landscape", false)));
+        menu.Items.Add(Item("Pozioma", "orientation", () => Set("landscape", true), Is("landscape", true)));
     }
     private void ColorMenu(DropDownMenu menu)
     {
@@ -204,7 +225,7 @@ public sealed class NotebookRibbon : Border
             menu.Items.Add(item);
         }
         menu.Items.Add(new Separator());
-        menu.Items.Add(Item("Więcej kolorów…", "color", () => { if (DialogService.Color(_values?.GetProperty("color").GetString() ?? "#202020") is string color) Set("color", color); }));
+        menu.Items.Add(Item("Więcej kolorów…", "color", () => { if (DialogService.Color(_values?.GetProperty("color").GetString() ?? "#ffffff") is string color) Set("color", color); }));
     }
     private void ImagesMenu(DropDownMenu menu)
     {
@@ -242,21 +263,20 @@ public sealed class NotebookRibbon : Border
     private void Select(string tab)
     {
         _openMenu?.Close();
-        _active = tab; _groups.Children.Clear(); _fields.Clear(); _body.Visibility = Visibility.Visible; _error.Text = "";
+        _active = tab; _groups.Children.Clear(); _fields.Clear(); _body.Visibility = Visibility.Visible; SetError("");
         foreach (var (name, button) in _tabs) { button.Foreground = UiPolicy.Current.TextBrush; _tabLines[name].Background = name == tab ? UiPolicy.Current.AccentBrush : System.Windows.Media.Brushes.Transparent; }
         if (tab == "Układ")
         {
             var page = Group("Ustawienia strony");
-            AddDropdown(page, "Marginesy", "margins", MarginsMenu);
-            AddDropdown(page, "Orientacja", "orientation", menu => {
-                menu.Items.Add(Item("Pionowa", "page", () => Set("landscape", false), Is("landscape", false)));
-                menu.Items.Add(Item("Pozioma", "orientation", () => Set("landscape", true), Is("landscape", true)));
-            });
-            AddDropdown(page, "Rozmiar", "size", menu => {
-                foreach (var (size, dimensions) in new[] { ("A3", "297 × 420 mm"), ("A4", "210 × 297 mm"), ("A5", "148 × 210 mm"), ("Letter", "215,9 × 279,4 mm"), ("Legal", "215,9 × 355,6 mm") })
-                    menu.Items.Add(Item(size, "size", () => Set("size", size), Is("size", size), dimensions));
-            });
             AddDropdown(page, "Obszar", "width", AreaMenu);
+            AddDropdown(page, "Rozmiar", "size", SizeMenu);
+            AddDropdown(page, "Kolor", "color", ColorMenu);
+            var paragraph = Group("Marginesy, wcięcia i odstępy");
+            AddDropdown(paragraph, "Marginesy", "margins", MarginsMenu);
+            var indent = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 4, 0) }; paragraph.Children.Add(indent);
+            Number(indent, "indentLeft", "Z lewej", "mm"); Number(indent, "indentRight", "Z prawej", "mm");
+            var space = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 0, 0) }; paragraph.Children.Add(space);
+            Number(space, "before", "Przed", "pt"); Number(space, "after", "Po", "pt");
             var text = Group("Tekst", false);
             AddDropdown(text, "Dzielenie wyrazów", "hyphen", menu => {
                 menu.Items.Add(Item("Bez dzielenia", "hyphen", () => Set("hyphenation", false), Is("hyphenation", false)));
@@ -264,9 +284,6 @@ public sealed class NotebookRibbon : Border
             }, true);
             Panel(text, "Stopka i numeracje", "numbering", "numbering", true);
             Command(text, "Zaawansowany układ…", "settings", "pageLayout", true);
-            var indent = Group("Wcięcie", false); Number(indent, "indentLeft", "Z lewej", "mm"); Number(indent, "indentRight", "Z prawej", "mm");
-            var space = Group("Odstępy", false); Number(space, "before", "Przed", "pt"); Number(space, "after", "Po", "pt");
-            AddDropdown(Group("Tło strony"), "Kolor strony", "color", ColorMenu);
         }
         else if (tab == "Wstawianie")
         {
