@@ -43,7 +43,12 @@ try {
   });
   await check('Right panel slides alongside document without changing data; Escape closes it', async () => {
     const before = await doc(); await command('workspacePanel', 'comments');
-    await page.locator('body.right-panel-open').waitFor(); await page.waitForTimeout(230);
+    await page.locator('body.right-panel-open').waitFor();
+    await page.waitForFunction(() => {
+      const editor = document.querySelector('.document-viewport').getBoundingClientRect();
+      const panel = document.querySelector('.right-panel');
+      return getComputedStyle(panel).transform === 'none' && editor.right <= panel.getBoundingClientRect().left + 1;
+    });
     const editorBox = await page.locator('.document-viewport').boundingBox(), panelBox = await page.locator('.right-panel').boundingBox();
     assert.ok(editorBox.x + editorBox.width <= panelBox.x + 1);
     assert.deepEqual(await doc(), before);
