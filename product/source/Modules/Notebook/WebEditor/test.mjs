@@ -611,9 +611,11 @@ try {
       { type: 'paragraph', content: [{ type: 'text', text: 'Source' }] }
     ] } }));
     const original = await json();
-    const source = await page.locator('.tiptap > .object-container').last().boundingBox();
+    const sourceContainer = page.locator('.tiptap > .object-container').last();
+    await revealTypeTools(sourceContainer);
+    const source = await sourceContainer.locator(':scope > .container-type-tools .container-type-label').boundingBox();
     const target = await page.locator('.layout-row > .object-container').last().boundingBox();
-    await page.mouse.move(source.x + 10, source.y + 2); await page.mouse.down();
+    await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2); await page.mouse.down();
     await page.mouse.move(target.x + target.width - 10, target.y + target.height / 2, { steps: 8 });
     assert.equal(await page.locator('.block-drop-marker').isVisible(), true);
     await page.mouse.up();
@@ -629,10 +631,10 @@ try {
   await check('Ctrl clicks toggle multiple containers and Escape clears every selection', async () => {
     await open('multi-select', 'A\n\nB\n\nC');
     const boxes = page.locator('.tiptap > .object-container');
-    await boxes.nth(0).locator('p').click({ modifiers: ['Control'] });
-    await boxes.nth(1).locator('p').click({ modifiers: ['Control'] });
+    await boxes.nth(0).click({ modifiers: ['Control'], position: { x: 1, y: 1 } });
+    await boxes.nth(1).click({ modifiers: ['Control'], position: { x: 1, y: 1 } });
     assert.equal(await page.locator('.container-multi-selected').count(), 2);
-    await boxes.nth(0).locator('p').click({ modifiers: ['Control'] });
+    await boxes.nth(0).click({ modifiers: ['Control'], position: { x: 1, y: 1 } });
     assert.equal(await page.locator('.container-multi-selected').count(), 1);
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('.container-multi-selected,.container-selected,.containers-all-selected,.container-boundary-selected').count(), 0);
@@ -672,8 +674,9 @@ try {
       const boxes = page.locator('.tiptap > .object-container');
       const moving = boxes.nth(reverse ? 1 : 0), destination = boxes.nth(reverse ? 0 : 1);
       const dragToEmpty = async () => {
-        const a = await moving.boundingBox(), b = await destination.boundingBox();
-        await page.mouse.move(a.x + 10, a.y + 2); await page.mouse.down();
+        await revealTypeTools(moving);
+        const a = await moving.locator(':scope > .container-type-tools .container-type-label').boundingBox(), b = await destination.boundingBox();
+        await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2); await page.mouse.down();
         await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 });
         assert.equal(await destination.evaluate(el => el.classList.contains('container-drop-empty')), true);
         assert.equal(await destination.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(130, 184, 248, 0.18)');
@@ -867,9 +870,12 @@ try {
     assert.equal((await json()).content[2].attrs.boxEmpty, true);
     assert.equal(await page.locator('.tiptap > .container-empty').count(), 1);
     const rows = await page.locator('.layout-row').evaluateAll(elements => elements.map(element => {
-      const rect = element.getBoundingClientRect(); return { left: rect.left, top: rect.top, bottom: rect.bottom };
+      const rect = element.getBoundingClientRect(); return { left: rect.left, top: rect.top, bottom: rect.bottom,
+        bottomHandle: Math.max(...[...element.querySelectorAll(':scope > .object-container > .container-resize-bottom')].map(handle => handle.getBoundingClientRect().bottom)),
+        topHandle: Math.min(...[...element.querySelectorAll(':scope > .object-container > .container-select-top')].map(handle => handle.getBoundingClientRect().top)) };
     }));
-    await page.mouse.dblclick(rows[0].left + 80, (rows[0].bottom + rows[1].top) / 2);
+    // Use an integer CSS pixel: the half-pixel gap rounds into the next row's selection handle.
+    await page.mouse.dblclick(rows[0].left + 80, Math.floor((rows[0].bottomHandle + rows[1].topHandle) / 2));
     assert.equal(await page.locator('.layout-row.ProseMirror-selectednode').count(), 0);
     assert.equal(await page.evaluate(() => document.activeElement?.classList.contains('container-boundary-focus')), true);
     await open('explicit-text-after-row', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
@@ -944,8 +950,8 @@ try {
     await page.keyboard.type('# Heading'); await page.keyboard.press('Control+Enter');
     await page.keyboard.type('1. first'); await page.keyboard.press('Enter'); await page.keyboard.type('second');
     assert.equal(await page.locator('h1').count(), 1);
-    assert.equal(await page.locator('ol li').count(), 1);
-    assert.match(JSON.stringify(await json()), /hardBreak/);
+    assert.equal(await page.locator('ol li').count(), 2);
+    assert.deepEqual(await page.locator('ol li').allTextContents(), ['first', 'second']);
     await page.keyboard.press('Control+Enter'); await page.keyboard.type('third');
     assert.equal((await json()).content.filter(node => node.content?.length).length, 3);
     await page.evaluate(() => window.notatnik.editor.commands.setTextSelection(1));
