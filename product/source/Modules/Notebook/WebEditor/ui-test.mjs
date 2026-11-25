@@ -60,7 +60,11 @@ try {
   await page.evaluate(() => window.notatnik.receive({ type: 'command', action: 'math' }));
   const trigger = page.locator('#math-dialog .ui-choice');
   await trigger.click();
-  assert.equal(await page.locator('#math-dialog .ui-dropdown').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(37, 37, 37)');
+  assert.equal(await page.locator('#math-dialog .ui-dropdown').evaluate(el => {
+    const reference = document.createElement('span'); reference.style.backgroundColor = 'var(--ui-menu-background)'; el.append(reference);
+    const expected = getComputedStyle(reference).backgroundColor; reference.remove();
+    return getComputedStyle(el).backgroundColor === expected;
+  }), true, 'Math dropdown uses the current shared theme background, including its opacity');
   assert.equal(await page.locator('#math-dialog .ui-dropdown').count(), 1);
   await page.getByRole('menuitem', { name: 'Osobny wiersz', exact: true }).click();
   assert.equal(await page.locator('#math-layout').inputValue(), 'blockMath');
