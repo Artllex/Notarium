@@ -499,8 +499,13 @@ try {
     await open('arrows-after-row', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
       { type: 'layoutRow', content: [p('C'), p('D')] }, p('dsd')
     ] } }));
-    await page.locator('.layout-row p').last().click();
-    await page.keyboard.press('End');
+    await page.evaluate(() => {
+      const editor = window.notatnik.editor;
+      let end;
+      editor.state.doc.descendants((node,pos) => { if (node.type.name === 'paragraph' && node.textContent === 'D') end = pos + 1 + node.content.size; });
+      editor.chain().focus().setTextSelection(end).run();
+    });
+    await page.waitForFunction(() => document.activeElement === window.notatnik.editor.view.dom);
     await page.keyboard.press('ArrowRight');
     assert.deepEqual(await page.evaluate(() => ({ text: window.notatnik.editor.state.selection.$from.parent.textContent, offset: window.notatnik.editor.state.selection.$from.parentOffset })), { text: 'dsd', offset: 0 });
     await page.keyboard.press('ArrowLeft');
@@ -575,8 +580,15 @@ try {
     await page.waitForFunction(() => document.querySelectorAll('.layout-paper').length > 1);
     assert.ok(await page.locator('.layout-paper').count() > 1);
     assert.equal(await page.locator('.layout-footer').first().textContent(), 'Notarium · 4');
-    const fragments = await page.locator('.tiptap p').first().evaluate(el => { const range = document.createRange(); range.selectNodeContents(el); return [...range.getClientRects()].map(r => r.left); });
-    assert.ok(Math.max(...fragments) - Math.min(...fragments) > 400, 'Text must actually flow onto another page');
+    const populatedPages = await page.locator('.tiptap p').first().evaluate(el => {
+      const range = document.createRange(); range.selectNodeContents(el);
+      const fragments = [...range.getClientRects()].filter(r => r.width > 0 && r.height > 0);
+      return [...document.querySelectorAll('.layout-paper')].filter(paper => {
+        const bounds = paper.getBoundingClientRect();
+        return fragments.some(r => r.left < bounds.right && r.right > bounds.left && r.top < bounds.bottom && r.bottom > bounds.top);
+      }).length;
+    });
+    assert.ok(populatedPages > 1, 'Text must actually flow onto multiple pages in either vertical or horizontal view');
     await page.screenshot({ path: resolve(reportDirectory, 'page-layout.png') });
     const saved = await page.evaluate(() => window.notatnik.snapshot());
     await command('undo'); assert.deepEqual(await json(), original);

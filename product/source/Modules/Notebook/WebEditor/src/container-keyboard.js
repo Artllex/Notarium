@@ -25,6 +25,12 @@ export class ContainerKeyboard {
   }
   handle(event) {
     if (event.isComposing || !this.editor.isEditable || event.altKey || event.target.closest('input,textarea,select,button')) return;
+    if (['Enter', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) &&
+        !event.target.closest('.cm-editor,.rich-label')) {
+      // This capture listener runs before ProseMirror's normal keydown flush.
+      // Read the browser's latest caret (e.g. after End) before editing a list.
+      this.editor.view.domObserver.flush();
+    }
     if (event.key === 'Tab' && !event.ctrlKey && !event.metaKey) {
       if (!event.target.closest('.cm-editor,.rich-label,td,th') &&
           !this.editor.state.selection.$from.parent.type.spec.code && this.navigation.indentText?.(event.shiftKey)) {
