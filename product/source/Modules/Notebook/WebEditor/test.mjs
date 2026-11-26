@@ -1209,9 +1209,12 @@ try {
     await page.locator('#math-source').fill('\\frac{a}{b}');
     await page.locator('#math-save').click();
     assert.equal(await page.locator('.tiptap .katex').count(), 1);
-    await page.locator('.tiptap .katex').click();
+    // Use the visible inline formula's center, rather than Playwright's content
+    // quad point, which lands on the container's top selection handle in Edge.
+    const formula = await page.locator('.tiptap .katex').boundingBox();
+    await page.mouse.click(formula.x + formula.width / 2, formula.y + formula.height / 2);
     assert.equal(await page.locator('#math-dialog').evaluate(el => el.open), false);
-    await page.locator('.tiptap .katex').dblclick();
+    await page.mouse.dblclick(formula.x + formula.width / 2, formula.y + formula.height / 2);
     await page.locator('#math-source').fill('E=mc^2'); await page.locator('#math-save').click();
     assert.match(JSON.stringify(await json()), /E=mc\^2/);
     await command('undo'); assert.match(JSON.stringify(await json()), /frac/);
