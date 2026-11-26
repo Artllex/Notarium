@@ -47,13 +47,6 @@ public partial class MainWindow
 
     private void Editor_SelectionChanged(object? sender, EventArgs e)
     {
-        if (Editor.CurrentPageView is { } pageView && pageView.ValueKind == System.Text.Json.JsonValueKind.Object) {
-            _pageDirection = pageView.GetProperty("direction").GetString() ?? "down";
-            _pagesPerRow = pageView.GetProperty("pages").GetInt32();
-            PagesDownMenuItem.IsChecked = _pageDirection == "down";
-            PagesAcrossMenuItem.IsChecked = _pageDirection == "across";
-            if (!PageCountInput.IsKeyboardFocused) PageCountInput.Text = _pagesPerRow.ToString();
-        }
         FontFamilyButton.Content = $"{Editor.CurrentFont} ▾";
         ContentWidthButton.Content = Editor.CurrentContentWidth == 0 ? "↔ ∞" : $"↔ {Editor.CurrentContentWidth}";
     }

@@ -32,13 +32,10 @@ public sealed class WebEditorControl : UserControl, IDisposable
     public event EventHandler? SelectionChanged;
     public event EventHandler<string>? ShortcutRequested;
     public event EventHandler<string>? EditorError;
-    public event EventHandler<string>? RibbonError;
     public string CurrentFont { get; private set; } = "Segoe UI";
     public string? CurrentTextColor { get; private set; }
     public string? CurrentHighlightColor { get; private set; }
     public int CurrentContentWidth { get; private set; }
-    public JsonElement? CurrentLayout { get; private set; }
-    public JsonElement? CurrentPageView { get; private set; }
     public bool CanUndoContent { get; private set; }
     public bool CanRedoContent { get; private set; }
     public bool IsCodeFocused { get; private set; }
@@ -135,8 +132,6 @@ public sealed class WebEditorControl : UserControl, IDisposable
                     if (_flushes.Remove(message.GetProperty("requestId").GetString()!, out var waiter)) waiter.TrySetResult(true);
                     break;
                 case "selection":
-                    CurrentPageView = message.TryGetProperty("pageView", out var pageView) ? pageView.Clone() : null;
-                    CurrentLayout = message.TryGetProperty("layout", out var layout) ? layout.Clone() : null;
                     CurrentFont = message.GetProperty("font").GetString() ?? "Segoe UI";
                     CurrentTextColor = message.TryGetProperty("color", out var color) && color.ValueKind == JsonValueKind.String ? color.GetString() : null;
                     CurrentHighlightColor = message.TryGetProperty("highlight", out var highlight) && highlight.ValueKind == JsonValueKind.String ? highlight.GetString() : null;
@@ -151,7 +146,6 @@ public sealed class WebEditorControl : UserControl, IDisposable
                 case "openLink": OpenLink(message.GetProperty("url").GetString()); break;
                 case "shortcut": ShortcutRequested?.Invoke(this, message.GetProperty("key").GetString()!); break;
                 case "error": EditorError?.Invoke(this, message.GetProperty("message").GetString()!); break;
-                case "ribbonError": RibbonError?.Invoke(this, message.GetProperty("message").GetString()!); break;
             }
         }
         catch (Exception error) when (error is JsonException or InvalidOperationException or FormatException)

@@ -1,5 +1,7 @@
 # Ustawienia edytora: inwentaryzacja i nowe miejsca obsługi
 
+> Dokument historyczny dla wersji ze wstążką na `main`. Na gałęzi `codex/notarium-clean` obowiązuje [CLEAN-VERSION.md](CLEAN-VERSION.md); opisane poniżej funkcje składu dokumentów i panele zostały usunięte.
+
 ## Dotychczasowe okienka edytora
 
 1. Układ (`page-layout-dialog`): podział na strony, szerokość obszaru, A3/A4/A5/Letter/Legal, orientacja, kolor, marginesy, wcięcia, odstępy, zakres akapit/domyslne notatki, dzielenie wyrazów, stopka, odległość stopki, numeracja i numer początkowy.

@@ -1,5 +1,7 @@
 # Notarium
 
+Gałąź `codex/notarium-clean`: prosty edytor notatek, bez wstążki i funkcji składu dokumentów w stylu Worda. Zainstalowanym modułem jest wyłącznie Notatnik. Zakres: [oczyszczona wersja](product/documentation/CLEAN-VERSION.md). Dotychczasowa wersja pozostaje na `main`.
+
 Kanoniczne repozytorium: C:/NOTARIUM. Kod: product/source. Dokumentacja: product/documentation.
 
 Historia kodu jest w Git, zachowana od dotychczasowego repozytorium Artllex/Notarium. Nie używamy katalogów final/verified ani kopii źródeł jako systemu wersjonowania.

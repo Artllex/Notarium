@@ -1,4 +1,4 @@
-<!-- notarium:article -->
+<!-- notarium:content-width 790 -->
 
 # Od światła do energii
 

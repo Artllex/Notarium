@@ -31,13 +31,7 @@ export class ContainerKeyboard {
       // Read the browser's latest caret (e.g. after End) before editing a list.
       this.editor.view.domObserver.flush();
     }
-    if (event.key === 'Tab' && !event.ctrlKey && !event.metaKey) {
-      if (!event.target.closest('.cm-editor,.rich-label,td,th') &&
-          !this.editor.state.selection.$from.parent.type.spec.code && this.navigation.indentText?.(event.shiftKey)) {
-        event.preventDefault(); event.stopImmediatePropagation();
-      }
-      return;
-    }
+
     if (!event.ctrlKey && !event.metaKey && !event.shiftKey &&
         !event.target.closest('.cm-editor,.rich-label') && this.navigateArrow(event.key)) {
       event.preventDefault(); event.stopImmediatePropagation(); return;

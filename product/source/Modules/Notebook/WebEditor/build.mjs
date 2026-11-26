@@ -8,7 +8,7 @@ const result = await build({ entryPoints: ['src/editor.js'], bundle: true, minif
 await writeFile('dist/editor.js', (await readFile('dist/editor.js', 'utf8')).replace(/^[\t ]+$/gm, ''));
 await copyFile('src/index.html', 'dist/index.html');
 await writeFile('dist/editor.css', (await readFile('node_modules/cropperjs/dist/cropper.css', 'utf8')) + '\n' +
-  (await readFile('../../../Shared/Web/UI/components.css', 'utf8')) + '\n' + (await readFile('src/editor.css', 'utf8')) + '\n' + (await readFile('src/article.css', 'utf8')) + '\n' + (await readFile('src/containers.css', 'utf8')) + '\n' + (await readFile('src/workspace-panels.css', 'utf8')));
+  (await readFile('../../../Shared/Web/UI/components.css', 'utf8')) + '\n' + (await readFile('src/editor.css', 'utf8')) + '\n' + (await readFile('src/containers.css', 'utf8')));
 await build({ entryPoints: ['node_modules/katex/dist/katex.min.css'], bundle: true, minify: true,
   outfile: 'dist/math.css', loader: { '.woff2': 'dataurl', '.woff': 'dataurl', '.ttf': 'dataurl' } });
 const packages = new Set(Object.keys(result.metafile.inputs).flatMap(file => {

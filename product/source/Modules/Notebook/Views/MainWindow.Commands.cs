@@ -102,44 +102,12 @@ public partial class MainWindow
         Editor.Focus();
     }
 
-    private string _pageDirection = "down";
-    private int _pagesPerRow = 1;
-    private void ApplyPageView() => Editor.Execute("pageView", System.Text.Json.JsonSerializer.Serialize(new { direction = _pageDirection, pages = _pagesPerRow }));
-    private void PageDirection_Click(object sender, RoutedEventArgs e)
-    {
-        _pageDirection = ((MenuItem)sender).Tag.ToString()!;
-        ApplyPageView();
-    }
-    private void PageCount_Click(object sender, RoutedEventArgs e)
-    {
-        _pagesPerRow = int.Parse(((MenuItem)sender).Tag.ToString()!);
-        _pageDirection = "down"; ApplyPageView();
-    }
-    private void PageCountInput_KeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key != Key.Enter) return;
-        e.Handled = true;
-        if (!int.TryParse(PageCountInput.Text, out var pages) || pages < 1 || pages > 100) {
-            PageCountInput.ToolTip = "Podaj liczbę całkowitą od 1 do 100."; PageCountInput.SelectAll(); return;
-        }
-        _pagesPerRow = pages; _pageDirection = "down"; ApplyPageView();
-    }
-
     private void MetadataMenu_Click(object sender, RoutedEventArgs e)
     {
         if (ActiveNote is null) return;
         DialogService.Show(this, $"Tytuł pliku: {ActiveNote.Title}\nPodtytuł: —\nOpis: —\nAutor: —", "File metadata", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
-
-    private void HelpMenu_Click(object sender, RoutedEventArgs e)
-    {
-        DialogService.Show(this,
-            "Notarium\n\nMinimalistyczna aplikacja do tworzenia i organizowania notatek.\n\nAutor: Arkad",
-            "About Notarium",
-            MessageBoxButton.OK,
-            MessageBoxImage.Information);
-    }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {

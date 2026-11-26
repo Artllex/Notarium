@@ -1,1 +1,0 @@
-{"name":"notarium-dev-gallery","private":true,"type":"module","scripts":{"build":"node build.mjs","test":"node test.mjs"},"devDependencies":{"esbuild":"0.28.2","playwright":"1.63.0"}}

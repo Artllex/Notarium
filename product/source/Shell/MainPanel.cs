@@ -62,9 +62,6 @@ public sealed class MainPanel : Window
         menu.Items.Add(edit);
         var view = new MenuItem { Header = "_View" };
         view.Items.Add(new MenuItem { Header = "Always highlight container borders", IsEnabled = false }); menu.Items.Add(view);
-        var help = new MenuItem { Header = "_Help" };
-        var about = new MenuItem { Header = "About Notarium" }; about.Click += (_, _) => DialogService.Show(this, "Notarium", "Notarium", MessageBoxButton.OK, MessageBoxImage.Information);
-        help.Items.Add(about); menu.Items.Add(help);
         ConfigureMenu(menu);
         frame.Menu.Content = menu;
         Content = frame;

@@ -72,7 +72,7 @@ export function snapshot(editor) {
   html.querySelectorAll('[data-latex]').forEach(node => { node.textContent = node.dataset.latex; });
   return {
     documentJson: JSON.stringify({ version: 1, doc: editor.getJSON() }),
-    markdown: (editor.state.doc.attrs.pageLayout ? `<!-- notarium:page-layout ${encodeURIComponent(JSON.stringify(editor.state.doc.attrs.pageLayout))} -->\n\n` : '') + (editor.state.doc.attrs.layout === 'article' ? `<!-- notarium:article width=${editor.state.doc.attrs.contentWidth ?? 790} -->\n\n` : '') + exportMarkdown.turndown(html.innerHTML),
+    markdown: (editor.state.doc.attrs.contentWidth ? `<!-- notarium:content-width ${editor.state.doc.attrs.contentWidth} -->\n\n` : '') + exportMarkdown.turndown(html.innerHTML),
     plainText: editor.getText({ blockSeparator: '\n' })
   };
 }

@@ -27,7 +27,7 @@ try {
     ctx.font='18px Segoe UI';ctx.fillText('Słońce',65,185);ctx.fillText('Panel',263,298);ctx.fillText('Energia',464,285);
     return c.toDataURL('image/png');
   });
-  const article = `<!-- notarium:article -->
+  const article = `<!-- notarium:content-width 790 -->
 
 # Od światła do energii
 

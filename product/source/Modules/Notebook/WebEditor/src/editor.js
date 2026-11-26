@@ -25,13 +25,8 @@ import { textTarget, clearTextTarget } from './rich-label.js';
 import { ContainerKeyboard } from './container-keyboard.js';
 import { isContainerAt } from './container-types.js';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
-import { setupPageLayout, normalizeLayout, paragraphFields, paragraphFormatTransaction } from './page-layout.js';
 import { listClipboardText } from './list-clipboard.js';
-import { indentText } from './indentation.js';
-import { setupWorkspacePanels } from './workspace-panels.js';
 import { targetElement } from './dom-target.js';
-let pageLayout;
-let workspacePanels;
 const lineListUndoKey = new PluginKey('lineListUndo');
 const wordSelectionKey = new PluginKey('wordSelection');
 function selectTextRange(view, range, toggle = false) {
@@ -129,34 +124,12 @@ const autoEmptyAfterRow = Extension.create({
 });
 const editor = new Editor({
   element: document.querySelector('#editor'),
-  extensions: [Extension.create({ name: 'documentLayout', addGlobalAttributes: () => [{ types: ['doc'], attributes: { layout: { default: 'note' }, contentWidth: { default: null }, pageLayout: { default: null } } }] }), StarterKit.configure({ codeBlock: false, trailingNode: false, link: { openOnClick: false, autolink: true } }), containerTrailingNode, textFlowSelection, TextStyle, Color, FontFamily,
+  extensions: [Extension.create({ name: 'documentLayout', addGlobalAttributes: () => [{ types: ['doc'], attributes: { contentWidth: { default: null } } }] }), StarterKit.configure({ codeBlock: false, trailingNode: false, link: { openOnClick: false, autolink: true } }), containerTrailingNode, textFlowSelection, TextStyle, Color, FontFamily,
     Highlight.configure({ multicolor: true }), TextAlign.configure({ types: ['heading', 'paragraph'] }),
     Extension.create({ name: 'paragraphLineSpacing', addGlobalAttributes: () => [{ types: ['paragraph', 'heading'], attributes: {
-      ...Object.fromEntries(paragraphFields.map(key => [key, { default: null,
-        parseHTML: el => el.hasAttribute(`data-paragraph-${key}`) ? Number(el.getAttribute(`data-paragraph-${key}`)) : null,
-        renderHTML: attrs => attrs[key] == null ? {} : { [`data-paragraph-${key}`]: attrs[key],
-          style: `${({ indentLeft: 'padding-left', indentRight: 'padding-right', before: 'margin-top', after: 'margin-bottom' })[key]}:${attrs[key] * (key.startsWith('indent') ? 96 / 25.4 : 96 / 72)}px` }
-      }])),
       lineSpacing: { default: null, parseHTML: el => Number(el.style.lineHeight) || null,
         renderHTML: attrs => attrs.lineSpacing ? { style: `line-height:${attrs.lineSpacing}` } : {} }
     } }] }),
-    Extension.create({ name: 'tabIndentation', addGlobalAttributes: () => [
-      ...[['firstLineIndent', ['paragraph', 'heading'], 'text-indent'],
-        ['listIndent', ['orderedList', 'bulletList', 'taskList'], 'margin-left'],
-        ['itemIndent', ['listItem', 'taskItem'], 'margin-left']].map(([key, types, style]) => ({ types,
-          attributes: { [key]: { default: null,
-            parseHTML: el => el.hasAttribute(`data-${key}`) ? Number(el.getAttribute(`data-${key}`)) : null,
-            renderHTML: attrs => attrs[key] == null ? {} : { [`data-${key}`]: attrs[key], style: `${style}:${attrs[key] * 96 / 25.4}px` }
-          } } })),
-      { types: ['orderedList'], attributes: { listStyleType: { default: null,
-        parseHTML: el => el.style.listStyleType || null,
-        renderHTML: attrs => ['decimal', 'lower-alpha', 'lower-roman'].includes(attrs.listStyleType) ? { style: `list-style-type:${attrs.listStyleType}` } : {}
-      } } },
-      { types: ['listItem'], attributes: { itemStyleType: { default: null,
-        parseHTML: el => el.style.listStyleType || null,
-        renderHTML: attrs => ['decimal', 'lower-alpha', 'lower-roman'].includes(attrs.itemStyleType) ? { style: `list-style-type:${attrs.itemStyleType}` } : {}
-      } } }
-    ] }),
     TaskList, TaskItem.configure({ nested: true }), CodeCell, CodeBlockSurface, ContainerAttributes, LayoutRow, BlockGroup, autoEmptyAfterRow, lineListUndo, wordSelections,
     CaptionImage.configure({ allowBase64: true, onEdit: editImage }),
     TableKit.configure({ table: { resizable: true } }),
@@ -259,12 +232,9 @@ const editor = new Editor({
 });
 
 const movement = setupBlockMovement(editor, () => noteId);
-pageLayout = setupPageLayout(editor);
 setupMedia(editor, () => noteId);
-workspacePanels = setupWorkspacePanels(editor, () => noteId);
 const containerNavigation = setupContainers(editor, { editImage, openMath, editContainer, noteId: () => noteId, imageDialogOpen: () => document.querySelector('#image-dialog').open });
-new ContainerKeyboard(editor, { ...containerNavigation,
-  indentText: backwards => indentText(editor, backwards, wordSelectionKey.getState(editor.state), wordSelectionKey) });
+new ContainerKeyboard(editor, containerNavigation);
 // Use the browser's click detail, not ProseMirror's independent click counter.
 // Capture before its mousedown handler can promote a double click to a triple.
 for (const eventType of ['mousedown', 'mouseup']) editor.view.dom.addEventListener(eventType, event => {
@@ -351,30 +321,20 @@ document.querySelector('#editor').addEventListener('mousedown', event => {
 });
 function publishSelection() {
   const width = resolvedContentWidth(editor.state.doc);
-  const layout = normalizeLayout({ width, ...editor.state.doc.attrs.pageLayout });
-  let paragraph = null;
-  editor.state.doc.nodesBetween(editor.state.selection.from, editor.state.selection.to, node => {
-    if (!paragraph && ['paragraph', 'heading'].includes(node.type.name)) paragraph = node.attrs;
-  });
-  for (const key of paragraphFields) if (paragraph?.[key] != null) layout[key] = paragraph[key];
   post({ type: 'selection', noteId, font: textTarget(editor).getAttributes('textStyle').fontFamily || 'Segoe UI',
     color: textTarget(editor).getAttributes('textStyle').color || null,
     highlight: textTarget(editor).getAttributes('highlight').color || null,
-    contentWidth: width, layout, pageView: pageLayout?.view, canUndo: editor.can().undo(), canRedo: editor.can().redo(), inCode: editor.isActive('codeCell') });
+    contentWidth: width, canUndo: editor.can().undo(), canRedo: editor.can().redo(), inCode: editor.isActive('codeCell') });
 }
 
-const resolvedContentWidth = doc => doc.attrs.contentWidth ?? (doc.attrs.layout === 'article' ? 790 : 0);
+const resolvedContentWidth = doc => doc.attrs.contentWidth ?? 0;
 function applyDocumentLayout(doc) {
-  pageLayout?.apply(doc);
-  editor.view.dom.dataset.layout = doc.attrs.layout || 'note';
   const width = resolvedContentWidth(doc);
   editor.view.dom.dataset.contentWidth = String(width);
   editor.view.dom.style.setProperty('--content-width', width ? `${width}px` : 'none');
 }
 
 function open(message) {
-  workspacePanels?.dismiss();
-  pageLayout.dismiss();
   clearTextTarget();
   movement.cancel();
   dismissMedia();
@@ -389,10 +349,8 @@ function open(message) {
       else {
         const host = document.createElement('div'); host.innerHTML = importLegacy(message.markdown);
         doc = PMParser.fromSchema(editor.schema).parse(host);
-        const article = (message.markdown || '').match(/<!-- notarium:article(?: width=(\d+))? -->/);
-        if (article) doc = doc.type.create({ ...doc.attrs, layout: 'article', contentWidth: article[1] ? Number(article[1]) : 790 }, doc.content);
-        const pageSettings = (message.markdown || '').match(/<!-- notarium:page-layout ([^ ]+) -->/);
-        if (pageSettings) doc = doc.type.create({ ...doc.attrs, pageLayout: normalizeLayout(JSON.parse(decodeURIComponent(pageSettings[1]))) }, doc.content);
+        const width = (message.markdown || '').match(/<!-- notarium:content-width (650|790|960) -->/);
+        if (width) doc = doc.type.create({ ...doc.attrs, contentWidth: Number(width[1]) }, doc.content);
       }
       state = EditorState.create({ doc: normalizeAutomaticEmptyAfterRows(doc), schema: editor.schema, plugins: editor.state.plugins });
     }
@@ -415,60 +373,8 @@ function insertionBoundary() {
 function command(message) {
   if (!noteId) return;
   const action = message.action, value = message.value;
-  if (action === 'pageView') {
-    try { pageLayout.setView(typeof value === 'string' ? JSON.parse(value) : value); publishSelection(); }
-    catch (error) { post({ type: 'ribbonError', message: error.message }); }
-    return;
-  }
-  if (action === 'workspacePanel') { workspacePanels.show(value); return; }
-  if (action === 'layoutFields') {
-    const fields = typeof value === 'string' ? JSON.parse(value) : value;
-    if (!fields || Object.keys(fields).some(key => !['top', 'bottom', 'left', 'right'].includes(key))) return;
-    const settings = normalizeLayout({ width: resolvedContentWidth(editor.state.doc), ...editor.state.doc.attrs.pageLayout, ...fields });
-    editor.view.dispatch(closeHistory(editor.state.tr).setDocAttribute('pageLayout', settings).setDocAttribute('contentWidth', settings.width));
-    editor.view.dispatch(closeHistory(editor.state.tr)); post({ type: 'ribbonError', message: '' }); return;
-  }
-  if (action === 'tableSize') {
-    const { rows, cols } = typeof value === 'string' ? JSON.parse(value) : value;
-    if (![rows, cols].every(number => Number.isInteger(number) && number >= 1 && number <= 20)) return;
-    editor.view.dispatch(closeHistory(editor.state.tr));
-    editor.chain().focus().insertTable({ rows, cols, withHeaderRow: true }).run(); return;
-  }
-  if (action === 'mathBlock') { openMath(null, null, 'blockMath'); return; }
-  if (action === 'layoutField') {
-    const { key, value: fieldValue } = typeof value === 'string' ? JSON.parse(value) : value;
-    const settings = normalizeLayout({ width: resolvedContentWidth(editor.state.doc), ...editor.state.doc.attrs.pageLayout, [key]: fieldValue });
-    if (!(key in settings)) return;
-    let tr = closeHistory(editor.state.tr);
-    if (paragraphFields.includes(key)) {
-      const ranges = wordSelectionKey.getState(editor.state) || [];
-      for (const range of ranges.length ? ranges : [editor.state.selection]) editor.state.doc.nodesBetween(range.from, range.to, (node, pos) => {
-        if (!['paragraph', 'heading'].includes(node.type.name)) return;
-        if (range.from !== range.to && (pos + 1 >= range.to || pos + node.nodeSize - 1 <= range.from)) return;
-        const current = tr.doc.nodeAt(pos);
-        if (current.attrs[key] !== settings[key]) tr.setNodeMarkup(pos, undefined, { ...current.attrs, [key]: settings[key] });
-      });
-    } else {
-      const previous = normalizeLayout({ width: resolvedContentWidth(editor.state.doc), ...editor.state.doc.attrs.pageLayout });
-      if (previous[key] !== settings[key]) tr = tr.setDocAttribute('pageLayout', settings).setDocAttribute('contentWidth', settings.width);
-    }
-    if (tr.docChanged) { editor.view.dispatch(tr); editor.view.dispatch(closeHistory(editor.state.tr)); }
-    post({ type: 'ribbonError', message: '' }); return;
-  }
-  if (action === 'pageLayout') { pageLayout.open(); return; }
-  if (action === 'setPageLayout') {
-    const settings = normalizeLayout(typeof value === 'string' ? JSON.parse(value) : value);
-    editor.view.dispatch(closeHistory(editor.state.tr).setDocAttribute('pageLayout', settings).setDocAttribute('contentWidth', settings.width));
-    editor.view.dispatch(closeHistory(editor.state.tr)); return;
-  }
   if (action === 'undo') { editor.commands.undo(); return; }
   if (action === 'redo') { editor.commands.redo(); return; }
-  if (action === 'paragraphFormat') {
-    const values = normalizeLayout(typeof value === 'string' ? JSON.parse(value) : value);
-    editor.view.dispatch(paragraphFormatTransaction(editor, values, editor.state.selection, closeHistory(editor.state.tr)));
-    editor.view.dispatch(closeHistory(editor.state.tr));
-    return;
-  }
   if (action === 'lineSpacing') {
     const spacing = Number(value);
     if (!Number.isFinite(spacing) || spacing < 1 || spacing > 2) return;
@@ -574,9 +480,6 @@ function receive(message) {
       case 'flush': post({ type: 'flushed', requestId: message.requestId, noteId, changed: dirty.has(noteId), ...snapshot(editor) }); break;
     }
   } catch (error) {
-    if (message.type === 'command' && ['layoutField', 'layoutFields'].includes(message.action)) {
-      post({ type: 'ribbonError', message: String(error.message || error) }); return;
-    }
     if (message.type === 'open') editor.setEditable(false);
     post({ type: 'error', message: String(error.message || error), noteId: message.noteId || noteId });
   }

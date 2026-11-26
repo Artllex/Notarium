@@ -1,5 +1,7 @@
 # Notarium — przewodnik po całej strukturze
 
+> Historyczny opis architektury z modułem DEV. Na gałęzi `codex/notarium-clean` aktywny jest tylko Notatnik, bez wstążki i składu stron. Aktualny zakres opisuje [CLEAN-VERSION.md](CLEAN-VERSION.md).
+
 Stan: 2026-09-26, po refaktoryzacji i dodaniu DEV.
 
 ## 1. Główna zasada

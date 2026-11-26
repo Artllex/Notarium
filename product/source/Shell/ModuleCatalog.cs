@@ -10,13 +10,12 @@ public sealed class ModuleCatalog
     public List<string> Errors { get; } = new();
     public List<ModuleEntry> Entries { get; } = new()
     {
-        new("notebook", "Notatnik"), new("calendar", "Kalendarz"),
-        new("collections", "Kolekcje"), new("prompting", "Prompting"), new("dev", "DEV tests")
+        new("notebook", "Notatnik")
     };
     public ModuleCatalog(string root)
     {
         if (!Directory.Exists(root)) return;
-        var folders = Directory.GetDirectories(root);
+        var folders = Directory.GetDirectories(root).Where(folder => Path.GetFileName(folder).Equals("Notebook", StringComparison.OrdinalIgnoreCase)).ToArray();
         AssemblyLoadContext.Default.Resolving += (_, name) =>
         {
             foreach (var folder in folders)
@@ -35,7 +34,7 @@ public sealed class ModuleCatalog
                     var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.GetFullPath(path));
                     foreach (var type in assembly.GetTypes().Where(t => !t.IsAbstract && typeof(INotariumModule).IsAssignableFrom(t)))
                     {
-                        if (Activator.CreateInstance(type) is INotariumModule module && !Modules.Any(m => m.Id == module.Id))
+                        if (Activator.CreateInstance(type) is INotariumModule module && module.Id == "notebook" && !Modules.Any(m => m.Id == module.Id))
                         {
                             Modules.Add(module);
                             var index = Entries.FindIndex(entry => entry.Id == module.Id);

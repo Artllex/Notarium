@@ -4,7 +4,7 @@
         <local:FavoriteButtonVisibilityConverter x:Key="FavoriteButtonVisibility" />
     </ui:CompositePanel.Resources>
     <Grid Background="{StaticResource Panel}">
-                <Grid.RowDefinitions><RowDefinition Height="52" /><RowDefinition Height="Auto" /><RowDefinition Height="46" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="52" /><RowDefinition Height="Auto" /><RowDefinition Height="46" /><RowDefinition Height="*" /></Grid.RowDefinitions>
                 <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <ui:ActionButton Width="28" Height="28" HorizontalAlignment="Left" Margin="10,0,0,0" Padding="0" ToolTip="Ukryj panel boczny" Click="SidebarIcon_Click" AutomationProperties.Name="Ukryj panel boczny"><ui:BrandIcon Width="28" Height="28" /></ui:ActionButton>
                     <ui:PlainTextButton Margin="47,0,6,0" ToolTip="Zwiń lub rozwiń listę modułów" Click="ModuleListToggle_Click"><TextBlock Text="Notarium" Foreground="{StaticResource Text}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" /></ui:PlainTextButton>
@@ -54,16 +54,5 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-
-                <Border Grid.Row="4" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="6,10,6,10">
-                    <StackPanel>
-                        <ui:ActionButton ToolTip="Konto — makieta" Height="32" Padding="9,2" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" Foreground="{StaticResource Text}">
-                            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,2,0,0" /><TextBlock Grid.Column="1" Text="Konto" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" /></Grid>
-                        </ui:ActionButton>
-                        <ui:ActionButton ToolTip="Ustawienia — makieta" Height="32" Padding="9,2" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" Foreground="{StaticResource Text}">
-                            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,2,0,0" /><TextBlock Grid.Column="1" Text="Ustawienia" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" /></Grid>
-                        </ui:ActionButton>
-                    </StackPanel>
-                </Border>
 
             </Grid></ui:CompositePanel>

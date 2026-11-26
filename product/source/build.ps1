@@ -15,19 +15,6 @@ New-Item -ItemType Directory -Path $env:NOTARIUM_TEST_ROOT | Out-Null
 try {
     dotnet run --project (Join-Path $PSScriptRoot 'Tests/SidebarResize/Notarium.SidebarResizeTests.csproj') -c Release
     if ($LASTEXITCODE) { throw 'Test zwężania panelu bocznego nie przeszedł.' }
-    if (Test-Path (Join-Path $PSScriptRoot 'Modules/Dev/Notarium.Dev.csproj')) {
-        Push-Location (Join-Path $PSScriptRoot 'Modules/Dev/WebGallery')
-        try {
-            npm.cmd ci
-            if ($LASTEXITCODE) { throw 'Instalacja zależności DEV nie powiodła się.' }
-            npm.cmd run build
-            if ($LASTEXITCODE) { throw 'Budowanie DEV nie powiodło się.' }
-            npm.cmd test
-            if ($LASTEXITCODE) { throw 'Testy galerii DEV nie przeszły.' }
-        } finally { Pop-Location }
-        dotnet run --project (Join-Path $PSScriptRoot 'Tests/Dev/Notarium.DevTests.csproj') -c Release
-        if ($LASTEXITCODE) { throw 'Testy modułu DEV nie przeszły.' }
-    }
     if (Test-Path (Join-Path $PSScriptRoot 'Modules/Notebook/Notarium.Notebook.csproj')) {
         Push-Location (Join-Path $PSScriptRoot 'Modules/Notebook/WebEditor')
         try {
@@ -35,10 +22,8 @@ try {
             if ($LASTEXITCODE) { throw 'Instalacja zależności edytora nie powiodła się.' }
             npm.cmd run build
             if ($LASTEXITCODE) { throw 'Budowanie edytora nie powiodło się.' }
-            node workspace-test.mjs
-            if ($LASTEXITCODE) { throw 'Testy wstążki i paneli nie przeszły.' }
-            node page-view-test.mjs
-            if ($LASTEXITCODE) { throw 'Testy układu stron nie przeszły.' }
+            node clean-scope-test.mjs
+            if ($LASTEXITCODE) { throw 'Test oczyszczonego edytora nie przeszedł.' }
             node ui-test.mjs
             if ($LASTEXITCODE) { throw 'Testy komponentów nie przeszły.' }
             npm.cmd test

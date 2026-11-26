@@ -16,23 +16,8 @@
                     <MenuItem Header="_File" Foreground="{StaticResource Text}"><MenuItem Header="_New note" Foreground="#202020" InputGestureText="Ctrl+N" Click="NewNote_Click" /><MenuItem Header="_Open file…" Foreground="#202020" InputGestureText="Ctrl+O" Click="OpenFile_Click" /><MenuItem Header="_Save active note as…" Foreground="#202020" InputGestureText="Ctrl+S" Click="SaveFile_Click" /><Separator /><MenuItem Header="_Delete note" Foreground="#202020" Click="DeleteNote_Click" /><Separator /><MenuItem Header="E_xit" Foreground="#202020" Click="Exit_Click" /></MenuItem>
                     <MenuItem Header="_Edit" Foreground="{StaticResource Text}"><MenuItem Header="_Undo" Foreground="#202020" InputGestureText="Ctrl+Z" Command="ApplicationCommands.Undo" CommandTarget="{Binding ElementName=Editor}" /><MenuItem Header="_Redo" Foreground="#202020" InputGestureText="Ctrl+Y" Command="ApplicationCommands.Redo" CommandTarget="{Binding ElementName=Editor}" /><Separator /><MenuItem Header="File _metadata…" Foreground="#202020" Click="MetadataMenu_Click" /></MenuItem>
                     <MenuItem x:Name="ViewMenuItem" Header="_View" Foreground="{StaticResource Text}" HorizontalContentAlignment="Left">
-                        <MenuItem Header="Paginacja">
-                            <MenuItem x:Name="PagesDownMenuItem" Header="Strony w dół" IsCheckable="True" IsChecked="True" Tag="down" Click="PageDirection_Click" />
-                            <MenuItem x:Name="PagesAcrossMenuItem" Header="Strony w bok" IsCheckable="True" Tag="across" Click="PageDirection_Click" />
-                            <Separator />
-                            <MenuItem Header="Stron w rzędzie (widok w dół)">
-                                <MenuItem Header="1 strona" Tag="1" Click="PageCount_Click" />
-                                <MenuItem Header="2 strony" Tag="2" Click="PageCount_Click" />
-                                <MenuItem Header="3 strony" Tag="3" Click="PageCount_Click" />
-                                <MenuItem Header="4 strony" Tag="4" Click="PageCount_Click" />
-                                <MenuItem Header="5 stron" Tag="5" Click="PageCount_Click" />
-                                <MenuItem Header="6 stron" Tag="6" Click="PageCount_Click" />
-                                <MenuItem><MenuItem.Header><StackPanel Orientation="Horizontal"><TextBlock Text="Własna liczba (1–100):" VerticalAlignment="Center" Margin="0,0,8,0" /><TextBox x:Name="PageCountInput" Text="1" Width="52" ToolTip="Wpisz liczbę i naciśnij Enter" PreviewKeyDown="PageCountInput_KeyDown" /></StackPanel></MenuItem.Header></MenuItem>
-                            </MenuItem>
-                        </MenuItem>
                         <MenuItem x:Name="PersistentHighlightsMenuItem" Header="_Always highlight container borders" IsCheckable="True" IsChecked="False" Foreground="#202020" HorizontalContentAlignment="Left" Click="PersistentHighlights_Click" />
                     </MenuItem>
-                    <MenuItem Header="_Help" Foreground="{StaticResource Text}"><MenuItem Header="_About Notarium" Foreground="#202020" Click="HelpMenu_Click" /></MenuItem>
             </ui:MenuBar>
 
             <!-- Lewy panel w stylu RemNote -->

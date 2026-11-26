@@ -37,68 +37,6 @@ async function chooseMathLayout(value) {
 }
 async function check(name, run) { await run(); assert.deepEqual(errors, []); const bridgeErrors = await page.evaluate(() => window.bridgeMessages.filter(m => m.type === 'error')); assert.deepEqual(bridgeErrors, []); console.log(`PASS ${name}`); passed++; }
 try {
-  await check('Word Tab gestures indent first line, selected paragraphs and list levels locally', async () => {
-    const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
-    const selection = (from, to = from) => page.evaluate(({ from, to }) => {
-      const editor = window.notatnik.editor;
-      editor.commands.setTextSelection({ from, to }); editor.view.focus();
-    }, { from, to });
-    await open('tab-first-line', 'First line\n\nOther paragraph');
-    await selection(1);
-    await page.keyboard.press('Tab');
-    assert.equal((await json()).content[0].attrs.firstLineIndent, 12.7);
-    assert.equal((await json()).content[1].attrs.firstLineIndent, null);
-    await page.keyboard.press('Shift+Tab');
-    assert.equal((await json()).content[0].attrs.firstLineIndent, 0);
-    await selection(3);
-    await page.keyboard.press('Tab');
-    assert.equal((await json()).content[0].content[0].text, 'Fi\trst line');
-    await page.keyboard.press('Shift+Tab');
-    assert.equal((await json()).content[0].content[0].text, 'First line');
-    await open('tab-paragraphs', 'One\n\nTwo\n\nKeep');
-    await selection(1, 9);
-    await page.keyboard.press('Tab');
-    let doc = await json();
-    assert.equal(doc.content[0].attrs.indentLeft, 12.7);
-    assert.equal(doc.content[1].attrs.indentLeft, 12.7);
-    assert.equal(doc.content[2].attrs.indentLeft, null);
-    await page.keyboard.press('Shift+Tab');
-    doc = await json();
-    assert.equal(doc.content[0].attrs.indentLeft, 0);
-    assert.equal(doc.content[1].attrs.indentLeft, 0);
-    for (const type of ['orderedList', 'bulletList']) {
-      await open('tab-list-' + type, '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
-        { type: 'blockGroup', attrs: { textFlow: true }, content: [p('Lista:'), { type, content: ['One', 'Two', 'Three'].map(text => ({ type: 'listItem', content: [p(text)] })) }] }, p('Outside')
-      ] } }));
-      const positions = await page.evaluate(() => {
-        const result = {}; window.notatnik.editor.state.doc.descendants((node, pos) => { if (node.type.name === 'paragraph') result[node.textContent] = pos + 1; }); return result;
-      });
-      await selection(positions.Two);
-      await page.keyboard.press('Tab');
-      doc = await json();
-      const list = doc.content[0].content[1];
-      assert.equal(list.content.length, 2);
-      assert.equal(list.content[0].content[1].content[0].content[0].content[0].text, 'Two');
-      if (type === 'orderedList') assert.equal(list.content[0].content[1].attrs.listStyleType, 'lower-alpha');
-      await page.keyboard.press('Shift+Tab');
-      doc = await json();
-      assert.equal(doc.content[0].content[1].content.length, 3);
-      await selection(positions.One, positions.Three + 5);
-      await page.keyboard.press('Tab');
-      doc = await json();
-      assert.equal(doc.content[0].content[1].attrs.listIndent, 12.7);
-      assert.equal(doc.content[0].content[1].content.length, 3);
-      assert.equal(doc.content[0].content[0].attrs.indentLeft, null);
-      assert.equal(doc.content[1].attrs.indentLeft, null);
-      await page.keyboard.press('Shift+Tab');
-      assert.equal((await json()).content[0].content[1].attrs.listIndent, 0);
-      await command('undo');
-      assert.equal((await json()).content[0].content[1].attrs.listIndent, 12.7);
-      const saved = await json();
-      await open('tab-reloaded-' + type, '', JSON.stringify({ version: 1, doc: saved }));
-      assert.equal((await json()).content[0].content[1].attrs.listIndent, 12.7);
-    }
-  });
   await check('Ctrl double clicks accumulate nonadjacent lines without first-click word fragments', async () => {
     const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
     await open('multi-lines', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
@@ -254,41 +192,6 @@ try {
       assert.deepEqual(await json(), before);
     }
   });
-  await check('Paragraph layout is local, persisted, undoable and has explicit document defaults', async () => {
-    await open('paragraph-local', 'First\n\nSecond\n\nThird');
-    await page.waitForTimeout(100);
-    const before = await json();
-    await page.evaluate(() => {
-      const editor = window.notatnik.editor;
-      let pos; editor.state.doc.descendants((node, offset) => { if (node.textContent === 'Second' && node.type.name === 'paragraph') pos = offset; });
-      editor.commands.setTextSelection({ from: pos + 1, to: pos + 7 });
-    });
-    await command('pageLayout');
-    await page.locator('#page-layout-dialog [name=indentLeft]').fill('10');
-    await page.locator('#page-layout-dialog [name=indentRight]').fill('5');
-    await page.locator('#page-layout-dialog [name=before]').fill('6');
-    await page.locator('#page-layout-dialog [name=after]').fill('12');
-    await page.locator('#page-layout-dialog button[value=save]').click();
-    const formatted = await json();
-    assert.equal(formatted.attrs.pageLayout, null);
-    assert.equal(formatted.content[0].attrs.indentLeft, null);
-    assert.equal(formatted.content[1].attrs.indentLeft, 10);
-    assert.equal(formatted.content[1].attrs.after, 12);
-    assert.equal(formatted.content[2].attrs.after, null);
-    const styles = await page.locator('.tiptap p').nth(1).evaluate(p => ({ left: parseFloat(getComputedStyle(p).paddingLeft), after: parseFloat(getComputedStyle(p).marginBottom) }));
-    assert.ok(Math.abs(styles.left - 10 * 96 / 25.4) < 0.02);
-    assert.equal(styles.after, 16);
-    await command('undo'); assert.deepEqual(await json(), before);
-    await command('redo'); assert.deepEqual(await json(), formatted);
-    await open('paragraph-reloaded', '', JSON.stringify({ version: 1, doc: formatted }));
-    await command('pageLayout');
-    await page.locator('#page-layout-dialog [name=paragraphScope]').evaluate(select => { select.value = 'defaults'; select.dispatchEvent(new Event('change', { bubbles: true })); });
-    await page.locator('#page-layout-dialog [name=indentLeft]').fill('3');
-    await page.locator('#page-layout-dialog button[value=save]').click();
-    const defaults = await json();
-    assert.equal(defaults.attrs.pageLayout.indentLeft, 3);
-    assert.equal(defaults.content[1].attrs.indentLeft, 10);
-  });
   await check('Line spacing formats only selected list paragraphs and supports undo', async () => {
     await open('selected-spacing', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
       { type: 'paragraph', content: [{ type: 'text', text: 'Lista:' }] },
@@ -384,7 +287,7 @@ try {
       { type: 'layoutRow', content: [p('C'), p('A'), p('D')] }
     ] } }));
     // Use the persisted width command: a one-off DOM style is discarded by layout refresh.
-    await command('layoutField', JSON.stringify({ key: 'width', value: 901.5 }));
+    await page.evaluate(() => { document.querySelector('#editor').style.width = '1045.5px'; });
     const row = page.locator('.layout-row').nth(1);
     const before = await row.boundingBox();
     await page.evaluate(() => {
@@ -400,7 +303,7 @@ try {
     assert.equal(after.x, before.x);
     const last = await row.locator(':scope > .object-container').last().boundingBox();
     assert.ok(Math.abs(last.x + last.width - before.x - before.width) < 0.05, 'Paste must preserve the precise right edge, without integer rounding');
-    await command('layoutField', JSON.stringify({ key: 'width', value: 0 }));
+    await page.evaluate(() => { document.querySelector('#editor').style.removeProperty('width'); });
   });
   await check('The visible top frame selects containers in every row rather than the row gap', async () => {
     const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
@@ -569,41 +472,6 @@ try {
     const expected = c.y - b.y - b.height;
     assert.ok(Math.abs(row.y - before.y - before.height - expected) < 1, 'Gap above row must match standalone gap');
     assert.ok(Math.abs(b.y - row.y - row.height - expected) < 1, 'Gap below row must match standalone gap');
-  });
-  await check('Page layout flows text onto multiple pages, persists and supports undo', async () => {
-    await open('layout-pages', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
-      { type: 'paragraph', content: [{ type: 'text', text: 'Tekst na kolejnych stronach. '.repeat(600) }] }
-    ] } }));
-    const original = await json();
-    await command('setPageLayout', { paged: true, size: 'A5', color: '#232323', top: 15, bottom: 15, left: 15, right: 15,
-      footer: 'Notarium', numbering: true, start: 4, hyphenation: true });
-    await page.waitForFunction(() => document.querySelectorAll('.layout-paper').length > 1);
-    assert.ok(await page.locator('.layout-paper').count() > 1);
-    assert.equal(await page.locator('.layout-footer').first().textContent(), 'Notarium · 4');
-    const populatedPages = await page.locator('.tiptap p').first().evaluate(el => {
-      const range = document.createRange(); range.selectNodeContents(el);
-      const fragments = [...range.getClientRects()].filter(r => r.width > 0 && r.height > 0);
-      return [...document.querySelectorAll('.layout-paper')].filter(paper => {
-        const bounds = paper.getBoundingClientRect();
-        return fragments.some(r => r.left < bounds.right && r.right > bounds.left && r.top < bounds.bottom && r.bottom > bounds.top);
-      }).length;
-    });
-    assert.ok(populatedPages > 1, 'Text must actually flow onto multiple pages in either vertical or horizontal view');
-    await page.screenshot({ path: resolve(reportDirectory, 'page-layout.png') });
-    const saved = await page.evaluate(() => window.notatnik.snapshot());
-    await command('undo'); assert.deepEqual(await json(), original);
-    await command('redo');
-    const expected = (await json()).attrs.pageLayout;
-    await open('layout-pages-reopen', '', saved.documentJson);
-    assert.deepEqual((await json()).attrs.pageLayout, expected);
-    await open('layout-pages-markdown', saved.markdown);
-    assert.deepEqual((await json()).attrs.pageLayout, expected);
-    await command('pageLayout');
-    assert.equal(await page.locator('#page-layout-dialog').evaluate(el => el.open), true);
-    await page.locator('#page-layout-dialog button[value=cancel]').click();
-    await open('layout-unset', 'Plain');
-    assert.equal(await page.locator('.layout-paper').count(), 0);
-    assert.equal(await page.locator('#editor').evaluate(el => el.classList.contains('document-paged')), false);
   });
   await check('A full fixed-width row shrinks existing columns to fit an additional container', async () => {
     await open('full-row-drop', '', JSON.stringify({ version: 1, doc: { type: 'doc', content: [
@@ -1141,7 +1009,7 @@ try {
     assert.equal(selections.at(-1).font, 'Georgia');
   });
   await check('Content width is per-document, undoable and retained by JSON and Markdown', async () => {
-    await open('article-width', '<!-- notarium:article -->\n\n# Article\n\nParagraph');
+    await open('article-width', '<!-- notarium:content-width 790 -->\n\n# Article\n\nParagraph');
     const editorElement = page.locator('.tiptap');
     assert.equal(await editorElement.getAttribute('data-content-width'), '790');
     assert.equal(await editorElement.evaluate(element => getComputedStyle(element).maxWidth), '790px');
@@ -1150,7 +1018,7 @@ try {
     await command('undo'); assert.equal(await editorElement.evaluate(element => getComputedStyle(element).maxWidth), '790px');
     await command('redo'); assert.equal(await editorElement.evaluate(element => getComputedStyle(element).maxWidth), '650px');
     const saved = await page.evaluate(() => window.notatnik.snapshot());
-    assert.match(saved.markdown, /notarium:article width=650/);
+    assert.match(saved.markdown, /notarium:content-width 650/);
     await open('width-json', '', saved.documentJson);
     assert.equal(await editorElement.evaluate(element => getComputedStyle(element).maxWidth), '650px');
     await open('width-markdown', saved.markdown);
