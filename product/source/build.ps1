@@ -24,6 +24,8 @@ try {
             if ($LASTEXITCODE) { throw 'Budowanie edytora nie powiodło się.' }
             node clean-scope-test.mjs
             if ($LASTEXITCODE) { throw 'Test oczyszczonego edytora nie przeszedł.' }
+            node drag-layout-test.mjs
+            if ($LASTEXITCODE) { throw 'Podnoszenie zmienia geometrię sąsiednich kontenerów.' }
             node ui-test.mjs
             if ($LASTEXITCODE) { throw 'Testy komponentów nie przeszły.' }
             npm.cmd test

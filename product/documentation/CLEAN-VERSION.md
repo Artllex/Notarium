@@ -31,6 +31,8 @@ Pierwszą kompilację blokował test kliknięcia LaTeX: automatycznie wybrany pu
 
 ## Porządkowanie kodu
 
+Podnoszenie kontenerów zachowuje szerokość obszaru: `scrollbar-gutter: stable` zapobiega przesunięciom elastycznych kolumn i wyśrodkowanych kontenerów, gdy podgląd przeciągania wywołuje paski przewijania. `drag-layout-test.mjs` sprawdza geometrię z rzeczywistymi paskami (domyślnie ukrywanymi przez Playwright).
+
 Wydzielono model, widok, geometrię, zaznaczanie, hover i integrację kontenerów. `containers.js` zachowuje publiczny interfejs dla dotychczasowych użytkowników. Gesty tekstowe, stan wielokrotnego zaznaczania, polecenia i odczyt dokumentu mają osobne moduły. Właściciele obsługi zdarzeń usuwają swoje nasłuchiwanie przy zamknięciu edytora.
 
 Usunięto nieużywany edytor `Legacy/` (9 plików), pozostawiając import starszych notatek Markdown. CSS sformatowano z zachowaniem kolejności reguł; reguł nie scalano w sposób zmieniający kaskadę. Poprawiono dokumentację i listę plików testów, aby pozostałości `obj` usuniętego DEV nie trafiały do kompilacji.

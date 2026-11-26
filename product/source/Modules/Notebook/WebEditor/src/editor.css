@@ -352,6 +352,11 @@ dialog button:disabled {
 * {
   box-sizing: border-box;
 }
+/* A lifted preview can introduce overflow. Keep scrollbar space constant so
+   flexible rows and centered containers retain their geometry throughout drag. */
+html {
+  scrollbar-gutter: stable;
+}
 body {
   margin: 0;
 }
