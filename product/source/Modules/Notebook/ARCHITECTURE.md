@@ -6,11 +6,15 @@
 - `WebEditorControl`: adapter WebView2, komunikaty identyfikowane przez ID notatki,
   inicjalizacja, zamknięcie z opróżnieniem zmian i otwieranie linków w przeglądarce.
 - `WebEditor/src/editor.js`: Tiptap/ProseMirror, formatowanie, listy i sesje dokumentów.
+- `editor-commands.js`: polecenia prostego paska narzędzi i edycja odnośnika; `document-state.js`: odczyt zapisanego dokumentu bez automatycznego zapisu.
+- `text-selection.js` i `text-gestures.js`: stan wielokrotnego zaznaczania tekstu oraz gesty, kopiowanie i wycinanie zaznaczonych fragmentów.
+- `containers.js`: publiczny interfejs kontenerów i wyrównanie. `container-schema.js` definiuje ich model, `container-view.js` widok, a `container-geometry.js` przeliczanie wymiarów i transakcje zmiany rozmiaru.
+- `container-controller.js`: integracja widoków, schowek kontenerów i punkty wstawiania. `container-selection.js` zarządza zaznaczaniem kontenerów i nawigacją strzałkami; `container-hover.js` stanem hover i czasem podpowiedzi Type. Każdy moduł usuwa własne nasłuchiwanie przy zniszczeniu edytora.
 - `WebEditor/src/code-cell.js`: węzeł komórki z CodeMirror 6 (katalog języków), obramowaniem,
   przesuwaniem i usuwaniem. Zmiany CodeMirror trafiają do transakcji ProseMirror.
 - `WebEditor/src/storage.js`: import starego Markdown, eksport i wersjonowany JSON.
 - `NoteStore`: zapis atomowy; `Core/RichDocumentText`: tekst do podglądu listy notatek.
-- `Legacy/`: stary edytor zachowany dla historycznych testów, wyłączony z aplikacji.
+- Stary edytor `Legacy/` został usunięty; import starszego Markdown pozostaje w `storage.js`.
 
 ## Kontrakty
 
@@ -59,8 +63,8 @@ Parsery są dołączone do lokalnego pakietu; wykonywanie kodu pozostaje nieakty
 Szerokość składu jest atrybutem dokumentu `contentWidth`: 650, 790, 960 px
 lub 0 oznaczające pełną szerokość. Przycisk `↔` na pasku pokazuje wartość
 aktywnej notatki. Zmiana należy do historii ProseMirror, zapisuje się w JSON,
-a dokument artykułowy zachowuje ją także w znaczniku eksportu Markdown.
-Starszy znacznik `<!-- notarium:article -->` jest importowany jako 790 px.
+a eksport Markdown zachowuje ją w osobnym znaczniku szerokości.
+Szerokość jest zapisywana przez `<!-- notarium:content-width 790 -->` (lub 650/960). Ukryty tryb artykułu został usunięty.
 
 Przenoszenie sekcji: wspólny moduł `block-movement.js` operuje na kontenerach
 dokumentu i grup (akapit, nagłówek, lista, tabela, komórka kodu,

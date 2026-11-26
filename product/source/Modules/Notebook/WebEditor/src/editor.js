@@ -1,4 +1,4 @@
-import { Dialog } from '../../../../Shared/Web/UI/components.js';
+import { readNoteState } from './document-state.js';
 import { VisualRegistry } from '../../../../Shared/Web/UI/registry.js';
 VisualRegistry.install();
 import { Editor, Extension } from '@tiptap/core';
@@ -12,42 +12,23 @@ import { InlineMath } from '@tiptap/extension-mathematics';
 import { TableKit } from '@tiptap/extension-table';
 import TextAlign from '@tiptap/extension-text-align';
 import { NumberedMath, CaptionImage } from './document-elements.js';
-import { setupMedia, openMath, openImage, editImage, openTable, dismissMedia } from './media.js';
-import { EditorState, Plugin, PluginKey, TextSelection, NodeSelection } from '@tiptap/pm/state';
-import { DOMParser as PMParser } from '@tiptap/pm/model';
+import { setupMedia, openMath, editImage, dismissMedia } from './media.js';
+import { Plugin, PluginKey, TextSelection, NodeSelection } from '@tiptap/pm/state';
 import { closeHistory } from '@tiptap/pm/history';
 import { CodeCell, CodeBlockSurface } from './code-cell.js';
 import { setupBlockMovement } from './block-movement.js';
-import { importLegacy, readDocument, snapshot } from './storage.js';
-import { ContainerAttributes, LayoutRow, BlockGroup, setupContainers, alignContainer } from './containers.js';
+import { snapshot } from './storage.js';
+import { ContainerAttributes, LayoutRow, BlockGroup, setupContainers } from './containers.js';
 import { editContainer, dismissContainer } from './container-dialog.js';
 import { textTarget, clearTextTarget } from './rich-label.js';
 import { ContainerKeyboard } from './container-keyboard.js';
 import { isContainerAt } from './container-types.js';
-import { Decoration, DecorationSet } from '@tiptap/pm/view';
+import { wordSelectionKey, selectTextRange, wordSelections } from './text-selection.js';
+import { setupTextGestures } from './text-gestures.js';
+import { setupEditorCommands } from './editor-commands.js';
 import { listClipboardText } from './list-clipboard.js';
 import { targetElement } from './dom-target.js';
 const lineListUndoKey = new PluginKey('lineListUndo');
-const wordSelectionKey = new PluginKey('wordSelection');
-function selectTextRange(view, range, toggle = false) {
-  const ranges = wordSelectionKey.getState(view.state);
-  const same = item => item.from === range.from && item.to === range.to;
-  const covered = ranges.some(item => item.from <= range.from && item.to >= range.to);
-  const next = toggle && ranges.some(same) ? ranges.filter(item => !same(item)) : covered ?
-    ranges.map(item => same(item) && range.kind ? { ...item, kind: range.kind } : item) :
-    [...ranges.filter(item => item.to <= range.from || item.from >= range.to), range].sort((a, b) => a.from - b.from);
-  view.dispatch(view.state.tr.setMeta(wordSelectionKey, next)
-    .setSelection(TextSelection.create(view.state.doc, range.from, range.to)));
-}
-const wordSelections = Extension.create({
-  name: 'wordSelections',
-  addProseMirrorPlugins() { return [new Plugin({ key: wordSelectionKey,
-    state: { init: () => [], apply: (tr, ranges) => tr.getMeta(wordSelectionKey) ??
-      (tr.docChanged ? [] : ranges) },
-    props: { decorations(state) { return DecorationSet.create(state.doc, wordSelectionKey.getState(state).map(range =>
-      Decoration.inline(range.from, range.to, { class: 'word-multi-selection', style: 'background:#31547a;color:inherit' }))); } }
-  })]; }
-});
 // Text-flow groups are editable to their end, just like paragraphs.
 const containerTrailingNode = TrailingNode.extend({
   addProseMirrorPlugins() {
@@ -235,68 +216,7 @@ const movement = setupBlockMovement(editor, () => noteId);
 setupMedia(editor, () => noteId);
 const containerNavigation = setupContainers(editor, { editImage, openMath, editContainer, noteId: () => noteId, imageDialogOpen: () => document.querySelector('#image-dialog').open });
 new ContainerKeyboard(editor, containerNavigation);
-// Use the browser's click detail, not ProseMirror's independent click counter.
-// Capture before its mousedown handler can promote a double click to a triple.
-for (const eventType of ['mousedown', 'mouseup']) editor.view.dom.addEventListener(eventType, event => {
-  if (event.button !== 0 || event.metaKey || event.detail < 2) return;
-  if (!event.target.closest?.('.object-container') || event.target.closest('button,input,select,.container-type-tools,.container-add-tools,.container-resize,.container-resize-edge,.container-select-edge')) return;
-  const hit = editor.view.posAtCoords({ left: event.clientX, top: event.clientY });
-  if (!hit) return;
-  const handler = event.detail === 3 && !event.ctrlKey ? editor.options.editorProps.handleTripleClick : editor.options.editorProps.handleDoubleClick;
-  if (handler(editor.view, hit.pos, event)) {
-    event.preventDefault(); event.stopImmediatePropagation();
-    if (eventType === 'mouseup') requestAnimationFrame(() => handler(editor.view, hit.pos, event));
-  }
-}, true);
-editor.view.dom.addEventListener('mousedown', event => {
-  if (!event.ctrlKey && wordSelectionKey.getState(editor.state).length)
-    editor.view.dispatch(editor.state.tr.setMeta(wordSelectionKey, []));
-}, true);
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && wordSelectionKey.getState(editor.state).length)
-    editor.view.dispatch(editor.state.tr.setMeta(wordSelectionKey, [])
-      .setSelection(TextSelection.near(editor.state.doc.resolve(editor.state.selection.head))));
-}, true);
-for (const type of ['copy', 'cut']) editor.view.dom.addEventListener(type, event => {
-  const ranges = wordSelectionKey.getState(editor.state);
-  if (!ranges.length || !event.clipboardData) return;
-  event.preventDefault(); event.stopImmediatePropagation();
-  const entries = ranges.map(range => {
-    const entry = { text: editor.state.doc.textBetween(range.from, range.to) };
-    if (range.kind !== 'line') return entry;
-    const $pos = editor.state.doc.resolve(range.from);
-    for (let depth = $pos.depth; depth > 0; depth--) {
-      if ($pos.node(depth).type.name !== 'listItem') continue;
-      const list = $pos.node(depth - 1);
-      entry.item = $pos.before(depth);
-      entry.marker = list.type.name === 'orderedList' ? `${(list.attrs.start || 1) + $pos.index(depth - 1)}.` : '-';
-      break;
-    }
-    return entry;
-  });
-  const multipleItems = new Set(entries.filter(entry => entry.marker).map(entry => entry.item)).size > 1;
-  const renderedItems = new Set();
-  event.clipboardData.setData('text/plain', entries.map(entry => {
-    if (!multipleItems || !entry.marker || renderedItems.has(entry.item)) return entry.text;
-    renderedItems.add(entry.item);
-    return `${entry.marker} ${entry.text}`;
-  }).join(ranges.some(range => range.kind === 'line') ? '\n' : ' '));
-  if (type === 'cut') {
-    const tr = closeHistory(editor.state.tr);
-    for (const range of [...ranges].reverse()) tr.delete(range.from, range.to);
-    editor.view.dispatch(tr.setMeta(wordSelectionKey, []));
-  }
-}, true);
-editor.view.dom.addEventListener('dblclick', event => {
-  const hit = editor.view.posAtCoords({ left: event.clientX, top: event.clientY });
-  if (hit && editor.options.editorProps.handleDoubleClick(editor.view, hit.pos, event)) {
-    event.preventDefault(); event.stopPropagation(); return;
-  }
-  const dom = event.target.closest?.('[data-type="inline-math"]');
-  if (!dom) return;
-  const pos = editor.view.posAtDOM(dom, 0), node = editor.state.doc.nodeAt(pos);
-  if (node?.type.name === 'inlineMath') openMath(node, pos);
-});
+setupTextGestures(editor);
 
 function publish() {
   dirty.add(noteId);
@@ -344,15 +264,7 @@ function open(message) {
   try {
     let state = sessions.get(message.noteId);
     if (!state) {
-      let doc;
-      if (message.documentJson) { doc = editor.schema.nodeFromJSON(readDocument(message.documentJson)); doc.check(); }
-      else {
-        const host = document.createElement('div'); host.innerHTML = importLegacy(message.markdown);
-        doc = PMParser.fromSchema(editor.schema).parse(host);
-        const width = (message.markdown || '').match(/<!-- notarium:content-width (650|790|960) -->/);
-        if (width) doc = doc.type.create({ ...doc.attrs, contentWidth: Number(width[1]) }, doc.content);
-      }
-      state = EditorState.create({ doc: normalizeAutomaticEmptyAfterRows(doc), schema: editor.schema, plugins: editor.state.plugins });
+      state = readNoteState(editor, message, normalizeAutomaticEmptyAfterRows);
     }
     noteId = message.noteId;
     editor.view.updateState(state); editor.setEditable(Boolean(noteId));
@@ -362,102 +274,7 @@ function open(message) {
   } finally { loading = false; }
 }
 
-function insertionBoundary() {
-  const { selection } = editor.state;
-  if (selection.node?.type.name === 'blockGroup') return selection.from + selection.node.nodeSize - 1;
-  for (let depth = selection.$from.depth; depth > 0; depth--) {
-    if (['doc', 'blockGroup', 'layoutRow'].includes(selection.$from.node(depth - 1).type.name)) return selection.$from.after(depth);
-  }
-  return selection.to;
-}
-function command(message) {
-  if (!noteId) return;
-  const action = message.action, value = message.value;
-  if (action === 'undo') { editor.commands.undo(); return; }
-  if (action === 'redo') { editor.commands.redo(); return; }
-  if (action === 'lineSpacing') {
-    const spacing = Number(value);
-    if (!Number.isFinite(spacing) || spacing < 1 || spacing > 2) return;
-    const { from, to, empty } = editor.state.selection;
-    const tr = closeHistory(editor.state.tr);
-    editor.state.doc.nodesBetween(from, to, (node, pos) => {
-      if (!['paragraph', 'heading'].includes(node.type.name)) return;
-      if (!empty && (pos + node.nodeSize <= from || pos >= to)) return;
-      tr.setNodeMarkup(pos, undefined, { ...node.attrs, lineSpacing: spacing });
-    });
-    if (tr.docChanged) editor.view.dispatch(tr);
-    editor.view.dispatch(closeHistory(editor.state.tr));
-    return;
-  }
-  if (action === 'persistentHighlights') {
-    document.body.classList.toggle('persistent-container-highlights', value === true || value === 'true');
-    return;
-  }
-  editor.view.dispatch(closeHistory(editor.state.tr));
-  const alignment = { alignLeft: 'left', alignCenter: 'center', alignRight: 'right', alignJustify: 'justify' }[action];
-  const target = textTarget(editor);
-  if (alignment && target === editor && alignContainer(editor, alignment)) return;
-  const chain = target.chain().focus();
-  switch (action) {
-    case 'bold': chain.toggleBold().run(); break;
-    case 'italic': chain.toggleItalic().run(); break;
-    case 'strike': chain.toggleStrike().run(); break;
-    case 'alignLeft': chain.setTextAlign('left').run(); break;
-    case 'alignCenter': chain.setTextAlign('center').run(); break;
-    case 'alignRight': chain.setTextAlign('right').run(); break;
-    case 'alignJustify': chain.setTextAlign('justify').run(); break;
-    case 'heading': chain.toggleHeading({ level: 1 }).run(); break;
-    case 'bullet': chain.toggleBulletList().run(); break;
-    case 'numbered': chain.toggleOrderedList().run(); break;
-    case 'checklist': chain.toggleTaskList().run(); break;
-    case 'code': chain.toggleCode().run(); break;
-    case 'codeblock': chain.toggleCodeBlock().run(); break;
-    case 'font': chain.setFontFamily(value).run(); break;
-    case 'color': chain.setColor(value).run(); break;
-    case 'clearColor': chain.unsetColor().run(); break;
-    case 'clearHighlight': chain.unsetHighlight().run(); break;
-    case 'highlight': chain.setHighlight({ color: value }).run(); break;
-    case 'link': showLinkDialog(); break;
-    case 'math': openMath(); break;
-    case 'image': openImage(); break;
-    case 'table': openTable(); break;
-    case 'contentWidth': {
-      const width = Number(value);
-      if (![0, 650, 790, 960].includes(width)) throw new Error('Nieobsługiwana szerokość składu.');
-      editor.view.dispatch(editor.state.tr.setDocAttribute('contentWidth', width)); break;
-    }
-    case 'container': {
-      const position = insertionBoundary();
-      editor.chain().focus().insertContentAt(position, { type: 'blockGroup', content: [{ type: 'paragraph' }] }).setTextSelection(position + 2).run();
-      break;
-    }
-    case 'cell': {
-      const position = insertionBoundary();
-      chain.insertContentAt(position, [{ type: 'codeCell', attrs: { language: 'python' } }, { type: 'paragraph', attrs: { boxEmpty: true } }])
-        .setTextSelection(position + 1).run();
-      break;
-    }
-  }
-}
-
-let linkTarget, linkSelection;
-function showLinkDialog() {
-  linkTarget = textTarget(editor);
-  linkSelection = linkTarget.state.selection;
-  const dialog = document.querySelector('#link-dialog');
-  const input = document.querySelector('#link-url');
-  input.value = linkTarget.getAttributes('link').href || 'https://';
-  Dialog.for(dialog).open(); input.focus({ preventScroll: true }); input.select();
-}
-document.querySelector('#link-dialog').addEventListener('close', event => {
-  const target = linkTarget && !linkTarget.isDestroyed ? linkTarget : editor;
-  if (event.target.returnValue !== 'save') { target.commands.focus(); return; }
-  if (linkSelection) target.view.dispatch(target.state.tr.setSelection(linkSelection));
-  const href = document.querySelector('#link-url').value.trim();
-  if (!/^(https?:\/\/|mailto:)/i.test(href)) return;
-  if (target.state.selection.empty) target.chain().focus().insertContent({ type: 'text', text: href, marks: [{ type: 'link', attrs: { href } }] }).run();
-  else target.chain().focus().setLink({ href }).run();
-});
+const command = setupEditorCommands(editor, () => noteId);
 
 function receive(message) {
   try {

@@ -27,4 +27,10 @@ Aktualny program w `product/builds/Notarium` wymienia wyłącznie `build.ps1`, p
 
 Kompilacja powłoki i testów: bez błędów. Testy architektury i natywnych gestów: 49 kontroli zaliczonych. Test komponentów webowych: 5 kontroli zaliczonych. `clean-scope-test.mjs`: zachowanie treści starszego dokumentu, brak efektu wycofanych poleceń i zachowane proste formatowanie — zaliczone.
 
-Pełny `test.mjs` zatrzymuje się na istniejącym wcześniej problemie: krawędź zaznaczania kontenera przechwytuje kliknięcie we wzór LaTeX. Nie oznaczamy pełnego zestawu ani bieżącego pakietu aplikacji jako zweryfikowanych; ta zmiana nie obejmuje naprawy tego problemu.
+Pierwszą kompilację blokował test kliknięcia LaTeX: automatycznie wybrany punkt trafiał w krawędź kontenera. Poprawka `24b509f` kieruje rzeczywiste kliknięcie w środek widocznego wzoru; test edycji, walidacji i zapisu LaTeX przechodzi.
+
+## Porządkowanie kodu
+
+Wydzielono model, widok, geometrię, zaznaczanie, hover i integrację kontenerów. `containers.js` zachowuje publiczny interfejs dla dotychczasowych użytkowników. Gesty tekstowe, stan wielokrotnego zaznaczania, polecenia i odczyt dokumentu mają osobne moduły. Właściciele obsługi zdarzeń usuwają swoje nasłuchiwanie przy zamknięciu edytora.
+
+Usunięto nieużywany edytor `Legacy/` (9 plików), pozostawiając import starszych notatek Markdown. CSS sformatowano z zachowaniem kolejności reguł; reguł nie scalano w sposób zmieniający kaskadę. Poprawiono dokumentację i listę plików testów, aby pozostałości `obj` usuniętego DEV nie trafiały do kompilacji.
